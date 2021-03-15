@@ -404,16 +404,6 @@ contains
           yp(j)=real(j-1,mytype)*dy
           ypi(j)=(real(j,mytype)-half)*dy
        enddo
-    else
-       call stretching()
-
-       allocate(dyp(ny))
-       ! compute dy for stretched mesh - Kay
-       do j=2,ny-1
-          dyp(j) = half*(yp(j+1)-yp(j-1))
-       enddo
-       dyp(1)  = yp(2) -yp(1)
-       dyp(ny) = yp(ny)-yp(ny-1)
     endif
     ! z-position
     do k=1,nz

@@ -120,10 +120,6 @@ subroutine init_xcompact3d()
   itime = 0
 
   divu3(:,:,:) = zero
-  
-  if(nrank.eq.0)then
-     open(42,file='time_evol.dat',form='formatted')
-  endif
 
 endsubroutine init_xcompact3d
 !########################################################################
@@ -133,16 +129,10 @@ subroutine finalise_xcompact3d()
   use MPI
   use decomp_2d
 
-  use tools, only : simu_stats
-
   implicit none
 
   integer :: ierr
-
-  if(nrank.eq.0)then
-     close(42)
-  endif
-  call simu_stats(4)
+  
   call decomp_2d_finalize
   CALL MPI_FINALIZE(ierr)
 

@@ -978,7 +978,6 @@ contains
     real(mytype),dimension(xsize(1),xsize(2),xsize(3),ntime) :: drho1
 
     !! Get temperature
-    call calc_temp_eos(te1, rho1(:,:,:,1), phi1, tb1, xsize(1), xsize(2), xsize(3))
 
     !!=====================================================================
     !! XXX It is assumed that ux,uy,uz are already updated in all pencils!

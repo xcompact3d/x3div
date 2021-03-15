@@ -42,7 +42,6 @@ subroutine schemes()
   USE derivZ
   USE variables
   USE var
-  USE ydiff_implicit, only : init_implicit, implicit_schemes
 
   implicit none
 
@@ -218,11 +217,6 @@ subroutine schemes()
        cfi6z,cci6z,cbi6z,cfip6z,csip6z,cwip6z,csi6z,&
        cwi6z,cifi6z,cici6z,cibi6z,cifip6z,&
        cisip6z,ciwip6z,cisi6z,ciwi6z)
-
-  if (iimplicit.ne.0) then
-     call init_implicit()
-     call implicit_schemes()
-  endif
 
 #ifdef DEBG
   if (nrank .eq. 0) print *,'# schemes end'

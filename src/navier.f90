@@ -182,7 +182,6 @@ contains
        drho1(:,:,:) = drho1(:,:,:) / ta1(:,:,:)  !! XXX ta1 is the inverse molecular weight
     ENDIF
 
-    CALL calc_temp_eos(ta1, rho1, phi1, tb1, xsize(1), xsize(2), xsize(3))
     drho1(:,:,:) = drho1(:,:,:) - dtemp1(:,:,:) / ta1(:,:,:)
 
     drho1(:,:,:) = rho1(:,:,:) * drho1(:,:,:)
@@ -787,7 +786,6 @@ contains
        !! X-pencil
 
        !! We need temperature
-       CALL calc_temp_eos(ta1, rho1(:,:,:,1), phi1, tb1, xsize(1), xsize(2), xsize(3))
 
        CALL derxx (tb1, ta1, di1, sx, sfxp, ssxp, swxp, xsize(1), xsize(2), xsize(3), 1)
        IF (imultispecies) THEN
@@ -881,14 +879,7 @@ contains
           ENDDO
        ENDIF
        divu3(:,:,:) = divu3(:,:,:) + tb3(:,:,:)
-
-       IF (imultispecies) THEN
-          !! Thus far we have computed rho * divu, want divu
-          CALL calc_rho_eos(rho3, ta3, phi3, tb3, zsize(1), zsize(2), zsize(3))
-          divu3(:,:,:) = divu3(:,:,:) / rho3(:,:,:)
-       ELSE
-          divu3(:,:,:) = (xnu / prandtl) * divu3(:,:,:) / pressure0
-       ENDIF
+       divu3(:,:,:) = (xnu / prandtl) * divu3(:,:,:) / pressure0
     ELSE
        divu3(:,:,:) = zero
     ENDIF

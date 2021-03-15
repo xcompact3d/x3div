@@ -43,6 +43,10 @@ program xcompact3d
 
   call calculate_transeq_rhs(drho1,dux1,duy1,duz1,dphi1,rho1,ux1,uy1,uz1,ep1,phi1,divu3)
 
+  ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
+  uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
+  uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
+  
   divu3(:,:,:) = zero
   call solve_poisson(pp3,px1,py1,pz1,rho1,ux1,uy1,uz1,ep1,drho1,divu3)
   call cor_vel(ux1,uy1,uz1,px1,py1,pz1)

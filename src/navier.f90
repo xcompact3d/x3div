@@ -35,9 +35,8 @@ module navier
 
   private
 
-  public :: solve_poisson, divergence, calc_divu_constraint
+  public :: solve_poisson, divergence
   public :: pre_correc, cor_vel
-  public :: lmn_t_to_rho_trans, momentum_to_velocity, velocity_to_momentum
   public :: gradp
 
 contains
@@ -47,7 +46,7 @@ contains
   !! DESCRIPTION: Takes the intermediate momentum field as input,
   !!              computes div and solves pressure-Poisson equation.
   !############################################################################
-  SUBROUTINE solve_poisson(pp3, px1, py1, pz1, rho1, ux1, uy1, uz1, ep1, drho1, divu3)
+  SUBROUTINE solve_poisson(pp3, px1, py1, pz1, ux1, uy1, uz1)
 
     USE decomp_2d, ONLY : mytype, xsize, zsize, ph1
     USE decomp_2d_poisson, ONLY : poisson
@@ -61,132 +60,21 @@ contains
 
     !! Inputs
     REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)), INTENT(IN) :: ux1, uy1, uz1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)), INTENT(IN) :: ep1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime), INTENT(IN) :: rho1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3), ntime), INTENT(IN) :: drho1
-    REAL(mytype), DIMENSION(zsize(1), zsize(2), zsize(3)), INTENT(IN) :: divu3
 
     !! Outputs
     REAL(mytype), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize, npress) :: pp3
     REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: px1, py1, pz1
 
     !! Locals
-    INTEGER :: nlock, poissiter
-    LOGICAL :: converged
-    REAL(mytype) :: atol, rtol, rho0
+    INTEGER :: nlock
 
     nlock = 1 !! Corresponds to computing div(u*)
-    converged = .FALSE.
-    poissiter = 0
-    rho0 = one
 
-    atol = 1.0e-14_mytype !! Absolute tolerance for Poisson solver
-    rtol = 1.0e-14_mytype !! Relative tolerance for Poisson solver
-
-    IF (ilmn.AND.ivarcoeff) THEN
-       !! Variable-coefficient Poisson solver works on div(u), not div(rho u)
-       !! rho u -> u
-       CALL momentum_to_velocity(rho1, ux1, uy1, uz1)
-    ENDIF
-
-    CALL divergence(pp3(:,:,:,1),rho1,ux1,uy1,uz1,ep1,drho1,divu3,nlock)
-    IF (ilmn.AND.ivarcoeff) THEN
-       dv3(:,:,:) = pp3(:,:,:,1)
-    ENDIF
-
-    DO WHILE(.NOT.converged)
-       IF (ivarcoeff) THEN
-
-          !! Test convergence
-          CALL test_varcoeff(converged, pp3, dv3, atol, rtol, poissiter)
-
-          IF (.NOT.converged) THEN
-             !! Evaluate additional RHS terms
-             CALL calc_varcoeff_rhs(pp3(:,:,:,1), rho1, px1, py1, pz1, dv3, drho1, ep1, divu3, rho0, &
-                  poissiter)
-          ENDIF
-       ENDIF
-
-       IF (.NOT.converged) THEN
-          CALL poisson(pp3(:,:,:,1))
-
-          !! Need to update pressure gradient here for varcoeff
-          CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
-
-          IF ((.NOT.ilmn).OR.(.NOT.ivarcoeff)) THEN
-             !! Once-through solver
-             !! - Incompressible flow
-             !! - LMN - constant-coefficient solver
-             converged = .TRUE.
-          ENDIF
-       ENDIF
-
-       poissiter = poissiter + 1
-    ENDDO
-
-    IF (ilmn.AND.ivarcoeff) THEN
-       !! Variable-coefficient Poisson solver works on div(u), not div(rho u)
-       !! u -> rho u
-       CALL velocity_to_momentum(rho1, ux1, uy1, uz1)
-    ENDIF
+    CALL divergence(pp3(:,:,:,1),ux1,uy1,uz1,nlock)
+    CALL poisson(pp3(:,:,:,1))
+    CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
 
   END SUBROUTINE solve_poisson
-  !############################################################################
-  !!
-  !!  SUBROUTINE: lmn_t_to_rho_trans
-  !! DESCRIPTION: Converts the temperature transient to the density transient
-  !!              term. This is achieved by application of EOS and chain rule.
-  !!      INPUTS: dtemp1 - the RHS of the temperature equation.
-  !!                rho1 - the density field.
-  !!     OUTPUTS:  drho1 - the RHS of the density equation.
-  !!      AUTHOR: Paul Bartholomew
-  !!
-  !############################################################################
-  SUBROUTINE lmn_t_to_rho_trans(drho1, dtemp1, rho1, dphi1, phi1)
-
-    USE decomp_2d
-    USE param, ONLY : zero
-    USE param, ONLY : imultispecies, massfrac, mol_weight
-    USE param, ONLY : ntime
-    USE var, ONLY : numscalar
-    USE var, ONLY : ta1, tb1
-
-    IMPLICIT NONE
-
-    !! INPUTS
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3)) :: dtemp1, rho1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), numscalar) :: phi1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), ntime, numscalar) :: dphi1
-
-    !! OUTPUTS
-    REAL(mytype), INTENT(OUT), DIMENSION(xsize(1), xsize(2), xsize(3)) :: drho1
-
-    !! LOCALS
-    INTEGER :: is
-
-    drho1(:,:,:) = zero
-
-    IF (imultispecies) THEN
-       DO is = 1, numscalar
-          IF (massfrac(is)) THEN
-             drho1(:,:,:) = drho1(:,:,:) - dphi1(:,:,:,1,is) / mol_weight(is)
-          ENDIF
-       ENDDO
-
-       ta1(:,:,:) = zero !! Mean molecular weight
-       DO is = 1, numscalar
-          IF (massfrac(is)) THEN
-             ta1(:,:,:) = ta1(:,:,:) + phi1(:,:,:,is) / mol_weight(is)
-          ENDIF
-       ENDDO
-       drho1(:,:,:) = drho1(:,:,:) / ta1(:,:,:)  !! XXX ta1 is the inverse molecular weight
-    ENDIF
-
-    drho1(:,:,:) = drho1(:,:,:) - dtemp1(:,:,:) / ta1(:,:,:)
-
-    drho1(:,:,:) = rho1(:,:,:) * drho1(:,:,:)
-
-  ENDSUBROUTINE lmn_t_to_rho_trans
   !############################################################################
   !subroutine COR_VEL
   !Correction of u* by the pressure gradient to get a divergence free
@@ -219,7 +107,7 @@ contains
   ! output : pp3 (on pressure mesh)
   !written by SL 2018
   !############################################################################
-  subroutine divergence (pp3,rho1,ux1,uy1,uz1,ep1,drho1,divu3,nlock)
+  subroutine divergence (pp3,ux1,uy1,uz1,nlock)
 
     USE param
     USE decomp_2d
@@ -234,11 +122,8 @@ contains
     !  TYPE(DECOMP_INFO) :: ph1,ph3,ph4
 
     !X PENCILS NX NY NZ  -->NXM NY NZ
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)),intent(in) :: ux1,uy1,uz1,ep1
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3),ntime),intent(in) :: drho1
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3),nrhotime),intent(in) :: rho1
+    real(mytype),dimension(xsize(1),xsize(2),xsize(3)),intent(in) :: ux1,uy1,uz1
     !Z PENCILS NXM NYM NZ  -->NXM NYM NZM
-    real(mytype),dimension(zsize(1),zsize(2),zsize(3)),intent(in) :: divu3
     real(mytype),dimension(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),nzmsize) :: pp3
 
     integer :: nvect3,i,j,k,nlock
@@ -247,33 +132,13 @@ contains
 
     nvect3=(ph1%zen(1)-ph1%zst(1)+1)*(ph1%zen(2)-ph1%zst(2)+1)*nzmsize
 
-    if (iibm.eq.0) then
-       ta1(:,:,:) = ux1(:,:,:)
-       tb1(:,:,:) = uy1(:,:,:)
-       tc1(:,:,:) = uz1(:,:,:)
-    else
-       ta1(:,:,:) = (one - ep1(:,:,:)) * ux1(:,:,:)
-       tb1(:,:,:) = (one - ep1(:,:,:)) * uy1(:,:,:)
-       tc1(:,:,:) = (one - ep1(:,:,:)) * uz1(:,:,:)
-    endif
+    ta1(:,:,:) = ux1(:,:,:)
+    tb1(:,:,:) = uy1(:,:,:)
+    tc1(:,:,:) = uz1(:,:,:)
 
     !WORK X-PENCILS
 
     call derxvp(pp1,ta1,di1,sx,cfx6,csx6,cwx6,xsize(1),nxmsize,xsize(2),xsize(3),0)
-
-    if (ilmn.and.(nlock.gt.0)) then
-       if ((nlock.eq.1).and.(.not.ivarcoeff)) then
-          !! Approximate -div(rho u) using ddt(rho)
-          call extrapol_drhodt(ta1, rho1, drho1)
-       elseif ((nlock.eq.2).or.ivarcoeff) then
-          !! Need to check our error against divu constraint
-          !! Or else we are solving the variable-coefficient Poisson equation
-          call transpose_z_to_y(-divu3, ta2)
-          call transpose_y_to_x(ta2, ta1)
-       endif
-       call interxvp(pgy1,ta1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
-       pp1(:,:,:) = pp1(:,:,:) + pgy1(:,:,:)
-    endif
 
     call interxvp(pgy1,tb1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
     call interxvp(pgz1,tc1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
@@ -681,432 +546,5 @@ contains
     return
   end subroutine pre_correc
   !############################################################################
-  !############################################################################
-  !! Convert to/from conserved/primary variables
-  SUBROUTINE primary_to_conserved(rho1, var1)
-
-    USE decomp_2d, ONLY : mytype, xsize
-    USE param, ONLY : nrhotime
-
-    IMPLICIT NONE
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: var1
-
-    var1(:,:,:) = rho1(:,:,:,1) * var1(:,:,:)
-
-  ENDSUBROUTINE primary_to_conserved
-  !############################################################################
-  !############################################################################
-  SUBROUTINE velocity_to_momentum (rho1, ux1, uy1, uz1)
-
-    USE decomp_2d, ONLY : mytype, xsize
-    USE param, ONLY : nrhotime
-    USE var, ONLY : ilmn
-
-    IMPLICIT NONE
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: ux1, uy1, uz1
-
-    IF (.NOT.ilmn) THEN
-       RETURN
-    ENDIF
-
-    CALL primary_to_conserved(rho1, ux1)
-    CALL primary_to_conserved(rho1, uy1)
-    CALL primary_to_conserved(rho1, uz1)
-
-  ENDSUBROUTINE velocity_to_momentum
-  !############################################################################
-  !############################################################################
-  SUBROUTINE conserved_to_primary(rho1, var1)
-
-    USE decomp_2d, ONLY : mytype, xsize
-    USE param, ONLY : nrhotime
-
-    IMPLICIT NONE
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: var1
-
-    var1(:,:,:) = var1(:,:,:) / rho1(:,:,:,1)
-
-  ENDSUBROUTINE conserved_to_primary
-  !############################################################################
-  !############################################################################
-  SUBROUTINE momentum_to_velocity (rho1, ux1, uy1, uz1)
-
-    USE decomp_2d, ONLY : mytype, xsize
-    USE param, ONLY : nrhotime
-    USE var, ONLY : ilmn
-
-    IMPLICIT NONE
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: ux1, uy1, uz1
-
-    IF (.NOT.ilmn) THEN
-       RETURN
-    ENDIF
-
-    CALL conserved_to_primary(rho1, ux1)
-    CALL conserved_to_primary(rho1, uy1)
-    CALL conserved_to_primary(rho1, uz1)
-
-  ENDSUBROUTINE momentum_to_velocity
-  !############################################################################
-  !############################################################################
-  !! Calculate velocity-divergence constraint
-  SUBROUTINE calc_divu_constraint(divu3, rho1, phi1)
-
-    USE decomp_2d, ONLY : mytype, xsize, ysize, zsize
-    USE decomp_2d, ONLY : transpose_x_to_y, transpose_y_to_z
-    USE param, ONLY : nrhotime, zero, ilmn, pressure0, imultispecies, massfrac, mol_weight
-    USE param, ONLY : ibirman_eos
-    USE param, ONLY : xnu, prandtl
-    USE param, ONLY : one
-    USE param, ONLY : iimplicit
-    USE variables
-
-    USE var, ONLY : ta1, tb1, tc1, td1, di1
-    USE var, ONLY : phi2, ta2, tb2, tc2, td2, te2, di2
-    USE var, ONLY : phi3, ta3, tb3, tc3, td3, rho3, di3
-
-    IMPLICIT NONE
-
-    INTEGER :: is
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), numscalar) :: phi1
-    REAL(mytype), INTENT(OUT), DIMENSION(zsize(1), zsize(2), zsize(3)) :: divu3
-
-    IF (ilmn.and.(.not.ibirman_eos)) THEN
-       !!------------------------------------------------------------------------------
-       !! X-pencil
-
-       !! We need temperature
-
-       CALL derxx (tb1, ta1, di1, sx, sfxp, ssxp, swxp, xsize(1), xsize(2), xsize(3), 1)
-       IF (imultispecies) THEN
-          tb1(:,:,:) = (xnu / prandtl) * tb1(:,:,:) / ta1(:,:,:)
-
-          !! Calc mean molecular weight
-          td1(:,:,:) = zero
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                td1(:,:,:) = td1(:,:,:) + phi1(:,:,:,is) / mol_weight(is)
-             ENDIF
-          ENDDO
-          td1(:,:,:) = one / td1(:,:,:)
-
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                CALL derxx (tc1, phi1(:,:,:,is), di1, sx, sfxp, ssxp, swxp, xsize(1), xsize(2), xsize(3), 1)
-                tb1(:,:,:) = tb1(:,:,:) + (xnu / sc(is)) * (td1(:,:,:) / mol_weight(is)) * tc1(:,:,:)
-             ENDIF
-          ENDDO
-       ENDIF
-
-       CALL transpose_x_to_y(ta1, ta2)        !! Temperature
-       CALL transpose_x_to_y(tb1, tb2)        !! d2Tdx2
-       IF (imultispecies) THEN
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                CALL transpose_x_to_y(phi1(:,:,:,is), phi2(:,:,:,is))
-             ENDIF
-          ENDDO
-       ENDIF
-
-       !!------------------------------------------------------------------------------
-       !! Y-pencil
-       iimplicit = -iimplicit
-       CALL deryy (tc2, ta2, di2, sy, sfyp, ssyp, swyp, ysize(1), ysize(2), ysize(3), 1)
-       iimplicit = -iimplicit
-       IF (imultispecies) THEN
-          tc2(:,:,:) = (xnu / prandtl) * tc2(:,:,:) / ta2(:,:,:)
-
-          !! Calc mean molecular weight
-          te2(:,:,:) = zero
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                te2(:,:,:) = te2(:,:,:) + phi2(:,:,:,is) / mol_weight(is)
-             ENDIF
-          ENDDO
-          te2(:,:,:) = one / te2(:,:,:)
-
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                iimplicit = -iimplicit
-                CALL deryy (td2, phi2(:,:,:,is), di2, sy, sfyp, ssyp, swyp, ysize(1), ysize(2), ysize(3), 1)
-                iimplicit = -iimplicit
-                tc2(:,:,:) = tc2(:,:,:) + (xnu / sc(is)) * (te2(:,:,:) / mol_weight(is)) * td2(:,:,:)
-             ENDIF
-          ENDDO
-       ENDIF
-       tb2(:,:,:) = tb2(:,:,:) + tc2(:,:,:)
-
-       CALL transpose_y_to_z(ta2, ta3)        !! Temperature
-       CALL transpose_y_to_z(tb2, tb3)        !! d2Tdx2 + d2Tdy2
-       IF (imultispecies) THEN
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                CALL transpose_y_to_z(phi2(:,:,:,is), phi3(:,:,:,is))
-             ENDIF
-          ENDDO
-       ENDIF
-
-       !!------------------------------------------------------------------------------
-       !! Z-pencil
-       CALL derzz (divu3, ta3, di3, sz, sfzp, sszp, swzp, zsize(1), zsize(2), zsize(3), 1)
-       IF (imultispecies) THEN
-          divu3(:,:,:) = (xnu / prandtl) * divu3(:,:,:) / ta3(:,:,:)
-
-          !! Calc mean molecular weight
-          td3(:,:,:) = zero
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                td3(:,:,:) = td3(:,:,:) + phi3(:,:,:,is) / mol_weight(is)
-             ENDIF
-          ENDDO
-          td3(:,:,:) = one / td3(:,:,:)
-
-          DO is = 1, numscalar
-             IF (massfrac(is)) THEN
-                CALL derzz (tc3, phi3(:,:,:,is), di3, sz, sfzp, sszp, swzp, zsize(1), zsize(2), zsize(3), 1)
-                divu3(:,:,:) = divu3(:,:,:) + (xnu / sc(is)) * (td3(:,:,:) / mol_weight(is)) * tc3(:,:,:)
-             ENDIF
-          ENDDO
-       ENDIF
-       divu3(:,:,:) = divu3(:,:,:) + tb3(:,:,:)
-       divu3(:,:,:) = (xnu / prandtl) * divu3(:,:,:) / pressure0
-    ELSE
-       divu3(:,:,:) = zero
-    ENDIF
-
-  ENDSUBROUTINE calc_divu_constraint
-
-  SUBROUTINE extrapol_drhodt(drhodt1_next, rho1, drho1)
-
-    USE decomp_2d, ONLY : mytype, xsize, nrank
-    USE param, ONLY : ntime, nrhotime, itime, itimescheme, itr, dt, gdt, irestart
-    USE param, ONLY : half, three, four
-    USE param, ONLY : ibirman_eos
-
-    IMPLICIT NONE
-
-    INTEGER :: subitr
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), ntime) :: drho1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), INTENT(OUT), DIMENSION(xsize(1), xsize(2), xsize(3)) :: drhodt1_next
-
-    IF (itimescheme.EQ.1) THEN
-       !! EULER
-       drhodt1_next(:,:,:) = (rho1(:,:,:,1) - rho1(:,:,:,2)) / dt
-    ELSEIF (itimescheme.EQ.2) THEN
-       !! AB2
-       IF ((itime.EQ.1).AND.(irestart.EQ.0)) THEN
-          drhodt1_next(:,:,:) = (rho1(:,:,:,1) - rho1(:,:,:,2)) / dt
-       ELSE
-          drhodt1_next(:,:,:) = three * rho1(:,:,:,1) - four * rho1(:,:,:,2) + rho1(:,:,:,3)
-          drhodt1_next(:,:,:) = half * drhodt1_next(:,:,:) / dt
-       ENDIF
-       ! ELSEIF (itimescheme.EQ.3) THEN
-       !    !! AB3
-       ! ELSEIF (itimescheme.EQ.4) THEN
-       !    !! AB4
-    ELSEIF (itimescheme.EQ.5) THEN
-       !! RK3
-       IF (itime.GT.1) THEN
-          drhodt1_next(:,:,:) = rho1(:,:,:,2)
-          DO subitr = 1, itr
-             drhodt1_next(:,:,:) = drhodt1_next(:,:,:) + (gdt(subitr) / dt) &
-                  * (rho1(:,:,:,2) - rho1(:,:,:,3))
-          ENDDO
-       ELSE
-          drhodt1_next(:,:,:) = drho1(:,:,:,1)
-       ENDIF
-    ELSE
-       IF (nrank.EQ.0) THEN
-          PRINT *, "Extrapolating drhodt not implemented for timescheme:", itimescheme
-          STOP
-       ENDIF
-    ENDIF
-
-    IF (ibirman_eos) THEN
-       CALL birman_drhodt_corr(drhodt1_next, rho1)
-    ENDIF
-
-  ENDSUBROUTINE extrapol_drhodt
-
-  SUBROUTINE birman_drhodt_corr(drhodt1_next, rho1)
-
-    USE decomp_2d, ONLY : mytype, xsize, ysize, zsize
-    USE decomp_2d, ONLY : transpose_x_to_y, transpose_y_to_z, transpose_z_to_y, transpose_y_to_x
-    USE variables, ONLY : derxx, deryy, derzz
-    USE param, ONLY : nrhotime
-    USE param, ONLY : xnu, prandtl
-    USE param, ONLY : iimplicit
-
-    USE var, ONLY : td1, te1, di1, sx, sfxp, ssxp, swxp
-    USE var, ONLY : rho2, ta2, tb2, di2, sy, sfyp, ssyp, swyp
-    USE var, ONLY : rho3, ta3, di3, sz, sfzp, sszp, swzp
-
-    IMPLICIT NONE
-
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: drhodt1_next
-
-    REAL(mytype) :: invpe
-
-    invpe = xnu / prandtl
-
-    CALL transpose_x_to_y(rho1(:,:,:,1), rho2)
-    CALL transpose_y_to_z(rho2, rho3)
-
-    !! Diffusion term
-    CALL derzz (ta3,rho3,di3,sz,sfzp,sszp,swzp,zsize(1),zsize(2),zsize(3),1)
-    CALL transpose_z_to_y(ta3, tb2)
-
-    iimplicit = -iimplicit
-    CALL deryy (ta2,rho2,di2,sy,sfyp,ssyp,swyp,ysize(1),ysize(2),ysize(3),1)
-    iimplicit = -iimplicit
-    ta2(:,:,:) = ta2(:,:,:) + tb2(:,:,:)
-    CALL transpose_y_to_x(ta2, te1)
-
-    CALL derxx (td1,rho1,di1,sx,sfxp,ssxp,swxp,xsize(1),xsize(2),xsize(3),1)
-    td1(:,:,:) = td1(:,:,:) + te1(:,:,:)
-
-    drhodt1_next(:,:,:) = drhodt1_next(:,:,:) - invpe * td1(:,:,:)
-
-  ENDSUBROUTINE birman_drhodt_corr
-  !############################################################################
-  !!
-  !!  SUBROUTINE: test_varcoeff
-  !!      AUTHOR: Paul Bartholomew
-  !! DESCRIPTION: Tests convergence of the variable-coefficient Poisson solver
-  !!
-  !############################################################################
-  SUBROUTINE test_varcoeff(converged, pp3, dv3, atol, rtol, poissiter)
-
-    USE MPI
-    USE decomp_2d, ONLY: mytype, ph1, real_type, nrank
-    USE var, ONLY : nzmsize
-    USE param, ONLY : npress
-    USE variables, ONLY : nxm, nym, nzm
-
-    IMPLICIT NONE
-
-    !! INPUTS
-    REAL(mytype), INTENT(INOUT), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize, npress) :: pp3
-    REAL(mytype), INTENT(IN), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize) :: dv3
-    REAL(mytype), INTENT(IN) :: atol, rtol
-    INTEGER, INTENT(IN) :: poissiter
-
-    !! OUTPUTS
-    LOGICAL, INTENT(OUT) :: converged
-
-    !! LOCALS
-    INTEGER :: ierr
-    REAL(mytype) :: errloc, errglob, divup3norm
-
-    IF (poissiter.EQ.0) THEN
-       errloc = SUM(dv3**2)
-       CALL MPI_ALLREDUCE(errloc,divup3norm,1,real_type,MPI_SUM,MPI_COMM_WORLD,ierr)
-       divup3norm = SQRT(divup3norm / nxm / nym / nzm)
-
-       IF (nrank.EQ.0) THEN
-          PRINT *, "Solving variable-coefficient Poisson equation:"
-          PRINT *, "+ RMS div(u*) - div(u): ", divup3norm
-       ENDIF
-    ELSE
-       !! Compute RMS change
-       errloc = SUM((pp3(:,:,:,1) - pp3(:,:,:,2))**2)
-       CALL MPI_ALLREDUCE(errloc,errglob,1,real_type,MPI_SUM,MPI_COMM_WORLD,ierr)
-       errglob = SQRT(errglob / nxm / nym / nzm)
-
-       IF (nrank.EQ.0) THEN
-          PRINT *, "+ RMS change in pressure: ", errglob
-       ENDIF
-
-       IF (errglob.LE.atol) THEN
-          converged = .TRUE.
-          IF (nrank.EQ.0) THEN
-             PRINT *, "- Converged: atol"
-          ENDIF
-       ENDIF
-
-       !! Compare RMS change to size of |div(u*) - div(u)|
-       IF (errglob.LT.(rtol * divup3norm)) THEN
-          converged = .TRUE.
-          IF (nrank.EQ.0) THEN
-             PRINT *, "- Converged: rtol"
-          ENDIF
-       ENDIF
-
-       IF (.NOT.converged) THEN
-          pp3(:,:,:,2) = pp3(:,:,:,1)
-       ENDIF
-    ENDIF
-
-  ENDSUBROUTINE test_varcoeff
-  !############################################################################
-  !!
-  !!  SUBROUTINE: calc_varcoeff_rhs
-  !!      AUTHOR: Paul Bartholomew
-  !! DESCRIPTION: Computes RHS of the variable-coefficient Poisson solver
-  !!
-  !############################################################################
-  SUBROUTINE calc_varcoeff_rhs(pp3, rho1, px1, py1, pz1, dv3, drho1, ep1, divu3, rho0, poissiter)
-
-    USE MPI
-
-    USE decomp_2d
-
-    USE param, ONLY : nrhotime, ntime
-    USE param, ONLY : one
-
-    USE var, ONLY : ta1, tb1, tc1
-    USE var, ONLY : nzmsize
-
-    IMPLICIT NONE
-
-    !! INPUTS
-    INTEGER, INTENT(IN) :: poissiter
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3)) :: px1, py1, pz1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), nrhotime) :: rho1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3), ntime) :: drho1
-    REAL(mytype), INTENT(IN), DIMENSION(xsize(1), xsize(2), xsize(3)) :: ep1
-    REAL(mytype), INTENT(IN), DIMENSION(zsize(1), zsize(2), zsize(3)) :: divu3
-    REAL(mytype), INTENT(IN), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize) :: dv3
-    real(mytype) :: rho0
-
-    !! OUTPUTS
-    REAL(mytype), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize) :: pp3
-
-    !! LOCALS
-    INTEGER :: nlock, ierr
-    REAL(mytype) :: rhomin
-
-    IF (poissiter.EQ.0) THEN
-       !! Compute rho0
-       rhomin = MINVAL(rho1)
-
-       CALL MPI_ALLREDUCE(rhomin,rho0,1,real_type,MPI_MIN,MPI_COMM_WORLD,ierr)
-    ENDIF
-
-    ta1(:,:,:) = (one - rho0 / rho1(:,:,:,1)) * px1(:,:,:)
-    tb1(:,:,:) = (one - rho0 / rho1(:,:,:,1)) * py1(:,:,:)
-    tc1(:,:,:) = (one - rho0 / rho1(:,:,:,1)) * pz1(:,:,:)
-
-    nlock = -1 !! Don't do any funny business with LMN
-    CALL divergence(pp3,rho1,ta1,tb1,tc1,ep1,drho1,divu3,nlock)
-
-    !! lapl(p) = div((1 - rho0/rho) grad(p)) + rho0(div(u*) - div(u))
-    !! dv3 contains div(u*) - div(u)
-    pp3(:,:,:) = pp3(:,:,:) + rho0 * dv3(:,:,:)
-
-  ENDSUBROUTINE calc_varcoeff_rhs
   !############################################################################
 endmodule navier

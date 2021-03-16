@@ -72,7 +72,7 @@ subroutine init_xcompact3d()
 
   integer :: ierr
 
-  integer :: nargin, FNLength, status, DecInd
+  integer :: nargin, arg, FNLength, status, DecInd
   logical :: back
   character(len=80) :: InputFN, FNBase
 
@@ -83,20 +83,38 @@ subroutine init_xcompact3d()
 
   ! Handle input file like a boss -- GD
   nargin=command_argument_count()
-  if (nargin <1) then
-     InputFN='input.i3d'
-     if (nrank==0) print*, 'Xcompact3d is run with the default file -->', InputFN
-  elseif (nargin.ge.1) then
-     if (nrank==0) print*, 'Program is run with the provided file -->', InputFN
 
-     call get_command_argument(1,InputFN,FNLength,status)
-     back=.true.
-     FNBase=inputFN((index(InputFN,'/',back)+1):len(InputFN))
-     DecInd=index(FNBase,'.',back)
-     if (DecInd >1) then
-        FNBase=FNBase(1:(DecInd-1))
-     end if
-  endif
+  !! Don't want to read input files - just basic numbers necessary for compute
+  ! 1) nx = 16
+  ! 2) ny = 16
+  ! 3) nz = 16
+  ! 4) p_row = 0
+  ! 5) p_col = 0
+  nx = 16; ny = 16; nz = 16
+  p_row = 0; p_col = 0
+  do arg = 1, nargin
+     call get_command_argument(arg, InputFN, FNLength, status)
+     read(InputFN, *, iostat=status) DecInd
+     if (arg.eq.1) then
+        nx = DecInd
+     elseif (arg.eq.2) then
+        ny = DecInd
+     elseif (arg.eq.3) then
+        nz = DecInd
+     elseif (arg.eq.4) then
+        p_row = DecInd
+     elseif (arg.eq.5) then
+        p_col = DecInd
+     else
+        print *, "Error: Too many arguments!"
+        print *, "  x3div accepts"
+        print *, "  1) nx"
+        print *, "  2) ny"
+        print *, "  3) nz"
+        print *, "  4) p_row"
+        print *, "  5) p_col"
+     endif
+  enddo
 
   call parameter(InputFN)
 

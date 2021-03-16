@@ -37,7 +37,7 @@
 !      AUTHOR: Paul Bartholomew <paul.bartholomew08@imperial.ac.uk>
 !
 !###########################################################################
-subroutine parameter(input_i3d)
+subroutine parameter()
 
   use iso_fortran_env
 
@@ -51,33 +51,8 @@ subroutine parameter(input_i3d)
 
   implicit none
 
-  character(len=80), intent(in) :: input_i3d
   real(mytype) :: theta, cfl,cf2
   integer :: longueur ,impi,j, is, total
-
-  NAMELIST /BasicParam/ p_row, p_col, nx, ny, nz, istret, beta, xlx, yly, zlz, &
-       itype, iin, re, u1, u2, init_noise, inflow_noise, &
-       dt, ifirst, ilast, &
-       numscalar, iibm, ilmn, &
-       ilesmod, iscalar, &
-       nclx1, nclxn, ncly1, nclyn, nclz1, nclzn, &
-       ivisu, ipost, &
-       gravx, gravy, gravz, &
-       icpg, icfr
-  NAMELIST /NumOptions/ ifirstder, isecondder, itimescheme, iimplicit, &
-       nu0nu, cnu, ipinter
-  NAMELIST /InOutParam/ irestart, icheckpoint, ioutput, nvisu, iprocessing
-  NAMELIST /Statistics/ wrotation,spinup_time, nstat, initstat
-  NAMELIST /ScalarParam/ sc, ri, uset, cp, &
-       nclxS1, nclxSn, nclyS1, nclySn, nclzS1, nclzSn, &
-       scalar_lbound, scalar_ubound, sc_even, sc_skew, &
-       alpha_sc, beta_sc, g_sc
-  NAMELIST /LESModel/ jles, smagcst, walecst, maxdsmagcst, iwall
-  NAMELIST /WallModel/ smagwalldamp
-  NAMELIST /Tripping/ itrip,A_tr,xs_tr_tbl,ys_tr_tbl,ts_tr_tbl,x0_tr_tbl
-  NAMELIST /LMN/ dens1, dens2, prandtl, ilmn_bound, ivarcoeff, ilmn_solve_temp, &
-       massfrac, mol_weight, imultispecies, primary_species, &
-       Fr, ibirman_eos
 #ifdef DEBG
   if (nrank .eq. 0) print *,'# parameter start'
 #endif
@@ -98,98 +73,15 @@ subroutine parameter(input_i3d)
   endif
 
   call parameter_defaults()
-
-  !! Read parameters
-  open(10, file=input_i3d)
-
-  !! These are the 'essential' parameters
-  read(10, nml=BasicParam); rewind(10)
-  read(10, nml=NumOptions); rewind(10)
-  read(10, nml=InOutParam); rewind(10)
-  read(10, nml=Statistics); rewind(10)
   
   !! Set Scalar BCs same as fluid (may be overridden) [DEFAULT]
   nclxS1 = nclx1; nclxSn = nclxn
   nclyS1 = ncly1; nclySn = nclyn
   nclzS1 = nclz1; nclzSn = nclzn
-  
-  if (numscalar.ne.0) then
-     iscalar = 1
-
-     !! Allocate scalar arrays and set sensible defaults
-     allocate(massfrac(numscalar))
-     allocate(mol_weight(numscalar))
-     massfrac(:) = .FALSE.
-     mol_weight(:) = one
-     allocate(sc(numscalar), ri(numscalar), uset(numscalar), cp(numscalar))
-     ri(:) = zero
-     uset(:) = zero
-     cp(:) = zero
-     if (iimplicit.gt.0) then
-        allocate(xcst_sc(numscalar))
-        xcst_sc(:) = zero
-        allocate(alpha_sc(numscalar,2), beta_sc(numscalar,2), g_sc(numscalar,2))
-        ! Default scalar BC : dirichlet BC, zero value
-        alpha_sc = one
-        beta_sc = zero
-        g_sc = zero
-     endif
-
-     ! In case of symmetry, scalars are even by default
-     allocate(sc_even(numscalar))
-     sc_even(:) = .true.
-
-     ! Skew-symmetric convection of scalars, off by default
-     allocate(sc_skew(numscalar))
-     sc_skew(:) = .false.
-
-     allocate(scalar_lbound(numscalar), scalar_ubound(numscalar))
-     scalar_lbound(:) = -huge(one)
-     scalar_ubound(:) = huge(one)
-  endif
-
-  if (ilmn) then
-     read(10, nml=LMN); rewind(10)
-
-     do is = 1, numscalar
-        if (massfrac(is)) then
-           imultispecies = .TRUE.
-        endif
-     enddo
-
-     if (imultispecies) then
-        if (primary_species.lt.1) then
-           if (nrank.eq.0) then
-              print *, "Error: you must set a primary species for multispecies flow"
-              print *, "       solver will enforce Y_p = 1 - sum_s Y_s, s != p."
-              stop
-           endif
-        else if (.not.massfrac(primary_species)) then
-           if (nrank.eq.0) then
-              print *, "Error: primary species must be a massfraction!"
-           endif
-        endif
-     endif
-  endif
-  if (numscalar.ne.0) then
-     read(10, nml=ScalarParam); rewind(10)
-  endif
-  ! !! These are the 'optional'/model parameters
-  ! read(10, nml=ScalarParam)
   if(ilesmod==0) then
      nu0nu=four
      cnu=0.44_mytype
   endif
-  if(ilesmod.ne.0) then
-     read(10, nml=LESModel); rewind(10)
-  endif
-  if (itype.eq.itype_tbl) then
-     read(10, nml=Tripping); rewind(10)
-  endif
-  ! read(10, nml=TurbulenceWallModel)
-  close(10)
-
-  ! allocate(sc(numscalar),cp(numscalar),ri(numscalar),group(numscalar))
 
   if (nclx1.eq.0.and.nclxn.eq.0) then
      nclx=.true.
@@ -510,6 +402,8 @@ subroutine parameter_defaults()
 
   integer :: i
 
+  ifirstder = 4
+  isecondder = 4
   ro = 99999999._mytype
   angle = zero
   u1 = 2
@@ -517,7 +411,7 @@ subroutine parameter_defaults()
   init_noise = zero
   inflow_noise = zero
   iin = 0
-  itimescheme = 4
+  itimescheme = 1
   iimplicit = 0
   istret = 0
   ipinter=3
@@ -530,6 +424,8 @@ subroutine parameter_defaults()
   t0 = zero
   datapath = './data/'
 
+  xlx = one; yly = one; zlz = one
+  
   !! IBM stuff
   nraf = 0
   nobjmax = 0

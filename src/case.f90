@@ -32,6 +32,7 @@
 
 module case
 
+  use mom
   use param
   use decomp_2d
   use variables
@@ -69,6 +70,8 @@ contains
     pressure0 = one
     rho1(:,:,:,:) = one
 
+    call vel(ux1, uy1, uz1)
+    
     !! Setup old arrays
     do it = 1, ntime
        drho1(:,:,:,it) = rho1(:,:,:,1)

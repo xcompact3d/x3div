@@ -49,6 +49,8 @@ contains
   subroutine init (rho1, ux1, uy1, uz1, ep1, phi1, drho1, dux1, duy1, duz1, dphi1, &
        pp3, px1, py1, pz1)
 
+    use mom, only : vel
+
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux1,uy1,uz1,ep1
     real(mytype),dimension(xsize(1),xsize(2),xsize(3),nrhotime) :: rho1
     real(mytype),dimension(xsize(1),xsize(2),xsize(3),numscalar) :: phi1
@@ -69,6 +71,8 @@ contains
     pressure0 = one
     rho1(:,:,:,:) = one
 
+    call vel(ux1, uy1, uz1)
+    
     !! Setup old arrays
     do it = 1, ntime
        drho1(:,:,:,it) = rho1(:,:,:,1)

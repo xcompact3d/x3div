@@ -84,7 +84,7 @@ contains
     real(mytype) :: du_ana
 
     if (nrank .eq. 0 ) then
-       open(101, file="du.dat", action="write", status="unknown")
+       open(111, file="du.dat", action="write", status="unknown")
     endif
     
     errloc = zero
@@ -101,7 +101,7 @@ contains
 
              if (nrank .eq. 0) then
                 if ((j.eq.1) .and. (k.eq.1)) then
-                   write(101, *) x, du(i, j, k), du_ana, errloc
+                   write(111, *) x, du(i, j, k), du_ana, errloc
                 endif
              endif
           enddo
@@ -113,7 +113,7 @@ contains
     print *, "RMS error in dudx: ", err
 
     if (nrank .eq. 0) then
-       close(101)
+       close(111)
     endif
     
   endsubroutine test_du
@@ -130,7 +130,7 @@ contains
     real(mytype) :: dv_ana
     
     if (nrank .eq. 0) then
-       open(102, file="dv.dat", action="write", status="unknown")
+       open(112, file="dv.dat", action="write", status="unknown")
     endif
 
     errloc = zero
@@ -146,7 +146,7 @@ contains
              errloc = errloc + (dv(i, j, k) - dv_ana)**2
              if (nrank .eq. 0) then
                 if ((i.eq.1) .and. (k.eq.1)) then
-                   write(102, *) y, dv(i, j, k), dv_ana, errloc
+                   write(112, *) y, dv(i, j, k), dv_ana, errloc
                 endif
              endif
           enddo
@@ -158,7 +158,7 @@ contains
     print *, "RMS error in dvdy: ", err
 
     if (nrank .eq. 0) then
-       close(102)
+       close(112)
     endif
 
   endsubroutine test_dv
@@ -175,7 +175,7 @@ contains
     real(mytype) :: dw_ana
     
     if (nrank .eq. 0) then
-       open(103, file="dw.dat", action="write", status="unknown")
+       open(113, file="dw.dat", action="write", status="unknown")
     endif
     
     errloc = zero
@@ -192,7 +192,7 @@ contains
 
              if (nrank .eq. 0) then
                 if ((i.eq.1) .and. (j.eq.1)) then
-                   write(103, *) z, dw(i, j, k), dw_ana, errloc
+                   write(113, *) z, dw(i, j, k), dw_ana, errloc
                 endif
              endif
           enddo
@@ -204,7 +204,7 @@ contains
     print *, "RMS error in dwdz: ", err
 
     if (nrank .eq. 0) then
-       close(103)
+       close(113)
     endif
 
   endsubroutine test_dw

@@ -8,6 +8,7 @@ add_executable(xcompact3d
                     case.f90
                     derive.f90
                     module_param.f90
+		    mom.f90
                     navier.f90
                     parameters.f90
                     poisson.f90

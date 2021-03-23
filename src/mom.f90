@@ -33,7 +33,8 @@
 module mom
 
   use MPI
-  
+ 
+  use decomp_2d, only : nrank 
   use decomp_2d, only : mytype, real_type
   use decomp_2d, only : xsize, ysize, zsize
   use decomp_2d, only : xstart, ystart, zstart
@@ -82,7 +83,9 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: du_ana
 
-    open(101, file="du.dat", action="write", status="unknown")
+    if (nrank .eq. 0 ) then
+       open(101, file="du.dat", action="write", status="unknown")
+    endif
     
     errloc = zero
     do k = 1, xsize(3)
@@ -96,8 +99,10 @@ contains
              du_ana = two * pi * du_ana / xlx
              errloc = errloc + (du(i, j, k) - du_ana)**2
 
-             if ((j.eq.1) .and. (k.eq.1)) then
-                write(101, *) x, du(i, j, k), du_ana, errloc
+             if (nrank .eq. 0) then
+                if ((j.eq.1) .and. (k.eq.1)) then
+                   write(101, *) x, du(i, j, k), du_ana, errloc
+                endif
              endif
           enddo
        enddo
@@ -107,7 +112,9 @@ contains
 
     print *, "RMS error in dudx: ", err
 
-    close(101)
+    if (nrank .eq. 0) then
+       close(101)
+    endif
     
   endsubroutine test_du
 
@@ -122,7 +129,9 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: dv_ana
     
-    open(102, file="dv.dat", action="write", status="unknown")
+    if (nrank .eq. 0) then
+       open(102, file="dv.dat", action="write", status="unknown")
+    endif
 
     errloc = zero
     do k = 1, ysize(3)
@@ -135,8 +144,10 @@ contains
              dv_ana = cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
              dv_ana = two * pi * dv_ana / yly
              errloc = errloc + (dv(i, j, k) - dv_ana)**2
-             if ((i.eq.1) .and. (k.eq.1)) then
-                write(102, *) y, dv(i, j, k), dv_ana, errloc
+             if (nrank .eq. 0) then
+                if ((i.eq.1) .and. (k.eq.1)) then
+                   write(102, *) y, dv(i, j, k), dv_ana, errloc
+                endif
              endif
           enddo
        enddo
@@ -146,8 +157,10 @@ contains
 
     print *, "RMS error in dvdy: ", err
 
-    close(102)
-    
+    if (nrank .eq. 0) then
+       close(102)
+    endif
+
   endsubroutine test_dv
 
   subroutine test_dw(dw)
@@ -161,7 +174,9 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: dw_ana
     
-    open(103, file="dw.dat", action="write", status="unknown")
+    if (nrank .eq. 0) then
+       open(103, file="dw.dat", action="write", status="unknown")
+    endif
     
     errloc = zero
     do k = 1, zsize(3)
@@ -175,8 +190,10 @@ contains
              dw_ana = two * pi * dw_ana / zlz
              errloc = errloc + (dw(i, j, k) - dw_ana)**2
 
-             if ((i.eq.1) .and. (j.eq.1)) then
-                write(103, *) z, dw(i, j, k), dw_ana, errloc
+             if (nrank .eq. 0) then
+                if ((i.eq.1) .and. (j.eq.1)) then
+                   write(103, *) z, dw(i, j, k), dw_ana, errloc
+                endif
              endif
           enddo
        enddo
@@ -186,8 +203,10 @@ contains
 
     print *, "RMS error in dwdz: ", err
 
-    close(103)
-    
+    if (nrank .eq. 0) then
+       close(103)
+    endif
+
   endsubroutine test_dw
   
 end module mom

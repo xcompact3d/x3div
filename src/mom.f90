@@ -37,13 +37,14 @@ module mom
   use decomp_2d, only : mytype, real_type
   use decomp_2d, only : xsize, ysize, zsize
   use decomp_2d, only : xstart, ystart, zstart
-  use param, only : dx, dy, dz
-  use var, only : zero
+  use param, only : dx, dy, dz, xlx, yly, zlz
+  use var, only : nx, ny, nz
+  use var, only : zero, two, pi
 
   implicit none
   
   private
-  public :: vel
+  public :: vel, test_du, test_dv, test_dw
 
 contains
 
@@ -61,9 +62,9 @@ contains
           do i = 1, xsize(1)
              x = (i + xstart(1) - 2) * dx
 
-             u(i, j, k) = 1._mytype
-             v(i, j, k) = 1._mytype
-             w(i, j, k) = zero
+             u(i, j, k) = sin(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
+             v(i, j, k) = cos(two * pi * (x / xlx)) * sin(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
+             w(i, j, k) = -two * cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * sin(two * pi * (z / zlz))
           enddo
        enddo
     enddo
@@ -80,6 +81,8 @@ contains
 
     real(mytype) :: err, errloc
     real(mytype) :: du_ana
+
+    open(101, file="du.dat", action="write", status="unknown")
     
     errloc = zero
     do k = 1, xsize(3)
@@ -89,15 +92,22 @@ contains
           do i = 1, xsize(1)
              x = (i + xstart(1) - 2) * dx
 
-             du_ana = 0._mytype
+             du_ana = cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
+             du_ana = two * pi * du_ana / xlx
              errloc = errloc + (du(i, j, k) - du_ana)**2
+
+             if ((j.eq.1) .and. (k.eq.1)) then
+                write(101, *) x, du(i, j, k), du_ana, errloc
+             endif
           enddo
        enddo
     enddo
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
-    err = sqrt(err)
+    err = sqrt(err / nx / ny / nz)
 
     print *, "RMS error in dudx: ", err
+
+    close(101)
     
   endsubroutine test_du
 
@@ -112,6 +122,8 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: dv_ana
     
+    open(102, file="dv.dat", action="write", status="unknown")
+
     errloc = zero
     do k = 1, ysize(3)
        z = (k + ystart(3) - 2) * dz
@@ -120,15 +132,21 @@ contains
           do i = 1, ysize(1)
              x = (i + ystart(1) - 2) * dx
 
-             dv_ana = 0._mytype
+             dv_ana = cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
+             dv_ana = two * pi * dv_ana / yly
              errloc = errloc + (dv(i, j, k) - dv_ana)**2
+             if ((i.eq.1) .and. (k.eq.1)) then
+                write(102, *) y, dv(i, j, k), dv_ana, errloc
+             endif
           enddo
        enddo
     enddo
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
-    err = sqrt(err)
+    err = sqrt(err / nx / ny / nz)
 
     print *, "RMS error in dvdy: ", err
+
+    close(102)
     
   endsubroutine test_dv
 
@@ -143,6 +161,8 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: dw_ana
     
+    open(103, file="dw.dat", action="write", status="unknown")
+    
     errloc = zero
     do k = 1, zsize(3)
        z = (k + zstart(3) - 2) * dz
@@ -151,15 +171,22 @@ contains
           do i = 1, zsize(1)
              x = (i + zstart(1) - 2) * dx
 
-             dw_ana = 0._mytype
+             dw_ana = -two * cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
+             dw_ana = two * pi * dw_ana / zlz
              errloc = errloc + (dw(i, j, k) - dw_ana)**2
+
+             if ((i.eq.1) .and. (j.eq.1)) then
+                write(103, *) z, dw(i, j, k), dw_ana, errloc
+             endif
           enddo
        enddo
     enddo
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
-    err = sqrt(err)
+    err = sqrt(err / nx / ny / nz)
 
     print *, "RMS error in dwdz: ", err
+
+    close(103)
     
   endsubroutine test_dw
   

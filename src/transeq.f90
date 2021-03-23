@@ -82,6 +82,8 @@ contains
 
     use case, only : momentum_forcing
 
+    use mom, only : test_du, test_dv, test_dw
+    
     implicit none
 
     !! INPUTS
@@ -112,6 +114,8 @@ contains
     ti1(:,:,:) = tf1(:,:,:) + ux1(:,:,:) * tc1(:,:,:)
     ! TODO: save the x-convective terms already in dux1, duy1, duz1
 
+    call test_du(ta1)
+    
     call transpose_x_to_y(ux1,ux2)
     call transpose_x_to_y(uy1,uy2)
     call transpose_x_to_y(uz1,uz2)
@@ -133,6 +137,8 @@ contains
     th2(:,:,:) = th2(:,:,:) + uy2(:,:,:) * te2(:,:,:)
     ti2(:,:,:) = ti2(:,:,:) + uy2(:,:,:) * tf2(:,:,:)
 
+    call test_dv(te2)
+    
     call transpose_y_to_z(ux2,ux3)
     call transpose_y_to_z(uy2,uy3)
     call transpose_y_to_z(uz2,uz3)
@@ -154,6 +160,8 @@ contains
     tb3(:,:,:) = th3(:,:,:) + uz3(:,:,:) * te3(:,:,:)
     tc3(:,:,:) = ti3(:,:,:) + uz3(:,:,:) * tf3(:,:,:)
 
+    call test_dw(tf3)
+    
     !WORK Y-PENCILS
     call transpose_z_to_y(ta3,td2)
     call transpose_z_to_y(tb3,te2)

@@ -32,6 +32,8 @@
 
 program xcompact3d
 
+  use MPI
+
   use var
 
   use transeq, only : calculate_transeq_rhs
@@ -39,13 +41,15 @@ program xcompact3d
 
   implicit none
 
-  real :: tstart, tend, telapsed, trun
+  real :: tstart, tend, telapsed, trun, tmin
+  integer :: ierr
 
   call init_xcompact3d(trun)
 
   telapsed = 0
+  tmin = telapsed
 
-  do while(telapsed < trun)
+  do while(tmin < trun)
      call init_flowfield()
 
      call cpu_time(tstart)
@@ -62,7 +66,11 @@ program xcompact3d
 
      call cpu_time(tend)
      telapsed = telapsed + (tend - tstart)
-     print *, telapsed, tend - tstart, trun
+
+     call MPI_Allreduce(telapsed, tmin, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD, ierr)
+     if (nrank == 0) then
+        print *, "Tmin = ", tmin, " of ", trun
+     end if
   end do
 
   if (nrank == 0) then

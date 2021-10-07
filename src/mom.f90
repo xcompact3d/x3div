@@ -110,7 +110,9 @@ contains
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
     err = sqrt(err / nx / ny / nz)
 
-    print *, "RMS error in dudx: ", err
+    if (nrank .eq. 0) then
+       print *, "RMS error in dudx: ", err
+    end if
 
     if (nrank .eq. 0) then
        close(101)
@@ -155,7 +157,9 @@ contains
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
     err = sqrt(err / nx / ny / nz)
 
-    print *, "RMS error in dvdy: ", err
+    if (nrank .eq. 0) then
+       print *, "RMS error in dvdy: ", err
+    end if
 
     if (nrank .eq. 0) then
        close(102)
@@ -201,7 +205,9 @@ contains
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
     err = sqrt(err / nx / ny / nz)
 
-    print *, "RMS error in dwdz: ", err
+    if (nrank .eq. 0) then
+       print *, "RMS error in dwdz: ", err
+    end if
 
     if (nrank .eq. 0) then
        close(103)

@@ -100,6 +100,7 @@ subroutine init_xcompact3d(trun)
 
   use variables, only : nx, ny, nz, nxm, nym, nzm
   use variables, only : p_row, p_col
+  use variables, only : test_mode
 
   implicit none
 
@@ -143,14 +144,22 @@ subroutine init_xcompact3d(trun)
         p_col = DecInd
      elseif (arg.eq.6) then
         trun = real(DecInd)
+     elseif (arg.eq.7) then
+        if (DecInd.eq.0) then
+           test_mode = .false.
+        else
+           test_mode = .true.
+        end if
      else
         print *, "Error: Too many arguments!"
         print *, "  x3div accepts"
-        print *, "  1) nx"
-        print *, "  2) ny"
-        print *, "  3) nz"
-        print *, "  4) p_row"
-        print *, "  5) p_col"
+        print *, "  1) nx (default=16)"
+        print *, "  2) ny (default=16)"
+        print *, "  3) nz (default=16)"
+        print *, "  4) p_row (default=0)"
+        print *, "  5) p_col (default=0)"
+        print *, "  6) trun (default=5)"
+        print *, "  7) test_mode logical 0/1 (default=0)"
      endif
   enddo
 

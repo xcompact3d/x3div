@@ -516,4 +516,7 @@ subroutine parameter_defaults()
   ts_tr_tbl=1.402033
   x0_tr_tbl=3.505082
 
+  !! X3DIV
+  test_mode = .FALSE.
+  
 end subroutine parameter_defaults

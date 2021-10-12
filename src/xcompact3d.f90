@@ -42,6 +42,7 @@ program xcompact3d
   implicit none
 
   real :: tstart, tend, telapsed, trun, tmin
+  integer :: ndt
   integer :: ierr
 
   call init_xcompact3d(trun)
@@ -49,6 +50,8 @@ program xcompact3d
   telapsed = 0
   tmin = telapsed
 
+  ndt = 0
+  
   do while(tmin < trun)
      call init_flowfield()
 
@@ -71,10 +74,14 @@ program xcompact3d
      if (nrank == 0) then
         print *, "Tmin = ", tmin, " of ", trun
      end if
+
+     ndt = ndt + 1
   end do
 
   if (nrank == 0) then
-     print *, "Elapsed time: ", telapsed
+     print *, "Elapsed time [s]: ", telapsed
+     print *, "Timesteps completed: ", ndt
+     print *, "Compute rate [dt/s]: ", ndt / telapsed
   end if
 
   call finalise_xcompact3d()

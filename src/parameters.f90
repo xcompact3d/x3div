@@ -425,6 +425,9 @@ subroutine parameter_defaults()
   datapath = './data/'
 
   xlx = one; yly = one; zlz = one
+  nclx1 = 0; nclxn = 0
+  ncly1 = 0; nclyn = 0
+  nclz1 = 0; nclzn = 0
   
   !! IBM stuff
   nraf = 0

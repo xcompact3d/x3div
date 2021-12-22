@@ -343,71 +343,15 @@ subroutine dery_00(ty,uy,ry,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire)
   real(mytype), dimension(nx,nz)  :: sy
   real(mytype), dimension(ny) :: ffy,fsy,fwy,ppy
 
+  real(mytype), dimension(ny, nx, nz) :: tmpty
+  integer, dimension(3) :: o, s
 
-  do k=1,nz
-     do i=1,nx
-        ty(i,1,k)=afjy*(uy(i,2,k)-uy(i,ny,k))&
-             +bfjy*(uy(i,3,k)-uy(i,ny-1,k))
-        ry(i,1,k)=-one
-        ty(i,2,k)=afjy*(uy(i,3,k)-uy(i,1,k))&
-             +bfjy*(uy(i,4,k)-uy(i,ny,k))
-        ry(i,2,k)=zero
-     enddo
-  enddo
-  do k=1,nz
-     do j=3,ny-2
-        do i=1,nx
-           ty(i,j,k)=afjy*(uy(i,j+1,k)-uy(i,j-1,k))&
-                +bfjy*(uy(i,j+2,k)-uy(i,j-2,k))
-           ry(i,j,k)=zero
-        enddo
-     enddo
-  enddo
-  do k=1,nz
-     do i=1,nx
-        ty(i,ny-1,k)=afjy*(uy(i,ny,k)-uy(i,ny-2,k))&
-             +bfjy*(uy(i,1,k)-uy(i,ny-3,k))
-        ry(i,ny-1,k)=zero
-        ty(i,ny,k)=afjy*(uy(i,1,k)-uy(i,ny-1,k))&
-             +bfjy*(uy(i,2,k)-uy(i,ny-2,k))
-        ry(i,ny,k)=alfajy
-     enddo
-  enddo
-  do k=1,nz
-     do j=2,ny
-        do i=1,nx
-           ty(i,j,k)=ty(i,j,k)-ty(i,j-1,k)*fsy(j)
-           ry(i,j,k)=ry(i,j,k)-ry(i,j-1,k)*fsy(j)
-        enddo
-     enddo
-  enddo
-  do k=1,nz
-     do i=1,nx
-        ty(i,ny,k)=ty(i,ny,k)*fwy(ny)
-        ry(i,ny,k)=ry(i,ny,k)*fwy(ny)
-     enddo
-  enddo
-  do k=1,nz
-     do j=ny-1,1,-1
-        do i=1,nx
-           ty(i,j,k)=(ty(i,j,k)-ffy(j)*ty(i,j+1,k))*fwy(j)
-           ry(i,j,k)=(ry(i,j,k)-ffy(j)*ry(i,j+1,k))*fwy(j)
-        enddo
-     enddo
-  enddo
-  do k=1,nz
-     do i=1,nx
-        sy(i,k)=(ty(i,1,k)-alfajy*ty(i,ny,k))&
-             /(1.+ry(i,1,k)-alfajy*ry(i,ny,k))
-     enddo
-  enddo
-  do k=1,nz
-     do j=1,ny
-        do i=1,nx
-           ty(i,j,k)=ty(i,j,k)-sy(i,k)*ry(i,j,k)
-        enddo
-     enddo
-  enddo
+  s = (/ ny, nx, nz /)
+  o = (/ 2, 1, 3 /)
+  call derx_00(tmpty, reshape(uy, s, order=o), reshape(ry, s, order=o), &
+       sy, ffy, fsy, fwy, ny, nx, nz, npaire)
+  s = (/ nx, ny, nz /)
+  ty = reshape(tmpty, s, order=o)
   if (istret.ne.0) then
      do k=1,nz
         do j=1,ny
@@ -855,71 +799,16 @@ subroutine derz_00(tz,uz,rz,sz,ffz,fsz,fwz,nx,ny,nz,npaire)
   real(mytype), dimension(nx,ny) :: sz
   real(mytype), dimension(nz) :: ffz,fsz,fwz
 
+  real(mytype), dimension(nz, nx, nx) :: tmptz
+  integer, dimension(3) :: o, s
 
-  do j=1,ny
-     do i=1,nx
-        tz(i,j,1)=afkz*(uz(i,j,2)-uz(i,j,nz  ))&
-             +bfkz*(uz(i,j,3)-uz(i,j,nz-1))
-        rz(i,j,1)=-one
-        tz(i,j,2)=afkz*(uz(i,j,3)-uz(i,j,1 ))&
-             +bfkz*(uz(i,j,4)-uz(i,j,nz))
-        rz(i,j,2)=zero
-     enddo
-  enddo
-  do k=3,nz-2
-     do j=1,ny
-        do i=1,nx
-           tz(i,j,k)=afkz*(uz(i,j,k+1)-uz(i,j,k-1))&
-                +bfkz*(uz(i,j,k+2)-uz(i,j,k-2))
-           rz(i,j,k)=zero
-        enddo
-     enddo
-  enddo
-  do j=1,ny
-     do i=1,nx
-        tz(i,j,nz-1)=afkz*(uz(i,j,nz)-uz(i,j,nz-2))&
-             +bfkz*(uz(i,j,1 )-uz(i,j,nz-3))
-        rz(i,j,nz-1)=zero
-        tz(i,j,nz  )=afkz*(uz(i,j,1)-uz(i,j,nz-1))&
-             +bfkz*(uz(i,j,2)-uz(i,j,nz-2))
-        rz(i,j,nz  )=alfakz
-     enddo
-  enddo
-  do k=2,nz
-     do j=1,ny
-        do i=1,nx
-           tz(i,j,k)=tz(i,j,k)-tz(i,j,k-1)*fsz(k)
-           rz(i,j,k)=rz(i,j,k)-rz(i,j,k-1)*fsz(k)
-        enddo
-     enddo
-  enddo
-  do j=1,ny
-     do i=1,nx
-        tz(i,j,nz)=tz(i,j,nz)*fwz(nz)
-        rz(i,j,nz)=rz(i,j,nz)*fwz(nz)
-     enddo
-  enddo
-  do k=nz-1,1,-1
-     do j=1,ny
-        do i=1,nx
-           tz(i,j,k)=(tz(i,j,k)-ffz(k)*tz(i,j,k+1))*fwz(k)
-           rz(i,j,k)=(rz(i,j,k)-ffz(k)*rz(i,j,k+1))*fwz(k)
-        enddo
-     enddo
-  enddo
-  do j=1,ny
-     do i=1,nx
-        sz(i,j)=(   tz(i,j,1)-alfakz*tz(i,j,nz))/&
-             (1.+rz(i,j,1)-alfakz*rz(i,j,nz))
-     enddo
-  enddo
-  do k=1,nz
-     do j=1,ny
-        do i=1,nx
-           tz(i,j,k)=tz(i,j,k)-sz(i,j)*rz(i,j,k)
-        enddo
-     enddo
-  enddo
+  s = (/ nz, ny, nx /)
+  o = (/ 3, 2, 1 /)
+  call derx_00(tmptz, reshape(uz, s, order=o), reshape(rz, s, order=o), &
+       reshape(sz, (/ ny, nx /), order=(/ 2, 1 /)), ffz, fsz, fwz, nz, ny, nx, npaire)
+  s = (/ nz, ny, nx /)
+  ty = reshape(tmpty, s, order=o)
+  
   return
 end subroutine derz_00
 

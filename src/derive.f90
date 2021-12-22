@@ -807,7 +807,7 @@ subroutine derz_00(tz,uz,rz,sz,ffz,fsz,fwz,nx,ny,nz,npaire)
   call derx_00(tmptz, reshape(uz, s, order=o), reshape(rz, s, order=o), &
        reshape(sz, (/ ny, nx /), order=(/ 2, 1 /)), ffz, fsz, fwz, nz, ny, nx, npaire)
   s = (/ nz, ny, nx /)
-  ty = reshape(tmpty, s, order=o)
+  ty = reshape(tmptz, s, order=o)
   
   return
 end subroutine derz_00

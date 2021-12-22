@@ -51,7 +51,7 @@ subroutine derx_00(tx,ux,rx,sx,ffx,fsx,fwx,nx,ny,nz,npaire)
   
   s = (/ nz, ny, nx /)
   o = (/ 3, 2, 1 /)
-  call derz_11(tmptx, reshape(ux, s, order=o), reshape(rx, s, order=o), &
+  call derz_00(tmptx, reshape(ux, s, order=o), reshape(rx, s, order=o), &
        sx, ffx, fsx, fwx, nz, ny, nx, npaire)
   s = (/ nx, ny, nz /)
   tx = reshape(tmptx, s, order=o)

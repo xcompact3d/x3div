@@ -46,42 +46,15 @@ subroutine derx_00(tx,ux,rx,sx,ffx,fsx,fwx,nx,ny,nz,npaire)
   real(mytype), dimension(ny,nz):: sx
   real(mytype), dimension(nx):: ffx,fsx,fwx
 
-  do k=1,nz
-     do j=1,ny
-        tx(1,j,k)=afix*(ux(2,j,k)-ux(nx,j,k))&
-             +bfix*(ux(3,j,k)-ux(nx-1,j,k))
-        rx(1,j,k)=-one
-        tx(2,j,k)=afix*(ux(3,j,k)-ux(1,j,k))&
-             +bfix*(ux(4,j,k)-ux(nx,j,k))
-        rx(2,j,k)=zero
-        do i=3,nx-2
-           tx(i,j,k)=afix*(ux(i+1,j,k)-ux(i-1,j,k))&
-                +bfix*(ux(i+2,j,k)-ux(i-2,j,k))
-           rx(i,j,k)=zero
-        enddo
-        tx(nx-1,j,k)=afix*(ux(nx,j,k)-ux(nx-2,j,k))&
-             +bfix*(ux(1,j,k)-ux(nx-3,j,k))
-        rx(nx-1,j,k)=zero
-        tx(nx,j,k)=afix*(ux(1,j,k)-ux(nx-1,j,k))&
-             +bfix*(ux(2,j,k)-ux(nx-2,j,k))
-        rx(nx,j,k)=alfaix
-        do i=2, nx
-           tx(i,j,k)=tx(i,j,k)-tx(i-1,j,k)*fsx(i)
-           rx(i,j,k)=rx(i,j,k)-rx(i-1,j,k)*fsx(i)
-        enddo
-        tx(nx,j,k)=tx(nx,j,k)*fwx(nx)
-        rx(nx,j,k)=rx(nx,j,k)*fwx(nx)
-        do i=nx-1,1,-1
-           tx(i,j,k)=(tx(i,j,k)-ffx(i)*tx(i+1,j,k))*fwx(i)
-           rx(i,j,k)=(rx(i,j,k)-ffx(i)*rx(i+1,j,k))*fwx(i)
-        enddo
-        sx(j,k)=(tx(1,j,k)-alfaix*tx(nx,j,k))&
-             /(one+rx(1,j,k)-alfaix*rx(nx,j,k))
-        do i=1,nx
-           tx(i,j,k)=tx(i,j,k)-sx(j,k)*rx(i,j,k)
-        enddo
-     enddo
-  enddo
+  real(mytype), dimension(nz, ny, nx) :: tmptx
+  integer, dimension(3) :: o, s
+  
+  s = (/ nz, ny, nx /)
+  o = (/ 3, 2, 1 /)
+  call derz_11(tmptx, reshape(ux, s, order=o), reshape(rx, s, order=o), &
+       sx, ffx, fsx, fwx, nz, ny, nx, npaire)
+  s = (/ nx, ny, nz /)
+  tx = reshape(tmptx, s, order=o)
 
   return
 end subroutine derx_00

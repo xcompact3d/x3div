@@ -41,9 +41,11 @@ program xcompact3d
 
   implicit none
 
-  real :: tstart, tend, telapsed, trun, tmin
+  double precision :: tstart, tend, telapsed, tmin
+  real :: trun
   integer :: ndt
   integer :: ierr
+  integer :: mpi_real_type
 
   call init_xcompact3d(trun)
 
@@ -51,11 +53,17 @@ program xcompact3d
   tmin = telapsed
 
   ndt = 0
+
+  if (kind(telapsed) == kind(0.0d0)) then
+     mpi_real_type = MPI_DOUBLE
+  else
+     mpi_real_type = MPI_FLOAT
+  end if
   
   do while(tmin < trun)
      call init_flowfield()
 
-     call cpu_time(tstart)
+     tstart = MPI_Wtime()
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
 
@@ -67,10 +75,10 @@ program xcompact3d
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
 
-     call cpu_time(tend)
+     tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)
 
-     call MPI_Allreduce(telapsed, tmin, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD, ierr)
+     call MPI_Allreduce(telapsed, tmin, 1, mpi_real_type, MPI_MIN, MPI_COMM_WORLD, ierr)
      if (nrank == 0) then
         print *, "Tmin = ", tmin, " of ", trun
      end if

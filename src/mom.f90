@@ -62,7 +62,6 @@ contains
           y = (j + xstart(2) - 2) * dy
           do i = 1, xsize(1)
              x = (i + xstart(1) - 2) * dx
-
              u(i, j, k) = sin(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
              v(i, j, k) = cos(two * pi * (x / xlx)) * sin(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
              w(i, j, k) = -two * cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * sin(two * pi * (z / zlz))
@@ -83,9 +82,9 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: du_ana
 
-    if (nrank .eq. 0 ) then
-       open(111, file="du.dat", action="write", status="unknown")
-    endif
+    !if (nrank .eq. 0 ) then
+    !   open(111, file="du.dat", action="write", status="unknown")
+    !endif
     
     errloc = zero
     do k = 1, xsize(3)
@@ -99,22 +98,22 @@ contains
              du_ana = two * pi * du_ana / xlx
              errloc = errloc + (du(i, j, k) - du_ana)**2
 
-             if (nrank .eq. 0) then
-                if ((j.eq.1) .and. (k.eq.1)) then
-                   write(111, *) x, du(i, j, k), du_ana, errloc
-                endif
-             endif
+             !if (nrank .eq. 0) then
+             !   if ((j.eq.1) .and. (k.eq.1)) then
+             !      write(111, *) x, du(i, j, k), du_ana, errloc
+             !   endif
+             !endif
           enddo
        enddo
     enddo
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
     err = sqrt(err / nx / ny / nz)
 
-    print *, "RMS error in dudx: ", err
+    if (nrank .eq. 0) write(*,*) "RMS error in dudx: ", err
 
-    if (nrank .eq. 0) then
-       close(111)
-    endif
+    !if (nrank .eq. 0) then
+    !   close(111)
+    !endif
     
   endsubroutine test_du
 
@@ -129,9 +128,9 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: dv_ana
     
-    if (nrank .eq. 0) then
-       open(112, file="dv.dat", action="write", status="unknown")
-    endif
+    !if (nrank .eq. 0) then
+    !   open(112, file="dv.dat", action="write", status="unknown")
+    !endif
 
     errloc = zero
     do k = 1, ysize(3)
@@ -144,22 +143,22 @@ contains
              dv_ana = cos(two * pi * (x / xlx)) * cos(two * pi * (y / yly)) * cos(two * pi * (z / zlz))
              dv_ana = two * pi * dv_ana / yly
              errloc = errloc + (dv(i, j, k) - dv_ana)**2
-             if (nrank .eq. 0) then
-                if ((i.eq.1) .and. (k.eq.1)) then
-                   write(112, *) y, dv(i, j, k), dv_ana, errloc
-                endif
-             endif
+             !if (nrank .eq. 0) then
+             !   if ((i.eq.1) .and. (k.eq.1)) then
+             !      write(112, *) y, dv(i, j, k), dv_ana, errloc
+             !   endif
+             !endif
           enddo
        enddo
     enddo
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
     err = sqrt(err / nx / ny / nz)
 
-    print *, "RMS error in dvdy: ", err
+    if (nrank .eq. 0) write(*,*) "RMS error in dvdy: ", err
 
-    if (nrank .eq. 0) then
-       close(112)
-    endif
+    !if (nrank .eq. 0) then
+    !   close(112)
+    !endif
 
   endsubroutine test_dv
 
@@ -174,9 +173,9 @@ contains
     real(mytype) :: err, errloc
     real(mytype) :: dw_ana
     
-    if (nrank .eq. 0) then
-       open(113, file="dw.dat", action="write", status="unknown")
-    endif
+    !if (nrank .eq. 0) then
+    !   open(113, file="dw.dat", action="write", status="unknown")
+    !endif
     
     errloc = zero
     do k = 1, zsize(3)
@@ -190,22 +189,22 @@ contains
              dw_ana = two * pi * dw_ana / zlz
              errloc = errloc + (dw(i, j, k) - dw_ana)**2
 
-             if (nrank .eq. 0) then
-                if ((i.eq.1) .and. (j.eq.1)) then
-                   write(113, *) z, dw(i, j, k), dw_ana, errloc
-                endif
-             endif
+             !if (nrank .eq. 0) then
+             !   if ((i.eq.1) .and. (j.eq.1)) then
+             !      write(113, *) z, dw(i, j, k), dw_ana, errloc
+             !   endif
+             !endif
           enddo
        enddo
     enddo
     call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
     err = sqrt(err / nx / ny / nz)
 
-    print *, "RMS error in dwdz: ", err
+    if (nrank .eq. 0) write(*,*) "RMS error in dwdz: ", err
 
-    if (nrank .eq. 0) then
-       close(113)
-    endif
+    !if (nrank .eq. 0) then
+    !   close(113)
+    !endif
 
   endsubroutine test_dw
   

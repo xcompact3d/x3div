@@ -36,20 +36,24 @@ program xcompact3d
 
   use transeq, only : calculate_transeq_rhs
   use navier, only : solve_poisson, cor_vel
+  use mom, only : test_du, test_dv, test_dw
 
   implicit none
 
+
   call init_xcompact3d()
 
-  call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
+  do itime=1,5
+    call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
 
-  ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
-  uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
-  uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
-  
-  divu3(:,:,:) = zero
-  call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
-  call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
+    ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
+    uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
+    uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
+    
+    divu3(:,:,:) = zero
+    call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
+    call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
+  enddo
 
   call finalise_xcompact3d()
 
@@ -136,7 +140,7 @@ subroutine init_xcompact3d()
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
-  call init(rho1,ux1,uy1,uz1,ep1,phi1,drho1,dux1,duy1,duz1,dphi1,pp3,px1,py1,pz1)
+  call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
   itime = 0
 
   divu3(:,:,:) = zero

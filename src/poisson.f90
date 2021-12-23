@@ -54,10 +54,10 @@ module decomp_2d_poisson
   integer, save :: bcx, bcy, bcz
 
   ! decomposition object for physical space
-  TYPE(DECOMP_INFO), save :: ph
+  type(DECOMP_INFO), save :: ph
 
   ! decomposition object for spectral space
-  TYPE(DECOMP_INFO), save :: sp
+  type(DECOMP_INFO), save :: sp
 
   ! store sine/cosine factors
   real(mytype), save, allocatable, dimension(:) :: az,bz
@@ -77,13 +77,13 @@ module decomp_2d_poisson
   ! underlying FFT library only needs to be initialised once
   logical, save :: fft_initialised = .false.
 
-  ABSTRACT INTERFACE
-     SUBROUTINE poisson_xxx(rhs)
+  abstract interface
+     subroutine poisson_xxx(rhs)
        use decomp_2d, only : mytype
-       real(mytype), dimension(:,:,:), intent(INOUT) :: rhs
-     END SUBROUTINE poisson_xxx
-  END INTERFACE
-  PROCEDURE (poisson_xxx), POINTER :: poisson
+       real(mytype), dimension(:,:,:), intent(inout) :: rhs
+     end subroutine poisson_xxx
+  end interface
+  procedure (poisson_xxx), pointer :: poisson
 
   public :: decomp_2d_poisson_init,decomp_2d_poisson_finalize,poisson
 contains
@@ -98,6 +98,9 @@ contains
     implicit none
 
     integer :: nx, ny, nz, i
+    
+    real(mytype) :: rl, iy
+    external  rl, iy
 
     if (nclx) then
        bcx=0
@@ -136,7 +139,7 @@ contains
     if (bcz==1) nz=nz-1
 
 #ifdef DEBG 
-    if (nrank .eq. 0) print *,'# decomp_2d_poisson_init start'
+    if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init start'
 #endif
 
     allocate(ax(nx),bx(nx))
@@ -145,14 +148,14 @@ contains
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
 #ifdef DEBG 
-    if (nrank .eq. 0) print *,'# decomp_2d_poisson_init decomp_info_init'
+    if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init'
 #endif
 
     call decomp_info_init(nx, ny, nz, ph)
     call decomp_info_init(nx, ny, nz/2+1, sp)
 
 #ifdef DEBG 
-    if (nrank .eq. 0) print *,'# decomp_2d_poisson_init decomp_info_init ok'
+    if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init ok'
 #endif
 
     ! allocate work space
@@ -232,13 +235,13 @@ contains
     end if
 
 #ifdef DEBG 
-    if (nrank .eq. 0) print *,'# decomp_2d_poisson_init before waves'
+    if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init before waves'
 #endif
 
     call waves()
 
 #ifdef DEBG 
-    if (nrank .eq. 0) print *,'# decomp_2d_poisson_init end'
+    if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init end'
 #endif
 
     return
@@ -307,6 +310,10 @@ contains
 
     integer :: nx,ny,nz, i,j,k
 
+    complex(mytype) :: cx
+    real(mytype) :: rl, iy
+    external cx, rl, iy
+
     nx = nx_global
     ny = ny_global
     nz = nz_global
@@ -330,35 +337,34 @@ contains
              ! post-processing in spectral space
 
              ! POST PROCESSING IN Z
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*bz(k)+tmp2*az(k), &
-                  tmp2*bz(k)-tmp1*az(k), kind=mytype)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * bz(k) + tmp2 * az(k), &
+                             tmp2 * bz(k) - tmp1 * az(k))
 
              ! POST PROCESSING IN Y
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*by(j)+tmp2*ay(j), &
-                  tmp2*by(j)-tmp1*ay(j), kind=mytype)
-             if (j.gt.(ny/2+1)) cw1(i,j,k)=-cw1(i,j,k)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j))
+             if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! POST PROCESSING IN X
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*bx(i)+tmp2*ax(i), &
-                  tmp2*bx(i)-tmp1*ax(i), kind=mytype)
-             if (i.gt.(nx/2+1)) cw1(i,j,k)=-cw1(i,j,k)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * bx(i) + tmp2 * ax(i), &
+                             tmp2 * bx(i) - tmp1 * ax(i))
+             if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! Solve Poisson
-             tmp1=real(kxyz(i,j,k), kind=mytype)
-             tmp2=aimag(kxyz(i,j,k))
+             tmp1 = rl(kxyz(i,j,k))
+             tmp2 = iy(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
-             if ((tmp1.lt.epsilon).or.(tmp2.lt.epsilon)) then
-                cw1(i,j,k)=0._mytype
-                !                print *,'DIV 0',i,j,k,epsilon
+             if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
+                cw1(i,j,k) = zero
              else
-                cw1(i,j,k)=cmplx( real(cw1(i,j,k), kind=mytype) / (-tmp1), &
-                     aimag(cw1(i,j,k))/(-tmp2), kind=mytype)
+                cw1(i,j,k) = cx(rl(cw1(i,j,k)) / (-tmp1), &
+                                iy(cw1(i,j,k)) / (-tmp2))
              end if
 
              !Print result in spectal space after Poisson
@@ -369,24 +375,24 @@ contains
              ! post-processing backward
 
              ! POST PROCESSING IN Z
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*bz(k)-tmp2*az(k), &
-                  -tmp2*bz(k)-tmp1*az(k), kind=mytype)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * bz(k) - tmp2 * az(k), &
+                            -tmp2 * bz(k) - tmp1 * az(k))
 
              ! POST PROCESSING IN Y
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*by(j)+tmp2*ay(j), &
-                  tmp2*by(j)-tmp1*ay(j), kind=mytype)
-             if (j.gt.(ny/2+1)) cw1(i,j,k)=-cw1(i,j,k)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j))
+             if (j > (ny/2 + 1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! POST PROCESSING IN X
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*bx(i)+tmp2*ax(i), &
-                  -tmp2*bx(i)+tmp1*ax(i), kind=mytype)
-             if (i.gt.(nx/2+1)) cw1(i,j,k)=-cw1(i,j,k)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * bx(i) + tmp2 * ax(i), &
+                            -tmp2 * bx(i) + tmp1 * ax(i))
+             if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
           end do
        end do
@@ -412,6 +418,10 @@ contains
     real(mytype) :: xx1,xx2,xx3,xx4,xx5,xx6,xx7,xx8
 
     integer :: nx,ny,nz, i,j,k, itmp
+
+    complex(mytype) :: cx
+    real(mytype) :: rl, iy
+    external cx, rl, iy
 
 100 format(1x,a8,3I4,2F12.6)
 
@@ -462,13 +472,13 @@ contains
     ! post-processing in spectral space
 
     ! POST PROCESSING IN Z
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*bz(k)+tmp2*az(k), &
-                  tmp2*bz(k)-tmp1*az(k), kind=mytype)
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          do i = sp%xst(1), sp%xen(1)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * bz(k) + tmp2 * az(k), &
+                             tmp2 * bz(k) - tmp1 * az(k))
 #ifdef DEBUG
              if (abs(cw1(i,j,k)) > 1.0e-4) &
                   write(*,100) 'after z',i,j,k,cw1(i,j,k)
@@ -478,14 +488,14 @@ contains
     end do
 
     ! POST PROCESSING IN Y
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*by(j)+tmp2*ay(j), &
-                  tmp2*by(j)-tmp1*ay(j), kind=mytype)
-             if (j.gt.(ny/2+1)) cw1(i,j,k)=-cw1(i,j,k)
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          do i = sp%xst(1), sp%xen(1)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j))
+             if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 #ifdef DEBUG
              if (abs(cw1(i,j,k)) > 1.0e-4) &
                   write(*,100) 'after y',i,j,k,cw1(i,j,k)
@@ -495,24 +505,24 @@ contains
     end do
 
     ! POST PROCESSING IN X
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          cw1b(1,j,k)=cw1(1,j,k)
-          do i = 2,nx
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             tmp3 = real(cw1(nx-i+2,j,k), kind=mytype)
-             tmp4 = aimag(cw1(nx-i+2,j,k))
-             xx1=tmp1*bx(i)/2._mytype
-             xx2=tmp1*ax(i)/2._mytype
-             xx3=tmp2*bx(i)/2._mytype
-             xx4=tmp2*ax(i)/2._mytype
-             xx5=tmp3*bx(i)/2._mytype
-             xx6=tmp3*ax(i)/2._mytype
-             xx7=tmp4*bx(i)/2._mytype
-             xx8=tmp4*ax(i)/2._mytype
-             cw1b(i,j,k) = cmplx(xx1+xx4+xx5-xx8,-xx2+xx3+xx6+xx7, &
-                  kind=mytype)  
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          cw1b(1,j,k) = cw1(1,j,k)
+          do i = 2, nx
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             tmp3 = rl(cw1(nx-i+2,j,k))
+             tmp4 = iy(cw1(nx-i+2,j,k))
+             xx1=tmp1 * bx(i)
+             xx2=tmp1 * ax(i)
+             xx3=tmp2 * bx(i)
+             xx4=tmp2 * ax(i)
+             xx5=tmp3 * bx(i)
+             xx6=tmp3 * ax(i)
+             xx7=tmp4 * bx(i)
+             xx8=tmp4 * ax(i)
+             cw1b(i,j,k) = half * cx(xx1 + xx4 + xx5 - xx8, &
+                                    -xx2 + xx3 + xx6 + xx7)
           end do
        end do
     end do
@@ -529,30 +539,23 @@ contains
 #endif
 
     ! Solve Poisson
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-             !tmp1=real(zk2(k)+yk2(j)+xk2(i), kind=mytype)
-             !tmp2=aimag(zk2(k)+yk2(j)+xk2(i))
-             tmp1=real(kxyz(i,j,k), kind=mytype)
-             tmp2=aimag(kxyz(i,j,k))
-             !xyzk=cmplx(tmp1,tmp2, kind=mytype)
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          do i = sp%xst(1), sp%xen(1)
+             tmp1 = rl(kxyz(i,j,k))
+             tmp2 = iy(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
-             if ((abs(tmp1).lt.epsilon).and.(abs(tmp2).lt.epsilon)) then    
-                cw1b(i,j,k)=cmplx(0._mytype,0._mytype, kind=mytype)
+             if ((abs(tmp1) < epsilon).and.(abs(tmp2) < epsilon)) then    
+                cw1b(i,j,k)=cx(zero, zero)
              end if
-             if ((abs(tmp1).lt.epsilon).and.(abs(tmp2).ge.epsilon)) then
-                cw1b(i,j,k)=cmplx(0._mytype, &
-                     aimag(cw1b(i,j,k))/(-tmp2), kind=mytype)
+             if ((abs(tmp1) < epsilon).and.(abs(tmp2) >= epsilon)) then
+                cw1b(i,j,k)=cx(zero, iy(cw1b(i,j,k)) / (-tmp2))
              end if
-             if ((abs(tmp1).ge.epsilon).and.(abs(tmp2).lt.epsilon)) then    
-                cw1b(i,j,k)=cmplx( real(cw1b(i,j,k), kind=mytype) &
-                     /(-tmp1), 0._mytype, kind=mytype)
+             if ((abs(tmp1) >= epsilon).and.(abs(tmp2) < epsilon)) then    
+                cw1b(i,j,k)=cx(rl(cw1b(i,j,k)) / (-tmp1), zero)
              end if
-             if ((abs(tmp1).ge.epsilon).and.(abs(tmp2).ge.epsilon)) then
-                cw1b(i,j,k)=cmplx( real(cw1b(i,j,k), kind=mytype) &
-                     /(-tmp1), &
-                     aimag(cw1b(i,j,k))/(-tmp2), kind=mytype)
+             if ((abs(tmp1) >= epsilon).and.(abs(tmp2) >= epsilon)) then
+                cw1b(i,j,k)=cx(rl(cw1b(i,j,k)) / (-tmp1), iy(cw1b(i,j,k)) / (-tmp2))
              end if
 #ifdef DEBUG
              if (abs(cw1b(i,j,k)) > 1.0e-4) &
@@ -565,24 +568,24 @@ contains
     ! post-processing backward
 
     ! POST PROCESSING IN X
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          cw1(1,j,k)=cw1b(1,j,k)
-          do i = 2,nx 
-             tmp1 = real(cw1b(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1b(i,j,k))
-             tmp3 = real(cw1b(nx-i+2,j,k), kind=mytype)
-             tmp4 = aimag(cw1b(nx-i+2,j,k))
-             xx1=tmp1*bx(i)
-             xx2=tmp1*ax(i)
-             xx3=tmp2*bx(i)
-             xx4=tmp2*ax(i)
-             xx5=tmp3*bx(i)
-             xx6=tmp3*ax(i)
-             xx7=tmp4*bx(i)
-             xx8=tmp4*ax(i)
-             cw1(i,j,k) = cmplx(xx1-xx4+xx6+xx7,-(-xx2-xx3+xx5-xx8), &
-                  kind=mytype)        
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          cw1(1,j,k) = cw1b(1,j,k)
+          do i = 2, nx 
+             tmp1 = rl(cw1b(i,j,k))
+             tmp2 = iy(cw1b(i,j,k))
+             tmp3 = rl(cw1b(nx-i+2,j,k))
+             tmp4 = iy(cw1b(nx-i+2,j,k))
+             xx1 = tmp1 * bx(i)
+             xx2 = tmp1 * ax(i)
+             xx3 = tmp2 * bx(i)
+             xx4 = tmp2 * ax(i)
+             xx5 = tmp3 * bx(i)
+             xx6 = tmp3 * ax(i)
+             xx7 = tmp4 * bx(i)
+             xx8 = tmp4 * ax(i)
+             cw1(i,j,k) = cx(xx1-xx4+xx6+xx7, &
+                           -(-xx2-xx3+xx5-xx8))
           end do
        end do
     end do
@@ -599,14 +602,14 @@ contains
 #endif
 
     ! POST PROCESSING IN Y
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*by(j)-tmp2*ay(j), &
-                  tmp2*by(j)+tmp1*ay(j), kind=mytype)
-             if (j.gt.(ny/2+1)) cw1(i,j,k)=-cw1(i,j,k)
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          do i = sp%xst(1), sp%xen(1)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * by(j) - tmp2 * ay(j), &
+                             tmp2 * by(j) + tmp1 * ay(j))
+             if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 #ifdef DEBUG
              if (abs(cw1(i,j,k)) > 1.0e-4) &
                   write(*,100) 'AFTER Y',i,j,k,cw1(i,j,k)
@@ -616,13 +619,13 @@ contains
     end do
 
     ! POST PROCESSING IN Z
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1*bz(k)-tmp2*az(k), &
-                  tmp2*bz(k)+tmp1*az(k), kind=mytype)
+    do k = sp%xst(3), sp%xen(3)
+       do j = sp%xst(2), sp%xen(2)
+          do i = sp%xst(1), sp%xen(1)
+             tmp1 = rl(cw1(i,j,k))
+             tmp2 = iy(cw1(i,j,k))
+             cw1(i,j,k) = cx(tmp1 * bz(k) - tmp2 * az(k), &
+                             tmp2 * bz(k) + tmp1 * az(k))
 #ifdef DEBUG
              if (abs(cw1(i,j,k)) > 1.0e-4) &
                   write(*,100) 'END',i,j,k,cw1(i,j,k)
@@ -637,13 +640,13 @@ contains
     ! rhs is in Z-pencil but requires global operations in X
     call transpose_z_to_y(rhs,rw2,ph)
     call transpose_y_to_x(rw2,rw1,ph)
-    do k=ph%xst(3),ph%xen(3)
-       do j=ph%xst(2),ph%xen(2)
-          do i=1,nx/2
-             rw1b(2*i-1,j,k)=rw1(i,j,k)
+    do k = ph%xst(3), ph%xen(3)
+       do j = ph%xst(2), ph%xen(2)
+          do i = 1, nx/2
+             rw1b(2*i-1,j,k) = rw1(i,j,k)
           enddo
-          do i=1,nx/2
-             rw1b(2*i,j,k)=rw1(nx-i+1,j,k)
+          do i = 1, nx/2
+             rw1b(2*i,j,k) = rw1(nx-i+1,j,k)
           enddo
        enddo
     end do

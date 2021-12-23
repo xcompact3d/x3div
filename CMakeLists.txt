@@ -16,6 +16,13 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/opt" CACHE PATH "..." FORCE)
 endif()
 
+# Add support for CMAKE_DEPENDENT_OPTION
+INCLUDE(CMakeDependentOption)
+INCLUDE(CMakeParseArguments)
+
+# Find the modules included with Xcompact
+#SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+
 # make sure that the default is a RELEASE
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE RELEASE CACHE STRING
@@ -26,10 +33,15 @@ endif (NOT CMAKE_BUILD_TYPE)
 set(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER_ID} )
 message(STATUS "COMP ID ${Fortran_COMPILER_NAME}")
 message(STATUS "Fortran compiler name ${Fortran_COMPILER_NAME}")
+message(STATUS "Fortran compiler version ${CMAKE_Fortran_COMPILER_VERSION}")
 if (Fortran_COMPILER_NAME MATCHES "GNU")
   # gfortran
   message(STATUS "Setting gfortran flags")
   set(CMAKE_Fortran_FLAGS "-cpp -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none")
+  if (CMAKE_Fortran_COMPILER_VERSION GREATER_EQUAL "10")
+    message(STATUS "Set New Fortran basic flags")
+    set(CMAKE_Fortran_FLAGS "-cpp -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch")
+  endif (CMAKE_Fortran_COMPILER_VERSION GREATER_EQUAL "10")
   set(CMAKE_Fortran_FLAGS_RELEASE "-funroll-all-loops -fno-f2c -O3")
   set(CMAKE_Fortran_FLAGS_DEBUG   "-DDEBG -O0 -g")
 elseif (Fortran_COMPILER_NAME MATCHES "Intel")
@@ -53,6 +65,16 @@ elseif (Fortran_COMPILER_NAME MATCHES "PGI")
   set(CMAKE_Fortran_FLAGS "-cpp -acc -Mfree -Kieee -Minfo=accel -g")
   set (CMAKE_Fortran_FLAGS_RELEASE "-O3")
   set (CMAKE_Fortran_FLAGS_DEBUG   "-O0 -DDEBG")
+elseif (Fortran_COMPILER_NAME MATCHES "NVHPC")
+  message(STATUS "Setting NVHPC fortran flags")
+  set(CMAKE_Fortran_FLAGS "-cpp -acc -Mfree -Kieee -Minfo=accel -g")
+  set (CMAKE_Fortran_FLAGS_RELEASE "-O3")
+  set (CMAKE_Fortran_FLAGS_DEBUG   "-O0 -DDEBG")
+elseif (Fortran_COMPILER_NAME MATCHES "Fujitsu")
+  message(STATUS "Setting Fujitsu fortran flags")
+  set (CMAKE_Fortran_FLAGS "-Cpp")
+  set (CMAKE_Fortran_FLAGS_RELEASE "-O3")
+  set (CMAKE_Fortran_FLAGS_DEBUG "-O0")
 else (Fortran_COMPILER_NAME MATCHES "GNU")
   message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
   message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
@@ -66,10 +88,7 @@ if (CMAKE_BUILD_TYPE MATCHES "DEBUG")
 endif (CMAKE_BUILD_TYPE MATCHES "DEBUG")
 
 
-message(STATUS "Before MPI")
-find_package(MPI)
 find_package(MPI REQUIRED)
-message(STATUS "After MPI")
 # Stop if there is no MPI_Fortran_Compiler
 if (MPI_Fortran_COMPILER)
     message(STATUS "MPI_Fortran_COMPILER found: ${MPI_Fortran_COMPILER}")

@@ -36,7 +36,7 @@ module navier
   private
 
   public :: solve_poisson, divergence
-  public :: pre_correc, cor_vel
+  public :: cor_vel
   public :: gradp
 
 contains
@@ -51,12 +51,9 @@ contains
     USE decomp_2d, ONLY : mytype, xsize, zsize, ph1
     USE decomp_2d_poisson, ONLY : poisson
     USE var, ONLY : nzmsize
-    USE var, ONLY : dv3
-    USE param, ONLY : ntime, nrhotime, npress
-    USE param, ONLY : ilmn, ivarcoeff, one
+    USE param, ONLY : npress
 
-
-    IMPLICIT NONE
+    implicit none
 
     !! Inputs
     REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)), INTENT(IN) :: ux1, uy1, uz1
@@ -119,7 +116,6 @@ contains
 
     implicit none
 
-    !  TYPE(DECOMP_INFO) :: ph1,ph3,ph4
 
     !X PENCILS NX NY NZ  -->NXM NY NZ
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)),intent(in) :: ux1,uy1,uz1
@@ -173,7 +169,7 @@ contains
     endif
 
     tmax=-1609._mytype
-    tmoy=0._mytype
+    tmoy=zero
     do k=1,nzmsize
        do j=ph1%zst(2),ph1%zen(2)
           do i=ph1%zst(1),ph1%zen(1)
@@ -189,9 +185,9 @@ contains
 
     if ((nrank==0).and.(nlock.gt.0)) then
        if (nlock==2) then
-          print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+          write(*,*) 'DIV U  max mean=',real(tmax1,mytype),real(tmoy1/real(nproc),mytype)
        else
-          print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+          write(*,*) 'DIV U* max mean=',real(tmax1,mytype),real(tmoy1/real(nproc),mytype)
        endif
     endif
 
@@ -318,233 +314,6 @@ contains
 
     return
   end subroutine gradp
-  !############################################################################
-  !############################################################################
-  subroutine pre_correc(ux,uy,uz,ep)
-
-    USE decomp_2d
-    USE variables
-    USE param
-    USE var
-    USE MPI
-    implicit none
-
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux,uy,uz,ep
-    integer :: i,j,k,is
-    real(mytype) :: ut,ut1,utt,ut11
-
-    integer :: code
-    integer, dimension(2) :: dims, dummy_coords
-    logical, dimension(2) :: dummy_periods
-
-    call MPI_CART_GET(DECOMP_2D_COMM_CART_X, 2, dims, dummy_periods, dummy_coords, code)
-
-    !********NCLX==2*************************************
-    !we are in X pencils:
-    if ((itype.eq.itype_channel).and.(nclx1==2.and.nclxn==2)) then
-
-       !Computatation of the flow rate Inflow/Outflow
-       ut1=zero
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             ut1=ut1+bxx1(j,k)
-          enddo
-       enddo
-       call MPI_ALLREDUCE(ut1,ut11,1,real_type,MPI_SUM,MPI_COMM_WORLD,code)
-       ut11=ut11/(real(ny*nz,mytype))
-       ut=zero
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             ut=ut+bxxn(j,k)
-          enddo
-       enddo
-       call MPI_ALLREDUCE(ut,utt,1,real_type,MPI_SUM,MPI_COMM_WORLD,code)
-       utt=utt/(real(ny*nz,mytype))
-       if (nrank==0) print *,'Flow rate x I/O/O-I',real(ut11,4),real(utt,4),real(utt-ut11,4)
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             bxxn(j,k)=bxxn(j,k)-utt+ut11
-          enddo
-       enddo
-
-    endif
-
-    if (nclx1==2) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             dpdyx1(j,k)=dpdyx1(j,k)*gdt(itr)
-             dpdzx1(j,k)=dpdzx1(j,k)*gdt(itr)
-          enddo
-       enddo
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             ux(1 ,j,k)=bxx1(j,k)
-             uy(1 ,j,k)=bxy1(j,k)+dpdyx1(j,k)
-             uz(1 ,j,k)=bxz1(j,k)+dpdzx1(j,k)
-          enddo
-       enddo
-    endif
-    if (nclxn==2) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             dpdyxn(j,k)=dpdyxn(j,k)*gdt(itr)
-             dpdzxn(j,k)=dpdzxn(j,k)*gdt(itr)
-          enddo
-       enddo
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             ux(nx,j,k)=bxxn(j,k)
-             uy(nx,j,k)=bxyn(j,k)+dpdyxn(j,k)
-             uz(nx,j,k)=bxzn(j,k)+dpdzxn(j,k)
-          enddo
-       enddo
-    endif
-
-
-    !********NCLX==1*************************************
-    if (nclx1==1) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             ux(1 ,j,k)=zero
-          enddo
-       enddo
-    endif
-    if (nclxn==1) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             ux(nx,j,k)=zero
-          enddo
-       enddo
-    endif
-
-    !********NCLY==2*************************************
-    if (ncly1==2) then
-       if (xstart(2)==1) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                dpdxy1(i,k)=dpdxy1(i,k)*gdt(itr)
-                dpdzy1(i,k)=dpdzy1(i,k)*gdt(itr)
-             enddo
-          enddo
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                ux(i,1,k)=byx1(i,k)+dpdxy1(i,k)
-                uy(i,1,k)=byy1(i,k)
-                uz(i,1,k)=byz1(i,k)+dpdzy1(i,k)
-             enddo
-          enddo
-       endif
-    endif
-
-    if (nclyn==2) then
-       if (xend(2)==ny) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                dpdxyn(i,k)=dpdxyn(i,k)*gdt(itr)
-                dpdzyn(i,k)=dpdzyn(i,k)*gdt(itr)
-             enddo
-          enddo
-       endif
-       if (dims(1)==1) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                ux(i,xsize(2),k)=byxn(i,k)+dpdxyn(i,k)
-                uy(i,xsize(2),k)=byyn(i,k)
-                uz(i,xsize(2),k)=byzn(i,k)+dpdzyn(i,k)
-             enddo
-          enddo
-       elseif (ny - (nym / dims(1)) == xstart(2)) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                ux(i,xsize(2),k)=byxn(i,k)+dpdxyn(i,k)
-                uy(i,xsize(2),k)=byyn(i,k)
-                uz(i,xsize(2),k)=byzn(i,k)+dpdzyn(i,k)
-             enddo
-          enddo
-       endif
-    endif
-
-    !********NCLY==1*************************************
-    if (ncly1==1) then
-       if (xstart(2)==1) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                uy(i,1,k)=zero
-             enddo
-          enddo
-       endif
-    endif
-
-    if (nclyn==1) then
-       if (xend(2)==ny) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                uy(i,xsize(2),k)=zero
-             enddo
-          enddo
-       endif
-    endif
-
-
-    !********NCLZ==2*************************************
-    if (nclz1==2) then
-       if (xstart(3)==1) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                dpdxz1(i,j)=dpdxz1(i,j)*gdt(itr)
-                dpdyz1(i,j)=dpdyz1(i,j)*gdt(itr)
-             enddo
-          enddo
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                ux(i,j,1)=bzx1(i,j)+dpdxz1(i,j)
-                uy(i,j,1)=bzy1(i,j)+dpdyz1(i,j)
-                uz(i,j,1)=bzz1(i,j)
-             enddo
-          enddo
-       endif
-    endif
-
-    if (nclzn==2) then
-       if (xend(3)==nz) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                dpdxzn(i,j)=dpdxzn(i,j)*gdt(itr)
-                dpdyzn(i,j)=dpdyzn(i,j)*gdt(itr)
-             enddo
-          enddo
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                ux(i,j,xsize(3))=bzxn(i,j)+dpdxzn(i,j)
-                uy(i,j,xsize(3))=bzyn(i,j)+dpdyzn(i,j)
-                uz(i,j,xsize(3))=bzzn(i,j)
-             enddo
-          enddo
-       endif
-    endif
-    !********NCLZ==1************************************* !just to reforce free-slip condition
-    if (nclz1==1) then
-       if (xstart(3)==1) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                uz(i,j,1)=zero
-             enddo
-          enddo
-       endif
-    endif
-
-    if (nclzn==1) then
-       if (xend(3)==nz) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                uz(i,j,xsize(3))=zero
-             enddo
-          enddo
-       endif
-    endif
-
-    return
-  end subroutine pre_correc
   !############################################################################
   !############################################################################
 endmodule navier

@@ -5,7 +5,8 @@ message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 message(STATUS "PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
 
 add_executable(xcompact3d 
-                    case.f90
+                    x3d_tools.f90
+	            case.f90
                     derive.f90
                     module_param.f90
 		    mom.f90

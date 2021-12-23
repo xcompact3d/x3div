@@ -99,61 +99,6 @@ module variables
   real(mytype), save, allocatable, dimension(:,:) :: sy,vy
   real(mytype), save, allocatable, dimension(:,:) :: sz,vz
 
-
-  ! module implicit
-  real(mytype), dimension(:), pointer :: gg, hh, ss, rr, vv, ww, zz, lo1, lo2, lo3, up1, up2, up3
-  ! velocity, ncly1 = 2, nclyn = 2
-  real(mytype), allocatable, target, dimension(:) :: aam,bbm,ccm,ddm,eem,ggm,hhm,wwm,zzm
-  real(mytype), allocatable, target, dimension(:) :: rrm,qqm,vvm,ssm
-  real(mytype), allocatable, target, dimension(:) :: sssm, zzzm, ttm, uum  !!Nona
-  ! velocity, ncly1 = 1, nclyn = 1, npaire = 0
-  real(mytype), allocatable, target, dimension(:) :: aam10,bbm10,ccm10,ddm10,eem10,ggm10,hhm10,wwm10,zzm10
-  real(mytype), allocatable, target, dimension(:) :: rrm10,qqm10,vvm10,ssm10
-  ! velocity, ncly1 = 1, nclyn = 1, npaire = 1
-  real(mytype), allocatable, target, dimension(:) :: aam11,bbm11,ccm11,ddm11,eem11,ggm11,hhm11,wwm11,zzm11
-  real(mytype), allocatable, target, dimension(:) :: rrm11,qqm11,vvm11,ssm11
-  ! velocity, ncly1 = 0, nclyn = 0
-  real(mytype), allocatable, target, dimension(:) :: aam0,bbm0,ccm0,ddm0,eem0,ggm0,hhm0,wwm0,zzm0
-  real(mytype), allocatable, target, dimension(:) :: rrm0,qqm0,vvm0,ssm0,l1m,l2m,l3m,u1m,u2m,u3m
-  ! velocity, ncly1 = 1, nclyn = 2, npaire = 0
-  real(mytype), allocatable, target, dimension(:) :: aam120,bbm120,ccm120,ddm120,eem120,ggm120,hhm120,wwm120,zzm120
-  real(mytype), allocatable, target, dimension(:) :: rrm120,qqm120,vvm120,ssm120
-  ! velocity, ncly1 = 1, nclyn = 2, npaire = 1
-  real(mytype), allocatable, target, dimension(:) :: aam121,bbm121,ccm121,ddm121,eem121,ggm121,hhm121,wwm121,zzm121
-  real(mytype), allocatable, target, dimension(:) :: rrm121,qqm121,vvm121,ssm121
-  ! velocity, ncly1 = 2, nclyn = 1, npaire = 0
-  real(mytype), allocatable, target, dimension(:) :: aam210,bbm210,ccm210,ddm210,eem210,ggm210,hhm210,wwm210,zzm210
-  real(mytype), allocatable, target, dimension(:) :: rrm210,qqm210,vvm210,ssm210
-  ! velocity, ncly1 = 2, nclyn = 1, npaire = 1
-  real(mytype), allocatable, target, dimension(:) :: aam211,bbm211,ccm211,ddm211,eem211,ggm211,hhm211,wwm211,zzm211
-  real(mytype), allocatable, target, dimension(:) :: rrm211,qqm211,vvm211,ssm211
-  ! scalar, ncly1 = 2, nclyn = 2
-  real(mytype), allocatable, target, dimension(:,:) :: aamt,bbmt,ccmt,ddmt,eemt,ggmt,hhmt,wwmt,zzmt
-  real(mytype), allocatable, target, dimension(:,:) :: rrmt,qqmt,vvmt,ssmt
-  real(mytype), allocatable, target, dimension(:,:) :: uumt,ttmt,sssmt,zzzmt !! Nona
-  ! scalar, ncly1 = 1, nclyn = 1, npaire = 0
-  real(mytype), allocatable, target, dimension(:,:) :: aam10t,bbm10t,ccm10t,ddm10t,eem10t,ggm10t,hhm10t,wwm10t,zzm10t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm10t,qqm10t,vvm10t,ssm10t
-  ! scalar, ncly1 = 1, nclyn = 1, npaire = 1
-  real(mytype), allocatable, target, dimension(:,:) :: aam11t,bbm11t,ccm11t,ddm11t,eem11t,ggm11t,hhm11t,wwm11t,zzm11t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm11t,qqm11t,vvm11t,ssm11t
-  ! scalar, ncly1 = 0, nclyn = 0
-  real(mytype), allocatable, target, dimension(:,:) :: aam0t,bbm0t,ccm0t,ddm0t,eem0t,ggm0t,hhm0t,wwm0t,zzm0t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm0t,qqm0t,vvm0t,ssm0t,l1mt,l2mt,l3mt,u1mt,u2mt,u3mt
-  ! scalar, ncly1 = 1, nclyn = 2, npaire = 0
-  real(mytype), allocatable, target, dimension(:,:) :: aam120t,bbm120t,ccm120t,ddm120t,eem120t,ggm120t,hhm120t,wwm120t,zzm120t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm120t,qqm120t,vvm120t,ssm120t
-  ! scalar, ncly1 = 1, nclyn = 2, npaire = 1
-  real(mytype), allocatable, target, dimension(:,:) :: aam121t,bbm121t,ccm121t,ddm121t,eem121t,ggm121t,hhm121t,wwm121t,zzm121t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm121t,qqm121t,vvm121t,ssm121t
-  ! scalar, ncly1 = 2, nclyn = 1, npaire = 0
-  real(mytype), allocatable, target, dimension(:,:) :: aam210t,bbm210t,ccm210t,ddm210t,eem210t,ggm210t,hhm210t,wwm210t,zzm210t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm210t,qqm210t,vvm210t,ssm210t
-  ! scalar, ncly1 = 2, nclyn = 1, npaire = 1
-  real(mytype), allocatable, target, dimension(:,:) :: aam211t,bbm211t,ccm211t,ddm211t,eem211t,ggm211t,hhm211t,wwm211t,zzm211t
-  real(mytype), allocatable, target, dimension(:,:) :: rrm211t,qqm211t,vvm211t,ssm211t
-
-
   ABSTRACT INTERFACE
      SUBROUTINE DERIVATIVE_X(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
@@ -238,11 +183,6 @@ module variables
   real(mytype), save, allocatable, dimension(:,:) :: dpdxy1,dpdxyn,dpdzy1,dpdzyn
   real(mytype), save, allocatable, dimension(:,:) :: dpdxz1,dpdxzn,dpdyz1,dpdyzn
 
-  !module inflow
-  real(mytype), save, allocatable, dimension(:,:) :: bxx1,bxy1,bxz1,bxxn,bxyn,bxzn,bxo,byo,bzo
-  real(mytype), save, allocatable, dimension(:,:) :: byx1,byy1,byz1,byxn,byyn,byzn
-  real(mytype), save, allocatable, dimension(:,:) :: bzx1,bzy1,bzz1,bzxn,bzyn,bzzn
-
   !module derpres
   real(mytype),allocatable,dimension(:) :: cfx6,ccx6,cbx6,cfxp6,ciwxp6,csxp6,&
        cwxp6,csx6,cwx6,cifx6,cicx6,cisx6
@@ -316,9 +256,6 @@ module param
   real(mytype) :: wrotation,ro
   real(mytype) :: dens1, dens2
 
-  !! Channel flow
-  integer :: icpg, icfr
-  real(mytype) :: re_cent, fcpg
 
   !! Numerics control
   integer :: ifirstder,isecondder,ipinter
@@ -333,64 +270,14 @@ module param
   real(mytype) :: g_bl_inf, f_bl_inf
 
 
-  !! Scalars
-  logical, allocatable, dimension(:) :: sc_even, sc_skew
-  real(mytype), allocatable, dimension(:) :: scalar_lbound, scalar_ubound
-
-  !! LES modelling flag
-  integer :: ilesmod, iwall
-
-  !LES
-  integer :: jles
-  integer :: smagwalldamp
-  real(mytype) :: smagcst,walecst,FSGS,pr_t,maxdsmagcst
-
-  !! Gravity field (vector components)
-  real(mytype) :: gravx, gravy, gravz
-
-  !! LMN
-  logical :: ilmn, ilmn_bound, ilmn_solve_temp
-  real(mytype) :: pressure0, prandtl, Fr
-  integer :: nrhotime, npress
-  logical :: ivarcoeff
-
-  logical :: imultispecies
-  logical, allocatable, dimension(:) :: massfrac
-  real(mytype), allocatable, dimension(:) :: mol_weight
-  integer :: primary_species
-
-  logical :: ibirman_eos
-
-  !! Case-specific variables
-  logical :: tgv_twod
-
-  character :: filesauve*80, filenoise*80, &
-       nchamp*80,filepath*80, fileturb*80, filevisu*80, datapath*80
+  integer :: npress
   real(mytype), dimension(5) :: adt,bdt,cdt,ddt,gdt
-
-  !VISU
-  integer :: save_w,save_w1,save_w2,save_w3,save_qc,save_pc
-  integer :: save_ux,save_uy,save_uz,save_phi,save_pre
-  integer :: save_uxm,save_uym,save_uzm,save_phim,save_prem
-  integer :: save_ibm,save_dmap,save_utmap,save_dudx,save_dudy,save_dudz
-  integer :: save_dvdx,save_dvdy,save_dvdz,save_dwdx,save_dwdy,save_dwdz
-  integer :: save_dphidx,save_dphidy,save_dphidz,save_abs,save_V
-
-  !module tripping
-  integer ::  z_modes, nxt_itr, itrip
-  real(mytype) :: x0_tr, xs_tr, ys_tr, ts_tr, zs_param, zs_tr, randomseed, A_trip
-  real(mytype) :: x0_tr_tbl, xs_tr_tbl, ys_tr_tbl, ts_tr_tbl, A_tr
-  real(mytype), allocatable, dimension(:) :: h_coeff, h_nxt,h_i
-  !module TBL tripping
-  !integer ::  z_modes, nxt_itr, itrip
-  !real(mytype) ::  zs_param, zs_tr, A_trip, randomseed
-  real(mytype), allocatable, dimension(:) :: h_coeff1, h_1,phase1
-  real(mytype), allocatable, dimension(:) :: h_coeff2, h_2,phase2
-
   !numbers
 
   real(mytype),parameter :: zpone=0.1_mytype
   real(mytype),parameter :: zptwo=0.2_mytype
+  real(mytype),parameter :: zptwoone=0.21_mytype
+  real(mytype),parameter :: zptwofive=0.25_mytype
   real(mytype),parameter :: zpthree=0.3_mytype
   real(mytype),parameter :: zpfour=0.4_mytype
   real(mytype),parameter :: zpfive=0.5_mytype
@@ -400,11 +287,14 @@ module param
   real(mytype),parameter :: zpnine=0.9_mytype
 
   real(mytype),parameter :: half=0.5_mytype
+  real(mytype),parameter :: twothird=2._mytype/3._mytype
   real(mytype),parameter :: zero=0._mytype
   real(mytype),parameter :: one=1._mytype
   real(mytype),parameter :: onepfive=1.5_mytype
   real(mytype),parameter :: two=2._mytype
+  real(mytype),parameter :: twopfive=2.5_mytype
   real(mytype),parameter :: three=3._mytype
+  real(mytype),parameter :: threepfive=3.5_mytype
   real(mytype),parameter :: four=4._mytype
   real(mytype),parameter :: five=5._mytype
   real(mytype),parameter :: six=6._mytype
@@ -420,20 +310,31 @@ module param
   real(mytype),parameter :: fifteen=15._mytype
   real(mytype),parameter :: sixteen=16._mytype
   real(mytype),parameter :: seventeen=17._mytype
+  real(mytype),parameter :: eighteen=18._mytype
 
   real(mytype),parameter :: twenty=20._mytype
+  real(mytype),parameter :: twentyone=21._mytype
+  real(mytype),parameter :: twentythree=23._mytype
   real(mytype),parameter :: twentyfour=24._mytype
   real(mytype),parameter :: twentyfive=25._mytype
   real(mytype),parameter :: twentyseven=27._mytype
   real(mytype),parameter :: twentyeight=28._mytype
   !
+  real(mytype),parameter :: thirty=30._mytype
   real(mytype),parameter :: thirtytwo=32._mytype
   real(mytype),parameter :: thirtyfour=34._mytype
   real(mytype),parameter :: thirtysix=36._mytype
+  real(mytype),parameter :: thirtyseven=37._mytype
   !
+  real(mytype),parameter :: forty=40._mytype
   real(mytype),parameter :: fortyfour=44._mytype
   real(mytype),parameter :: fortyfive=45._mytype
   real(mytype),parameter :: fortyeight=48._mytype
+  !
+  real(mytype),parameter :: fifty=50._mytype
+  real(mytype),parameter :: fiftyfour=54._mytype
+  real(mytype),parameter :: fiftyfive=55._mytype
+  real(mytype),parameter :: fiftynine=59._mytype
   !
   real(mytype),parameter :: sixty=60._mytype
   real(mytype),parameter :: sixtytwo=62._mytype
@@ -442,16 +343,21 @@ module param
   real(mytype),parameter :: seventy=70._mytype
   real(mytype),parameter :: seventyfive=75._mytype
   !
+  real(mytype),parameter :: onehundred=100._mytype
   real(mytype),parameter :: onehundredtwentysix=126._mytype
   real(mytype),parameter :: onehundredtwentyeight=128._mytype
+  real(mytype),parameter :: onehundredeighty=180._mytype
   !
   real(mytype),parameter :: twohundredsix=206._mytype
   real(mytype),parameter :: twohundredeight=208._mytype
   real(mytype),parameter :: twohundredfiftysix=256._mytype
   real(mytype),parameter :: twohundredseventytwo=272._mytype
   !
+  real(mytype),parameter :: onethousand=1000._mytype
   real(mytype),parameter :: twothousand=2000._mytype
-  real(mytype),parameter :: thirtysixthousand=3600._mytype
+  real(mytype),parameter :: threethousandsixhundred=3600._mytype
+  !
+  complex(mytype),parameter :: cx_one_one=cmplx(one, one, kind=mytype)
 
 
 #ifdef DOUBLE_PREC
@@ -463,18 +369,6 @@ module param
 #endif
 
 end module param
-!############################################################################
-!############################################################################
-module complex_geometry
-
-  use decomp_2d,only : mytype
-  use variables,only : nx,ny,nz,nxm,nym,nzm
-
-  integer     ,allocatable,dimension(:,:)   :: nobjx,nobjy,nobjz
-  integer     ,allocatable,dimension(:,:,:) :: nxipif,nxfpif,nyipif,nyfpif,nzipif,nzfpif
-  real(mytype),allocatable,dimension(:,:,:) :: xi,xf,yi,yf,zi,zf
-  integer :: nxraf,nyraf,nzraf,nraf,nobjmax
-end module complex_geometry
 !############################################################################
 !############################################################################
 module derivX
@@ -576,14 +470,4 @@ module parfiZ
   real(mytype) :: fialpz, fiapz, fibpz, ficpz, fidpz, fiepz, fifpz ! Coefficient for filter at boundary point p=n-2
 end module parfiZ
 !############################################################################
-!############################################################################
-module simulation_stats
-  real(8) :: tstart,time1,trank,tranksum,ttotal,tremaining,telapsed
-end module simulation_stats
-!############################################################################
-!############################################################################
-module ibm_param
-  use decomp_2d, only : mytype
-  real(mytype) :: cex,cey,ra
-end module ibm_param
 !############################################################################

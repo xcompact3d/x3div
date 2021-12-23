@@ -29,53 +29,45 @@
 !    problems with up to 0(10^5) computational cores, Int. J. of Numerical
 !    Methods in Fluids, vol 67 (11), pp 1735-1757
 !################################################################################
-
-module case
+!##################################################################
+function rl(complexnumber)
 
   use param
-  use decomp_2d
-  use variables
-
-  use var, only : nzmsize
 
   implicit none
 
-  private ! All functions/subroutines private by default
-  public :: init
+  real(mytype) :: rl
+  complex(mytype) :: complexnumber
 
-contains
-  !##################################################################
-  subroutine init (ux1, uy1, uz1, dux1, duy1, duz1, &
-       pp3, px1, py1, pz1)
+  rl = real(complexnumber, kind=mytype)
 
-    use mom, only : vel
+end function rl
+!##################################################################
+!##################################################################
+function iy(complexnumber)
 
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux1,uy1,uz1
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3),ntime) :: dux1,duy1,duz1
-    real(mytype),dimension(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize, npress) :: pp3
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1, py1, pz1
+  use param
 
-    INTEGER :: it, is
+  implicit none
 
-    !! Zero out the pressure field
-    pp3(:,:,:,1) = zero
-    px1(:,:,:) = zero
-    py1(:,:,:) = zero
-    pz1(:,:,:) = zero
+  real(mytype) :: iy
+  complex(mytype) :: complexnumber
 
+  iy = aimag(complexnumber)
 
-    call vel(ux1, uy1, uz1)
-    
-    !! Setup old arrays
-    do it = 1, ntime
-       dux1(:,:,:,it)=ux1(:,:,:)
-       duy1(:,:,:,it)=uy1(:,:,:)
-       duz1(:,:,:,it)=uz1(:,:,:)
-    enddo
+end function iy
+!##################################################################
+!##################################################################
+function cx(realpart,imaginarypart)
 
+  use param
 
-  end subroutine init
-end module case
+  implicit none
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!! case.f90 ends here
+  complex(mytype) :: cx
+  real(mytype) :: realpart, imaginarypart
+
+  cx = cmplx(realpart, imaginarypart, kind=mytype)
+
+end function cx
+!##################################################################

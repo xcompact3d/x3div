@@ -207,11 +207,18 @@ subroutine parameter_defaults()
   irestart = 0
   itime0 = 0
   t0 = zero
+  dt = zero
 
   xlx = one; yly = one; zlz = one
+  nclx1 = 0; nclxn = 0
+  ncly1 = 0; nclyn = 0
+  nclz1 = 0; nclzn = 0
   
   npress = 1 !! By default people only need one pressure field
   imodulo2 = 1
 
 
+  !! X3DIV
+  test_mode = .FALSE.
+  
 end subroutine parameter_defaults

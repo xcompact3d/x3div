@@ -180,16 +180,18 @@ contains
     enddo
     tmoy=tmoy/nvect3
 
-    call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
-    call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
 
-    if ((nrank==0).and.(nlock.gt.0)) then
-       if (nlock==2) then
-          write(*,*) 'DIV U  max mean=',real(tmax1,mytype),real(tmoy1/real(nproc),mytype)
-       else
-          write(*,*) 'DIV U* max mean=',real(tmax1,mytype),real(tmoy1/real(nproc),mytype)
+    if (test_mode) then
+       call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+       call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+       if ((nrank==0).and.(nlock.gt.0)) then
+          if (nlock==2) then
+             print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+          else
+             print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
+          endif
        endif
-    endif
+    end if
 
     return
   end subroutine divergence

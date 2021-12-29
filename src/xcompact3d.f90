@@ -32,6 +32,8 @@
 
 program xcompact3d
 
+  use MPI
+
   use var
 
   use transeq, only : calculate_transeq_rhs
@@ -40,27 +42,64 @@ program xcompact3d
 
   implicit none
 
+  double precision :: tstart, tend, telapsed, tmin, tmax
+  !real :: trun
+  integer :: ndt, ndt_max
+  integer :: ierr
+  integer :: mpi_real_type
 
-  call init_xcompact3d()
+  call init_xcompact3d(ndt_max)
 
-  do itime=1,5
-    call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
+  telapsed = 0
+  tmin = telapsed
 
-    ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
-    uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
-    uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
-    
-    divu3(:,:,:) = zero
-    call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
-    call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
-  enddo
+  ndt = 1
+
+  if (kind(telapsed) == kind(0.0d0)) then
+     mpi_real_type = MPI_DOUBLE
+  else
+     mpi_real_type = MPI_FLOAT
+  end if
+  
+  do while(ndt < ndt_max)
+     call init_flowfield()
+
+     tstart = MPI_Wtime()
+
+     call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
+
+     ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
+     uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
+     uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
+     
+     divu3(:,:,:) = zero
+     call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
+     call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
+
+     tend = MPI_Wtime()
+     telapsed = telapsed + (tend - tstart)
+
+     call MPI_Allreduce(telapsed, tmin, 1, mpi_real_type, MPI_MIN, MPI_COMM_WORLD, ierr)
+     call MPI_Allreduce(telapsed, tmax, 1, mpi_real_type, MPI_MAX, MPI_COMM_WORLD, ierr)
+     if (nrank == 0) then
+        print *, "Elapse time min ", tmin, " max ", tmax
+     end if
+
+     ndt = ndt + 1
+  end do
+
+  if (nrank == 0) then
+     print *, "Elapsed time (min-max) [s]: ", tmin, tmax
+     print *, "Timesteps completed: ", ndt
+     print *, "Compute rate (min-max)[dt/s]: ", ndt / tmin, ndt /  tmax
+  end if
 
   call finalise_xcompact3d()
 
 end program xcompact3d
 !########################################################################
 !########################################################################
-subroutine init_xcompact3d()
+subroutine init_xcompact3d(ndt_max)
 
   use MPI
   use decomp_2d
@@ -71,8 +110,12 @@ subroutine init_xcompact3d()
 
   use variables, only : nx, ny, nz, nxm, nym, nzm
   use variables, only : p_row, p_col
+  use variables, only : test_mode
 
   implicit none
+
+  !real, intent(inout) :: trun
+  integer, intent(inout) :: ndt_max
 
   integer :: ierr
 
@@ -96,6 +139,8 @@ subroutine init_xcompact3d()
   ! 5) p_col = 0
   nx = 16; ny = 16; nz = 16
   p_row = 0; p_col = 0
+  !trun = 5.0
+  ndt_max = 10
   do arg = 1, nargin
      call get_command_argument(arg, InputFN, FNLength, status)
      read(InputFN, *, iostat=status) DecInd
@@ -109,18 +154,29 @@ subroutine init_xcompact3d()
         p_row = DecInd
      elseif (arg.eq.5) then
         p_col = DecInd
+     elseif (arg.eq.6) then
+        !trun = real(DecInd)
+        ndt_max = DecInd
+     elseif (arg.eq.7) then
+        if (DecInd.eq.0) then
+           test_mode = .false.
+        else
+           test_mode = .true.
+        end if
      else
         print *, "Error: Too many arguments!"
         print *, "  x3div accepts"
-        print *, "  1) nx"
-        print *, "  2) ny"
-        print *, "  3) nz"
-        print *, "  4) p_row"
-        print *, "  5) p_col"
+        print *, "  1) nx (default=16)"
+        print *, "  2) ny (default=16)"
+        print *, "  3) nz (default=16)"
+        print *, "  4) p_row (default=0)"
+        print *, "  5) p_col (default=0)"
+        print *, "  6) ndt_max (default=10)"
+        print *, "  7) test_mode logical 0/1 (default=0)"
      endif
   enddo
 
-  call parameter(InputFN)
+  call parameter()
 
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
   call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
@@ -140,12 +196,23 @@ subroutine init_xcompact3d()
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
+  call init_flowfield()
+
+endsubroutine init_xcompact3d
+!########################################################################
+!########################################################################
+subroutine init_flowfield()
+  
+  use case
+
+  use var
+
   call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
   itime = 0
 
   divu3(:,:,:) = zero
 
-endsubroutine init_xcompact3d
+end subroutine
 !########################################################################
 !########################################################################
 subroutine finalise_xcompact3d()

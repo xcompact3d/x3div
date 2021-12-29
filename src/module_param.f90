@@ -99,6 +99,9 @@ module variables
   real(mytype), save, allocatable, dimension(:,:) :: sy,vy
   real(mytype), save, allocatable, dimension(:,:) :: sz,vz
 
+  !! X3DIV
+  logical :: test_mode
+
   ABSTRACT INTERFACE
      SUBROUTINE DERIVATIVE_X(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype

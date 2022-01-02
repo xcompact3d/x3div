@@ -6,6 +6,7 @@ message(STATUS "PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
 
 add_executable(xcompact3d 
                     x3d_tools.f90
+                    x3d_precision.f90
 	            case.f90
                     derive.f90
                     module_param.f90

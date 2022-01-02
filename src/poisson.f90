@@ -32,9 +32,17 @@
 
 module decomp_2d_poisson
 
-  use decomp_2d
-  use decomp_2d_fft
-
+  use x3dprecision, only : mytype
+  use decomp_2d, only : DECOMP_INFO
+  use decomp_2d, only : decomp_info_init, &
+                        decomp_info_finalize, &
+                        transpose_x_to_y, &                       
+                        transpose_y_to_z, &                       
+                        transpose_z_to_y, &                       
+                        transpose_y_to_x                       
+  use decomp_2d_fft, only : decomp_2d_fft_init, &
+                            decomp_2d_fft_3d,   &
+                            decomp_2d_fft_finalize 
   use param
   use variables
 
@@ -94,6 +102,8 @@ contains
   ! Initialise Poisson solver for given boundary conditions
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine decomp_2d_poisson_init()
+
+    use decomp_2d, only : nrank, nx_global, ny_global, nz_global
 
     implicit none
 
@@ -293,6 +303,8 @@ contains
     use derivX
     use derivY
     use derivZ
+    use decomp_2d, only : nx_global, ny_global, nz_global
+    use decomp_2d_fft, only : PHYSICAL_IN_Z
 
     ! right-hand-side of Poisson as input
     ! solution of Poisson as output
@@ -409,6 +421,9 @@ contains
 
   subroutine poisson_100(rhs)
 
+    use decomp_2d, only : nx_global, ny_global, nz_global
+    use decomp_2d_fft, only : PHYSICAL_IN_Z
+    
     implicit none
 
     real(mytype), dimension(:,:,:), intent(INOUT) :: rhs
@@ -661,6 +676,7 @@ contains
   subroutine abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
     use param
+    use x3dprecision, only : pi, sin_prec, cos_prec
 
     implicit none
 
@@ -674,42 +690,42 @@ contains
 
     if (bcx==0) then
        do i=1,nx
-          ax(i) = sin(real(i-1, kind=mytype)*PI/real(nx, kind=mytype))
-          bx(i) = cos(real(i-1, kind=mytype)*PI/real(nx, kind=mytype))
+          ax(i) = sin_prec(real(i-1, kind=mytype)*pi/real(nx, kind=mytype))
+          bx(i) = cos_prec(real(i-1, kind=mytype)*pi/real(nx, kind=mytype))
        end do
     else if (bcx==1) then
        do i=1,nx
-          ax(i) = sin(real(i-1, kind=mytype)*PI/2.0_mytype/ &
+          ax(i) = sin_prec(real(i-1, kind=mytype)*pi/two/ &
                real(nx, kind=mytype))
-          bx(i) = cos(real(i-1, kind=mytype)*PI/2.0_mytype/ &
+          bx(i) = cos_prec(real(i-1, kind=mytype)*pi/two/ &
                real(nx, kind=mytype))
        end do
     end if
 
     if (bcy==0) then
        do j=1,ny
-          ay(j) = sin(real(j-1, kind=mytype)*PI/real(ny, kind=mytype))
-          by(j) = cos(real(j-1, kind=mytype)*PI/real(ny, kind=mytype))
+          ay(j) = sin_prec(real(j-1, kind=mytype)*pi/real(ny, kind=mytype))
+          by(j) = cos_prec(real(j-1, kind=mytype)*pi/real(ny, kind=mytype))
        end do
     else if (bcy==1) then
        do j=1,ny
-          ay(j) = sin(real(j-1, kind=mytype)*PI/2.0_mytype/ &
+          ay(j) = sin_prec(real(j-1, kind=mytype)*pi/two/ &
                real(ny, kind=mytype))
-          by(j) = cos(real(j-1, kind=mytype)*PI/2.0_mytype/ &
+          by(j) = cos_prec(real(j-1, kind=mytype)*pi/two/ &
                real(ny, kind=mytype))
        end do
     end if
 
     if (bcz==0) then
        do k=1,nz
-          az(k) = sin(real(k-1, kind=mytype)*PI/real(nz, kind=mytype))
-          bz(k) = cos(real(k-1, kind=mytype)*PI/real(nz, kind=mytype))
+          az(k) = sin_prec(real(k-1, kind=mytype)*pi/real(nz, kind=mytype))
+          bz(k) = cos_prec(real(k-1, kind=mytype)*pi/real(nz, kind=mytype))
        end do
     else if (bcz==1) then
        do k=1,nz
-          az(k) = sin(real(k-1, kind=mytype)*PI/2.0_mytype/ &
+          az(k) = sin_prec(real(k-1, kind=mytype)*pi/two/ &
                real(nz, kind=mytype))
-          bz(k) = cos(real(k-1, kind=mytype)*PI/2.0_mytype/ &
+          bz(k) = cos_prec(real(k-1, kind=mytype)*pi/two/ &
                real(nz, kind=mytype))
        end do
     end if
@@ -723,13 +739,14 @@ contains
     !
     !***********************************************************
 
-    USE derivX 
-    USE derivY 
-    USE derivZ 
-    USE param
-    USE decomp_2d
-    USE variables
+    use derivX 
+    use derivY 
+    use derivZ 
+    use param
+    !use decomp_2d
+    use variables
     use decomp_2d_fft
+    use x3dprecision, only: sin_prec, cos_prec, pi, twopi
 
     implicit none
 
@@ -740,672 +757,270 @@ contains
     complex(mytype) :: xtt1,ytt1,ztt1,zt1,zt2,tmp1,tmp2,tmp3
     complex(mytype) :: tmp4,tmp5,tmp6
 
-    xkx(:)=0. ; xk2(:)=0. ; yky(:)=0. ; yk2(:)=0.
-    zkz(:)=0. ; zk2(:)=0.
+    real(mytype) :: rlexs
+    real(mytype) :: rleys
+    real(mytype) :: rlezs, iyezs
+
+    real(mytype) :: ytt_rl,xtt_rl,ztt_rl,yt1_rl,xt1_rl,zt1_rl
+    real(mytype) :: xtt1_rl,ytt1_rl,ztt1_rl
+
+    complex(mytype) :: cx
+    real(mytype) :: rl, iy
+    external cx, rl, iy
+
+    xkx = zero
+    xk2 = zero
+    yky = zero
+    yk2 = zero
+    zkz = zero
+    zk2 = zero
 
     !WAVE NUMBER IN X
-    if (bcx==0) then
-       do i=1,nx/2+1
-          w=2.*pi*(i-1)/nx
-          wp=acix6*2.*dx*sin(w/2.)+(bcix6*2.*dx)*sin(3./2.*w)
-          wp=wp/(1.+2.*alcaix6*cos(w))
-          xkx(i)=cmplx(nx*wp/xlx,nx*wp/xlx, kind=mytype)
-          exs(i)=cmplx(nx*w/xlx,nx*w/xlx, kind=mytype)
-          xk2(i)=cmplx((nx*wp/xlx)**2,(nx*wp/xlx)**2, kind=mytype)
+    if (bcx == 0) then
+       do i = 1, nx/2 + 1
+          w = twopi * (i-1) / nx
+          wp = acix6 * two * dx * sin_prec(w * half) + bcix6 * two * dx * sin_prec(three * half * w)
+          wp = wp / (one + two * alcaix6 * cos_prec(w))
+!
+          xkx(i) = cx_one_one * (nx * wp / xlx)
+          exs(i) = cx_one_one * (nx * w / xlx)
+          xk2(i) = cx_one_one * (nx * wp / xlx)**2
+!
        enddo
-       do i=nx/2+2,nx
-          xkx(i)=xkx(nx-i+2)
-          exs(i)=exs(nx-i+2)
-          xk2(i)=xk2(nx-i+2)
+       do i = nx/2 + 2, nx
+          xkx(i) = xkx(nx-i+2)
+          exs(i) = exs(nx-i+2)
+          xk2(i) = xk2(nx-i+2)
        enddo
     else
-       do i=1,nx
-          w=2.*pi*0.5*(i-1)/nxm
-          wp=acix6*2.*dx*sin(w/2.)+(bcix6*2.*dx)*sin(3./2.*w)
-          wp=wp/(1.+2.*alcaix6*cos(w))
-          xkx(i)=cmplx(nxm*wp/xlx,nxm*wp/xlx, kind=mytype)
-          exs(i)=cmplx(nxm*w/xlx,nxm*w/xlx, kind=mytype)
-          xk2(i)=cmplx((nxm*wp/xlx)**2,(nxm*wp/xlx)**2, kind=mytype)
+       do i = 1, nx
+          w = twopi * half * (i-1) / nxm
+          wp = acix6 * two * dx * sin_prec(w * half) +(bcix6 * two * dx) * sin_prec(three * half * w)
+          wp = wp / (one + two * alcaix6 * cos_prec(w))
+!
+          xkx(i) = cx_one_one * nxm * wp / xlx
+          exs(i) = cx_one_one * nxm * w / xlx
+          xk2(i) = cx_one_one * (nxm * wp / xlx)**2
+!      
        enddo
-       xkx(1)=0.
-       exs(1)=0.
-       xk2(1)=0.
+       xkx(1) = zero
+       exs(1) = zero
+       xk2(1) = zero
     endif
-
+!
     !WAVE NUMBER IN Y
-    if (bcy==0) then
-       do j=1,ny/2+1
-          w=2.*pi*(j-1)/ny
-          wp=aciy6*2.*dy*sin(w/2.)+(bciy6*2.*dy)*sin(3./2.*w)
-          wp=wp/(1.+2.*alcaiy6*cos(w))
-          if (istret==0) yky(j)=cmplx(ny*wp/yly,ny*wp/yly, kind=mytype)
-          if (istret.ne.0) yky(j)=cmplx(ny*wp,ny*wp, kind=mytype)
-          eys(j)=cmplx(ny*w/yly,ny*w/yly, kind=mytype)
-          yk2(j)=cmplx((ny*wp/yly)**2,(ny*wp/yly)**2, kind=mytype)
+    if (bcy == 0) then
+       do j = 1, ny/2 + 1
+          w = twopi * (j-1) / ny
+          wp = aciy6 * two * dy * sin_prec(w * half) + bciy6 * two * dy * sin_prec(three * half * w)
+          wp = wp / (one + two * alcaiy6 * cos_prec(w))
+!
+          if (istret == 0) yky(j) = cx_one_one * (ny * wp / yly)
+          if (istret /= 0) yky(j) = cx_one_one * (ny * wp)
+          eys(j) = cx_one_one * (ny * w / yly)
+          yk2(j) = cx_one_one * (ny * wp / yly)**2
+!      
        enddo
-       do j=ny/2+2,ny
-          yky(j)=yky(ny-j+2)
-          eys(j)=eys(ny-j+2)
-          yk2(j)=yk2(ny-j+2)
+       do j = ny/2 + 2, ny
+          yky(j) = yky(ny-j+2)
+          eys(j) = eys(ny-j+2)
+          yk2(j) = yk2(ny-j+2)
        enddo
     else
-       do j=1,ny
-          w=2.*pi*0.5*(j-1)/nym
-          wp=aciy6*2.*dy*sin(w/2.)+(bciy6*2.*dy)*sin(3./2.*w)
-          wp=wp/(1.+2.*alcaiy6*cos(w))
-          if (istret==0) yky(j)=cmplx(nym*wp/yly,nym*wp/yly, kind=mytype)
-          if (istret.ne.0) yky(j)=cmplx(nym*wp,nym*wp, kind=mytype)
-          eys(j)=cmplx(nym*w/yly,nym*w/yly, kind=mytype)
-          yk2(j)=cmplx((nym*wp/yly)**2,(nym*wp/yly)**2, kind=mytype)
+       do j = 1, ny
+          w = twopi * half * (j-1) / nym
+          wp = aciy6 * two * dy * sin_prec(w * half) +(bciy6 * two *dy) * sin_prec(three * half * w)
+          wp = wp / (one + two * alcaiy6 * cos_prec(w))
+!
+          if (istret == 0) yky(j) = cx_one_one * (nym * wp / yly)
+          if (istret /= 0) yky(j) = cx_one_one * (nym * wp)
+          eys(j)=cx_one_one * (nym * w / yly)
+          yk2(j)=cx_one_one * (nym * wp / yly)**2
+!      
        enddo
-       yky(1)=0.
-       eys(1)=0.
-       yk2(1)=0.
+       yky(1) = zero
+       eys(1) = zero
+       yk2(1) = zero
     endif
 
     !WAVE NUMBER IN Z
-    if (bcz==0) then
-       do k=1,nz/2+1
-          w=2.*pi*(k-1)/nz
-          wp=aciz6*2.*dz*sin(w/2.)+(bciz6*2.*dz)*sin(3./2.*w)
-          wp=wp/(1.+2.*alcaiz6*cos(w))
-          zkz(k)=cmplx(nz*wp/zlz,nz*wp/zlz, kind=mytype)
-          ezs(k)=cmplx(nz*w/zlz,nz*w/zlz, kind=mytype)
-          zk2(k)=cmplx((nz*wp/zlz)**2,(nz*wp/zlz)**2, kind=mytype)
+    if (bcz == 0) then
+       do k = 1, nz/2 + 1
+          w = twopi * (k-1) / nz
+          wp = aciz6 * two * dz * sin_prec(w * half) + (bciz6 * two * dz) * sin_prec(three * half * w)
+          wp = wp / (one + two * alcaiz6 * cos_prec(w))
+!
+          zkz(k) = cx_one_one * (nz * wp / zlz)
+          ezs(k) = cx_one_one * (nz * w / zlz)
+          zk2(k) = cx_one_one * (nz * wp / zlz)**2
+!
        enddo
     else
-       do k=1,nz/2+1
-          w=2.*pi*0.5*(k-1)/nzm
-          w1=2.*pi*0.5*(nzm-k+1)/nzm
-          wp=aciz6*2.*dz*sin(w/2.)+(bciz6*2.*dz)*sin(3./2.*w)
-          wp=wp/(1.+2.*alcaiz6*cos(w))
-          w1p=aciz6*2.*dz*sin(w1/2.)+(bciz6*2.*dz)*sin(3./2.*w1)
-          w1p=w1p/(1.+2.*alcaiz6*cos(w1))     
-          zkz(k)=cmplx(nzm*wp/zlz,-nzm*w1p/zlz, kind=mytype)
-          ezs(k)=cmplx(nzm*w/zlz,nzm*w1/zlz, kind=mytype)
-          zk2(k)=cmplx((nzm*wp/zlz)**2,(nzm*w1p/zlz)**2, kind=mytype)
+       do k= 1, nz/2 + 1
+          w = pi * (k-1) / nzm
+          w1 = pi * (nzm-k+1) / nzm
+          wp = aciz6 * two * dz * sin_prec(w * half)+(bciz6 * two * dz) * sin_prec(three * half * w)
+          wp = wp / (one + two * alcaiz6 * cos_prec(w))
+          w1p = aciz6 * two * dz * sin_prec(w1 * half) + (bciz6 * two * dz) * sin_prec(three * half * w1)
+          w1p = w1p / (one + two * alcaiz6 * cos_prec(w1))
+!
+          zkz(k) = cx(nzm * wp / zlz, -nzm * w1p / zlz)
+          ezs(k) = cx(nzm * w / zlz, nzm * w1 / zlz)
+          zk2(k) = cx((nzm * wp / zlz)**2, (nzm * w1p / zlz)**2)
+!
        enddo
     endif
-    !
-    !if (nrank==0) then
-    !   do i=1,nx
-    !      print *,i,ezs(i)
-    !   enddo
-    !endif
-    !stop
 
-    if ((bcx==0).and.(bcz==0).and.bcy.ne.0) then
+    if ((bcx == 0).and.(bcz == 0).and.(bcy /= 0)) then
        do k = sp%yst(3), sp%yen(3)
+!
+          rlezs = rl(ezs(k)) * dz
+!
           do j = sp%yst(2), sp%yen(2)
+!
+             rleys = rl(eys(j)) * dy
+!
              do i = sp%yst(1), sp%yen(1)
-                xtt=cmplx((bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-                     cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-                     dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)),&
-                     (bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-                     cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-                     dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)), kind=mytype)
-                ytt=cmplx((biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-                     ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-                     diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)),&
-                     (biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-                     ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-                     diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)), kind=mytype)
-                ztt=cmplx((biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-                     ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-                     diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)),&
-                     (biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-                     ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-                     diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)), kind=mytype)
-                xtt1=cmplx((aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)),&
-                     (aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)), kind=mytype)
-                ytt1=cmplx((aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)),&
-                     (aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)), kind=mytype)
-                ztt1=cmplx((aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)),&
-                     (aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)), kind=mytype)
-                xt1=cmplx((1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)),&
-                     (1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)), kind=mytype)
-                yt1=cmplx((1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)),&
-                     (1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)), kind=mytype)
-                zt1=cmplx((1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)),&
-                     (1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)), kind=mytype)
-                xt2=xk2(i)*((((ytt1+ytt)/yt1)*((ztt1+ztt)/zt1))**2)
-                yt2=yk2(j)*((((xtt1+xtt)/xt1)*((ztt1+ztt)/zt1))**2)
-                zt2=zk2(k)*((((xtt1+xtt)/xt1)*((ytt1+ytt)/yt1))**2)
-                xyzk=xt2+yt2+zt2
-                kxyz(i,j,k)=xyzk
-                !   print *,i,j,k, kxyz(i,j,k)
+!
+                rlexs = rl(exs(i)) * dx
+!
+                xtt_rl = two * &
+     (bicix6 * cos_prec(rlexs * onepfive) + cicix6 * cos_prec(rlexs * twopfive) + dicix6 * cos_prec(rlexs * threepfive))
+!
+                ytt_rl = two * &
+     (biciy6 * cos_prec(rleys * onepfive) + ciciy6 * cos_prec(rleys * twopfive) + diciy6 * cos_prec(rleys * threepfive))
+!
+                ztt_rl = two * &
+     (biciz6 * cos_prec(rlezs * onepfive) + ciciz6 * cos_prec(rlezs * twopfive) + diciz6 * cos_prec(rlezs * threepfive))
+!
+                xtt1_rl = two * aicix6 * cos_prec(rlexs * half)
+                ytt1_rl = two * aiciy6 * cos_prec(rleys * half)
+                ztt1_rl = two * aiciz6 * cos_prec(rlezs * half)
+!
+                xt1_rl = one + two * ailcaix6 * cos_prec(rlexs)
+                yt1_rl = one + two * ailcaiy6 * cos_prec(rleys)
+                zt1_rl = one + two * ailcaiz6 * cos_prec(rlezs)
+!
+                xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)
+!
+                xyzk = xt2 + yt2 + zt2
+                kxyz(i,j,k) = xyzk
+!
              enddo
           enddo
        enddo
+
     else
        if (bcz==0) then
           do k = sp%xst(3),sp%xen(3)
+!
+             rlezs = rl(ezs(k)) * dz
+!
              do j = sp%xst(2),sp%xen(2)
+!
+                rleys = rl(eys(j)) * dy
+!
                 do i = sp%xst(1),sp%xen(1)
-                   xtt=cmplx((bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-                        cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-                        dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)),&
-                        (bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-                        cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-                        dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)), kind=mytype)
-                   ytt=cmplx((biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-                        ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-                        diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)),&
-                        (biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-                        ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-                        diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)), kind=mytype)
-                   ztt=cmplx((biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-                        ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-                        diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)),&
-                        (biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-                        ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-                        diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)), kind=mytype)
-                   xtt1=cmplx((aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)),&
-                        (aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)), kind=mytype)
-                   ytt1=cmplx((aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)),&
-                        (aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)), kind=mytype)
-                   ztt1=cmplx((aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)),&
-                        (aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)), kind=mytype)
-                   xt1=cmplx((1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)),&
-                        (1.+2.*ailcaix6*cos(real(exs(i))*dx)), kind=mytype)
-                   yt1=cmplx((1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)),&
-                        (1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)), kind=mytype)
-                   zt1=cmplx((1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)),&
-                        (1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)), kind=mytype)
-                   xt2=xk2(i)*((((ytt1+ytt)/yt1)*((ztt1+ztt)/zt1))**2)
-                   yt2=yk2(j)*((((xtt1+xtt)/xt1)*((ztt1+ztt)/zt1))**2)
-                   zt2=zk2(k)*((((xtt1+xtt)/xt1)*((ytt1+ytt)/yt1))**2)
-                   xyzk=xt2+yt2+zt2
-                   kxyz(i,j,k)=xyzk
-                   !   print *,i,j,k, kxyz(i,j,k)
+!
+                   rlexs = rl(exs(i)) * dx
+!
+                   xtt_rl = two * &  
+  (bicix6 * cos_prec(rlexs * onepfive) + cicix6 * cos_prec(rlexs * twopfive) + dicix6 * cos_prec(rlexs * threepfive))
+!
+                   ytt_rl = two * &
+  (biciy6 * cos_prec(rleys * onepfive) + ciciy6 * cos_prec(rleys * twopfive) + diciy6 * cos_prec(rleys * threepfive))
+!
+                   ztt_rl = two * &
+  (biciz6 * cos_prec(rlezs * onepfive) + ciciz6 * cos_prec(rlezs * twopfive) + diciz6 * cos_prec(rlezs * threepfive))
+!
+                   xtt1_rl = two * aicix6 * cos_prec(rlexs * half)
+                   ytt1_rl = two * aiciy6 * cos_prec(rleys * half)
+                   ztt1_rl = two * aiciz6 * cos_prec(rlezs * half)
+!
+                   xt1_rl = one + two * ailcaix6 * cos_prec(rlexs)
+                   yt1_rl = one + two * ailcaiy6 * cos_prec(rleys)
+                   zt1_rl = one + two * ailcaiz6 * cos_prec(rlezs)
+!
+                   xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                   yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                   zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)
+!
+                   xyzk = xt2 + yt2 + zt2
+                   kxyz(i,j,k) = xyzk
+!
                 enddo
              enddo
           enddo
+
        else
-          do k = sp%xst(3),sp%xen(3)
-             do j = sp%xst(2),sp%xen(2)
-                do i = sp%xst(1),sp%xen(1)  
-                   xtt=cmplx((bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-                        cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-                        dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)),&
-                        (bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-                        cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-                        dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)), kind=mytype)
-                   ytt=cmplx((biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-                        ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-                        diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)),&
-                        (biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-                        ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-                        diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)), kind=mytype)
-                   !
-                   ztt=cmplx((biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-                        ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-                        diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)),&
-                        (biciz6*2.*cos(aimag(ezs(k))*3.*dz/2.)+&
-                        ciciz6*2.*cos(aimag(ezs(k))*5.*dz/2.)+&
-                        diciz6*2.*cos(aimag(ezs(k))*7.*dz/2.)), kind=mytype)
-                   !
-                   xtt1=cmplx((aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)),&
-                        (aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)), kind=mytype)
-                   ytt1=cmplx((aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)),&
-                        (aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)), kind=mytype)
-                   !
-                   ztt1=cmplx((aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)),&
-                        (aiciz6*2.*cos(aimag(ezs(k))*dz/2.)), kind=mytype)
-                   !
-                   xt1=cmplx((1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)),&
-                        (1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)), kind=mytype)
-                   yt1=cmplx((1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)),&
-                        (1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)), kind=mytype)
-                   zt1=cmplx((1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)),&
-                        (1.+2.*ailcaiz6*cos(aimag(ezs(k))*dz)), kind=mytype)
-
-                   tmp1=cmplx(real(ztt1+ztt, kind=mytype)/real(zt1, kind=mytype),&
-                        aimag(ztt1+ztt)/aimag(zt1), kind=mytype)
-                   tmp2=cmplx(real(ytt1+ytt, kind=mytype)/real(yt1, kind=mytype),&
-                        real(ytt1+ytt, kind=mytype)/real(yt1, kind=mytype), kind=mytype)
-                   tmp3=cmplx(real(xtt1+xtt, kind=mytype)/real(xt1, kind=mytype),&
-                        real(xtt1+xtt, kind=mytype)/real(xt1, kind=mytype), kind=mytype)
-
-                   tmp4=cmplx((real(tmp1, kind=mytype)*real(tmp2, kind=mytype))**2,(aimag(tmp1)*aimag(tmp2))**2, kind=mytype)
-                   tmp5=cmplx((real(tmp1, kind=mytype)*real(tmp3, kind=mytype))**2,(aimag(tmp1)*aimag(tmp3))**2, kind=mytype)
-                   tmp6=cmplx((real(tmp3, kind=mytype)*real(tmp2, kind=mytype))**2,(aimag(tmp3)*aimag(tmp2))**2, kind=mytype)
-
-                   tmp1=cmplx(real(tmp4, kind=mytype)*real(xk2(i), kind=mytype),aimag(tmp4)*aimag(xk2(i)), kind=mytype)
-                   tmp2=cmplx(real(tmp5, kind=mytype)*real(yk2(j), kind=mytype),aimag(tmp5)*aimag(yk2(j)), kind=mytype)
-                   tmp3=cmplx(real(tmp6, kind=mytype)*real(zk2(k), kind=mytype),aimag(tmp6)*aimag(zk2(k)), kind=mytype)
-
-                   xyzk=tmp1+tmp2+tmp3
-                   kxyz(i,j,k)=xyzk
-                   !         print *,i,j,k,zt1,yt1
+          do k = sp%xst(3), sp%xen(3)
+!
+             rlezs = rl(ezs(k)) * dz
+             iyezs = iy(ezs(k)) * dz
+!
+             do j = sp%xst(2), sp%xen(2)
+!
+                rleys = rl(eys(j)) * dy
+!
+                do i = sp%xst(1), sp%xen(1)  
+!
+                   rlexs = rl(exs(i)) * dx
+!
+                   xtt_rl = two * &
+  (bicix6 * cos_prec(rlexs * onepfive) + cicix6 * cos_prec(rlexs * twopfive) + dicix6 * cos_prec(rlexs * threepfive))
+!
+                   ytt_rl = two * &
+  (biciy6 * cos_prec(rleys * onepfive) + ciciy6 * cos_prec(rleys * twopfive) + diciy6 * cos_prec(rleys * threepfive))
+!
+                   ztt = two * cx( &
+  biciz6 * cos_prec(rlezs * onepfive) + ciciz6 * cos_prec(rlezs * twopfive) + diciz6 * cos_prec(rlezs * threepfive),&
+  biciz6 * cos_prec(iyezs * onepfive) + ciciz6 * cos_prec(iyezs * twopfive) + diciz6 * cos_prec(iyezs * threepfive))
+!
+                   xtt1_rl = two * aicix6 * cos_prec(rlexs * half)
+                   ytt1_rl = two * aiciy6 * cos_prec(rleys * half)
+!
+                   ztt1 = two * cx(aiciz6 * cos_prec(rlezs * half),&
+                                   aiciz6 * cos_prec(iyezs * half))
+!
+                   xt1_rl = one + two * ailcaix6 * cos_prec(rlexs)
+                   yt1_rl = one + two * ailcaiy6 * cos_prec(rleys)
+!
+                   zt1 = cx((one + two * ailcaiz6 * cos_prec(rlezs)),&
+                            (one + two * ailcaiz6 * cos_prec(iyezs)))
+!
+                   tmp1 = cx(rl(ztt1 + ztt) / rl(zt1),&
+                             iy(ztt1 + ztt) / iy(zt1))
+!
+                   tmp2 = cx_one_one * (ytt1_rl + ytt_rl) / yt1_rl
+!
+                   tmp3 = cx_one_one * (xtt1_rl + xtt_rl) / xt1_rl
+!
+                   tmp4 = rl(tmp2)**2 * cx(rl(tmp1)**2, iy(tmp1)**2)
+!
+                   tmp5 = rl(tmp3)**2 * cx(rl(tmp1)**2, iy(tmp1)**2)
+!
+                   tmp6 = (rl(tmp3) * rl(tmp2))**2 * cx_one_one
+!
+                   tmp1 = cx(rl(tmp4) * rl(xk2(i)), iy(tmp4) * iy(xk2(i)))
+!
+                   tmp2 = cx(rl(tmp5) * rl(yk2(j)), iy(tmp5) * iy(yk2(j)))
+!
+                   tmp3 = rl(tmp6) * zk2(k)
+!
+                   xyzk = tmp1 + tmp2 + tmp3
+                   kxyz(i,j,k) = xyzk
+!
                 enddo
              enddo
           enddo
+!
        endif
     endif
 
-
-    !          do k=1,1!nz
-    !          do j=1,ny
-    !          do i=1,1!!nx
-    !             print *,j,a(i,j,k,3),kxyz(i,j,k)
-    !          enddo
-    !          enddo
-    !          enddo
-
+  return
   end subroutine waves
-
-  !**************************************************************************
-  !
-  subroutine matrice_refinement()
-    !
-    !**************************************************************************
-
-    USE decomp_2d
-    USE variables
-    USE param
-    USE var
-    USE MPI
-    USE derivX 
-    USE derivY 
-    USE derivZ 
-
-    implicit none
-
-    integer :: i,j,k
-
-    complex(mytype),dimension(sp%yst(1):sp%yen(1)) :: transx
-    complex(mytype),dimension(sp%yst(2):sp%yen(2)) :: transy
-    complex(mytype),dimension(sp%yst(3):sp%yen(3)) :: transz
-    real(mytype) :: xa0,xa1 
-    complex(mytype) :: ytt,xtt,ztt,yt1,xt1,yt2,xt2
-    complex(mytype) :: xtt1,ytt1,ztt1,zt1,zt2,tmp1,tmp2,tmp3
-
-    do i = sp%yst(1),sp%yen(1)
-       xtt=cmplx((bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-            cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-            dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)),&
-            (bicix6*2.*cos(real(exs(i), kind=mytype)*3.*dx/2.)+&
-            cicix6*2.*cos(real(exs(i), kind=mytype)*5.*dx/2.)+&
-            dicix6*2.*cos(real(exs(i), kind=mytype)*7.*dx/2.)), kind=mytype)
-       xtt1=cmplx((aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)),&
-            (aicix6*2.*cos(real(exs(i), kind=mytype)*dx/2.)), kind=mytype)
-       xt1=cmplx((1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)),&
-            (1.+2.*ailcaix6*cos(real(exs(i), kind=mytype)*dx)), kind=mytype)
-       transx(i)=cmplx(real(xtt1+xtt, kind=mytype)/real(xt1, kind=mytype),&
-            real(xtt1+xtt, kind=mytype)/real(xt1, kind=mytype), kind=mytype)!(xtt+xtt)/xt1
-    enddo
-    do j = sp%yst(2),sp%yen(2)
-       ytt=cmplx((biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-            ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-            diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)),&
-            (biciy6*2.*cos(real(eys(j), kind=mytype)*3.*dy/2.)+&
-            ciciy6*2.*cos(real(eys(j), kind=mytype)*5.*dy/2.)+&
-            diciy6*2.*cos(real(eys(j), kind=mytype)*7.*dy/2.)), kind=mytype)
-       ytt1=cmplx((aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)),&
-            (aiciy6*2.*cos(real(eys(j), kind=mytype)*dy/2.)), kind=mytype)
-       yt1=cmplx((1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)),&
-            (1.+2.*ailcaiy6*cos(real(eys(j), kind=mytype)*dy)), kind=mytype)
-       transy(j)=cmplx(real(ytt1+ytt, kind=mytype)/real(yt1, kind=mytype),&
-            real(ytt1+ytt, kind=mytype)/real(yt1, kind=mytype), kind=mytype)!(ytt+ytt)/yt1
-    enddo
-    if (bcz==0) then
-       do k = sp%yst(3),sp%yen(3)
-          ztt=cmplx((biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-               ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-               diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)),&
-               (biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-               ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)+&
-               diciz6*2.*cos(real(ezs(k), kind=mytype)*7.*dz/2.)), kind=mytype)
-          ztt1=cmplx((aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)),&
-               (aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)), kind=mytype)
-          zt1=cmplx((1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)),&
-               (1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)), kind=mytype)
-          transz(k)=cmplx(real(ztt1+ztt, kind=mytype)/real(zt1, kind=mytype),&
-               aimag(ztt1+ztt)/aimag(zt1), kind=mytype)!(ztt+ztt)/zt1
-       enddo
-    else
-       do k = sp%yst(3),sp%yen(3)
-          ztt=cmplx((biciz6*2.*cos(real(ezs(k), kind=mytype)*3.*dz/2.)+&
-               ciciz6*2.*cos(real(ezs(k), kind=mytype)*5.*dz/2.)),&
-               (biciz6*2.*cos(aimag(ezs(k))*3.*dz/2.)+&
-               ciciz6*2.*cos(aimag(ezs(k))*5.*dz/2.)), kind=mytype)
-          ztt1=cmplx((aiciz6*2.*cos(real(ezs(k), kind=mytype)*dz/2.)),&
-               (aiciz6*2.*cos(aimag(ezs(k))*dz/2.)), kind=mytype)
-          zt1=cmplx((1.+2.*ailcaiz6*cos(real(ezs(k), kind=mytype)*dz)),&
-               (1.+2.*ailcaiz6*cos(aimag(ezs(k))*dz)), kind=mytype)
-          transz(k)=cmplx(real(ztt1+ztt, kind=mytype)/real(zt1, kind=mytype),&
-               aimag(ztt1+ztt)/aimag(zt1), kind=mytype)!(ztt+ztt)/zt1
-       enddo
-    endif
-
-    if ((istret==1).or.(istret==2)) then
-
-
-       xa0=alpha/pi+1./2./beta/pi
-       if (istret==1) xa1=1./4./beta/pi
-       if (istret==2) xa1=-1./4./beta/pi
-       !
-       !construction of the pentadiagonal matrice
-       !
-       do k=sp%yst(3),sp%yen(3)
-          do j=1,ny/2
-             do i=sp%yst(1),sp%yen(1)
-                cw22(i,j,k)=cmplx(real(yky(2*j-1), kind=mytype)*real(transx(i), kind=mytype)*real(transz(k), kind=mytype),&
-                     aimag(yky(2*j-1))*aimag(transx(i))*aimag(transz(k)), kind=mytype)
-                cw2(i,j,k)=cmplx(real(yky(2*j), kind=mytype)*real(transx(i), kind=mytype)*real(transz(k), kind=mytype),&
-                     aimag(yky(2*j))*aimag(transx(i))*aimag(transz(k)), kind=mytype)
-             enddo
-          enddo
-       enddo
-
-
-
-
-       !main diagonal 
-       do k=sp%yst(3),sp%yen(3)
-          do j=2,ny/2-1
-             do i=sp%yst(1),sp%yen(1)
-                a(i,j,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(2*j-1), kind=mytype)*real(transy(2*j-1), kind=mytype)&
-                     *real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                     -(real(zk2(k), kind=mytype)*real(transy(2*j-1), kind=mytype)*real(transy(2*j-1), kind=mytype)*&
-                     real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                     -real(cw22(i,j,k), kind=mytype)*real(cw22(i,j,k), kind=mytype)*xa0*xa0-&
-                     xa1*xa1*(real(cw22(i,j,k), kind=mytype)*real(cw22(i,j-1,k), kind=mytype)+real(cw22(i,j,k), kind=mytype)*&
-                     real(cw22(i,j+1,k), kind=mytype)),&
-                     -(aimag(xk2(i))*aimag(transy(2*j-1))*aimag(transy(2*j-1))*aimag(transz(k))*aimag(transz(k)))&
-                     -(aimag(zk2(k))*aimag(transy(2*j-1))*aimag(transy(2*j-1))*aimag(transx(i))*aimag(transx(i)))&
-                     -aimag(cw22(i,j,k))*aimag(cw22(i,j,k))*xa0*xa0-&
-                     xa1*xa1*(aimag(cw22(i,j,k))*aimag(cw22(i,j-1,k))+aimag(cw22(i,j,k))*aimag(cw22(i,j+1,k))), kind=mytype)
-                a2(i,j,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(2*j), kind=mytype)*real(transy(2*j), kind=mytype)*&
-                     real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                     -(real(zk2(k), kind=mytype)*real(transy(2*j), kind=mytype)*real(transy(2*j), kind=mytype)*&
-                     real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                     -real(cw2(i,j,k), kind=mytype)*real(cw2(i,j,k), kind=mytype)*xa0*xa0-&
-                     xa1*xa1*(real(cw2(i,j,k), kind=mytype)*real(cw2(i,j-1,k), kind=mytype)+real(cw2(i,j,k), kind=mytype)*&
-                     real(cw2(i,j+1,k), kind=mytype)),&
-                     -(aimag(xk2(i))*aimag(transy(2*j))*aimag(transy(2*j))*aimag(transz(k))*aimag(transz(k)))&
-                     -(aimag(zk2(k))*aimag(transy(2*j))*aimag(transy(2*j))*aimag(transx(i))*aimag(transx(i)))&
-                     -aimag(cw2(i,j,k))*aimag(cw2(i,j,k))*xa0*xa0-&
-                     xa1*xa1*(aimag(cw2(i,j,k))*aimag(cw2(i,j-1,k))+aimag(cw2(i,j,k))*aimag(cw2(i,j+1,k))), kind=mytype)
-             enddo
-          enddo
-          do i=sp%yst(1),sp%yen(1)
-             a(i,1,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(1), kind=mytype)*real(transy(1), kind=mytype)*&
-                  real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                  -(real(zk2(k), kind=mytype)*real(transy(1), kind=mytype)*real(transy(1), kind=mytype)*&
-                  real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                  -real(cw22(i,1,k), kind=mytype)*real(cw22(i,1,k), kind=mytype)*xa0*xa0-xa1*xa1*(real(cw22(i,1,k), kind=mytype)*&
-                  real(cw22(i,2,k), kind=mytype)),&
-                  -(aimag(xk2(i))*aimag(transy(1))*aimag(transy(1))*aimag(transz(k))*aimag(transz(k)))&
-                  -(aimag(zk2(k))*aimag(transy(1))*aimag(transy(1))*aimag(transx(i))*aimag(transx(i)))&
-                  -aimag(cw22(i,1,k))*aimag(cw22(i,1,k))*xa0*xa0-xa1*xa1*(aimag(cw22(i,1,k))*aimag(cw22(i,2,k))), kind=mytype)
-             a(i,ny/2,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(ny-2), kind=mytype)*real(transy(ny-2), kind=mytype)&
-                  *real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                  -(real(zk2(k), kind=mytype)*real(transy(ny-2), kind=mytype)*real(transy(ny-2), kind=mytype)*&
-                  real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                  -real(cw22(i,ny/2,k), kind=mytype)*real(cw22(i,ny/2,k), kind=mytype)*xa0*xa0-&
-                  xa1*xa1*(real(cw22(i,ny/2,k), kind=mytype)*real(cw22(i,ny/2-1,k), kind=mytype)),&
-                  -(aimag(xk2(i))*aimag(transy(ny-2))*aimag(transy(ny-2))*aimag(transz(k))*aimag(transz(k)))&
-                  -(aimag(zk2(k))*aimag(transy(ny-2))*aimag(transy(ny-2))*aimag(transx(i))*aimag(transx(i)))&
-                  -aimag(cw22(i,ny/2,k))*aimag(cw22(i,ny/2,k))*xa0*xa0-&
-                  xa1*xa1*(aimag(cw22(i,ny/2,k))*aimag(cw22(i,ny/2-1,k))), kind=mytype)
-             a2(i,1,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(2), kind=mytype)*real(transy(2), kind=mytype)*&
-                  real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                  -(real(zk2(k), kind=mytype)*real(transy(2), kind=mytype)*real(transy(2), kind=mytype)*&
-                  real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                  -real(cw2(i,1,k), kind=mytype)*real(cw2(i,1,k), kind=mytype)*(xa0-xa1)*(xa0+xa1)-xa1*xa1*(real(cw2(i,1,k), kind=mytype)*&
-                  real(cw2(i,2,k), kind=mytype)),&
-                  -(aimag(xk2(i))*aimag(transy(2))*aimag(transy(2))*aimag(transz(k))*aimag(transz(k)))&
-                  -(aimag(zk2(k))*aimag(transy(2))*aimag(transy(2))*aimag(transx(i))*aimag(transx(i)))&
-                  -aimag(cw2(i,1,k))*aimag(cw2(i,1,k))*(xa0-xa1)*(xa0+xa1)-xa1*xa1*(aimag(cw2(i,1,k))*aimag(cw2(i,2,k))), kind=mytype)
-             a2(i,ny/2,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(ny-1), kind=mytype)*real(transy(ny-1), kind=mytype)*&
-                  real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                  -(real(zk2(k), kind=mytype)*real(transy(ny-1), kind=mytype)*real(transy(ny-1), kind=mytype)*&
-                  real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                  -real(cw2(i,ny/2,k), kind=mytype)*real(cw2(i,ny/2,k), kind=mytype)*(xa0+xa1)*(xa0+xa1)-&
-                  xa1*xa1*(real(cw2(i,ny/2,k), kind=mytype)*real(cw2(i,ny/2-1,k), kind=mytype)),&
-                  -(aimag(xk2(i))*aimag(transy(ny-1))*aimag(transy(ny-1))*aimag(transz(k))*aimag(transz(k)))&
-                  -(aimag(zk2(k))*aimag(transy(ny-1))*aimag(transy(ny-1))*aimag(transx(i))*aimag(transx(i)))&
-                  -aimag(cw2(i,ny/2,k))*aimag(cw2(i,ny/2,k))*(xa0+xa1)*(xa0+xa1)-&
-                  xa1*xa1*(aimag(cw2(i,ny/2,k))*aimag(cw2(i,ny/2-1,k))), kind=mytype)
-          enddo
-       enddo
-
-
-
-
-
-       !sup diag +1
-       do k=sp%yst(3),sp%yen(3)
-          do j=2,ny/2-1
-             do i=sp%yst(1),sp%yen(1)   
-                a(i,j,k,4)=cmplx(xa0*xa1*(real(cw22(i,j,k), kind=mytype)*real(cw22(i,j+1,k), kind=mytype)+real(cw22(i,j+1,k), kind=mytype)*&
-                     real(cw22(i,j+1,k), kind=mytype)),&
-                     xa0*xa1*(aimag(cw22(i,j,k))*aimag(cw22(i,j+1,k))+aimag(cw22(i,j+1,k))*aimag(cw22(i,j+1,k))), kind=mytype)
-                a2(i,j,k,4)=cmplx(xa0*xa1*(real(cw2(i,j,k), kind=mytype)*real(cw2(i,j+1,k), kind=mytype)+real(cw2(i,j+1,k), kind=mytype)*&
-                     real(cw2(i,j+1,k), kind=mytype)),&
-                     xa0*xa1*(aimag(cw2(i,j,k))*aimag(cw2(i,j+1,k))+aimag(cw2(i,j+1,k))*aimag(cw2(i,j+1,k))), kind=mytype)
-             enddo
-          enddo
-          do i=sp%yst(1),sp%yen(1)   
-             a(i,1,k,4)=2.*cmplx((xa0*xa1*(real(cw22(i,1,k), kind=mytype)*real(cw22(i,2,k), kind=mytype)+real(cw22(i,2,k), kind=mytype)*&
-                  real(cw22(i,2,k), kind=mytype))),&
-                  (xa0*xa1*(aimag(cw22(i,1,k))*aimag(cw22(i,2,k))+aimag(cw22(i,2,k))*aimag(cw22(i,2,k)))), kind=mytype)
-             a2(i,1,k,4)=cmplx((xa0-xa1)*xa1*(real(cw2(i,1,k), kind=mytype)*real(cw2(i,2,k), kind=mytype))&
-                  +xa0*xa1*(real(cw2(i,2,k), kind=mytype)*real(cw2(i,2,k), kind=mytype)),&
-                  (xa0-xa1)*xa1*(aimag(cw2(i,1,k))*aimag(cw2(i,2,k)))&
-                  +xa0*xa1*(aimag(cw2(i,2,k))*aimag(cw2(i,2,k))), kind=mytype)
-             a2(i,ny/2-1,k,4)=cmplx(xa0*xa1*(real(cw2(i,ny/2-1,k), kind=mytype)*real(cw2(i,ny/2,k), kind=mytype))&
-                  +(xa0+xa1)*xa1*(real(cw2(i,ny/2,k), kind=mytype)*real(cw2(i,ny/2,k), kind=mytype)),&
-                  xa0*xa1*(aimag(cw2(i,ny/2-1,k))*aimag(cw2(i,ny/2,k)))&
-                  +(xa0+xa1)*xa1*(aimag(cw2(i,ny/2,k))*aimag(cw2(i,ny/2,k))), kind=mytype)
-             a2(i,ny/2,k,4)=0.
-          enddo
-       enddo
-
-
-
-       !sup diag +2
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)   
-             do j=1,ny/2-2
-                a(i,j,k,5)=cmplx(-real(cw22(i,j+1,k), kind=mytype)*real(cw22(i,j+2,k), kind=mytype)*xa1*xa1,&
-                     -aimag(cw22(i,j+1,k))*aimag(cw22(i,j+2,k))*xa1*xa1, kind=mytype)
-                a2(i,j,k,5)=cmplx(-real(cw2(i,j+1,k), kind=mytype)*real(cw2(i,j+2,k), kind=mytype)*xa1*xa1,&
-                     -aimag(cw2(i,j+1,k))*aimag(cw2(i,j+2,k))*xa1*xa1, kind=mytype)
-             enddo
-             a(i,1,k,5)=cmplx(real(a(i,1,k,5), kind=mytype)*2.,aimag(a(i,1,k,5))*2., kind=mytype)
-             a(i,ny/2-1,k,5)=0.
-             a(i,ny/2,k,5)=0.
-             a2(i,ny/2-1,k,5)=0.
-             a2(i,ny/2,k,5)=0. 
-          enddo
-       enddo
-
-
-
-       !inf diag -1
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)   
-             do j=2,ny/2
-                a(i,j,k,2)=cmplx(xa0*xa1*(real(cw22(i,j,k), kind=mytype)*real(cw22(i,j-1,k), kind=mytype)+real(cw22(i,j-1,k), kind=mytype)*&
-                     real(cw22(i,j-1,k), kind=mytype)),&
-                     xa0*xa1*(aimag(cw22(i,j,k))*aimag(cw22(i,j-1,k))+aimag(cw22(i,j-1,k))*aimag(cw22(i,j-1,k))), kind=mytype)
-                a2(i,j,k,2)=cmplx(xa0*xa1*(real(cw2(i,j,k), kind=mytype)*real(cw2(i,j-1,k), kind=mytype)+real(cw2(i,j-1,k), kind=mytype)*&
-                     real(cw2(i,j-1,k), kind=mytype)),&
-                     xa0*xa1*(aimag(cw2(i,j,k))*aimag(cw2(i,j-1,k))+aimag(cw2(i,j-1,k))*aimag(cw2(i,j-1,k))), kind=mytype)
-             enddo
-             a(i,1,k,2)=0.
-             a2(i,1,k,2)=0.
-             a2(i,2,k,2)=cmplx(xa0*xa1*(real(cw2(i,2,k), kind=mytype)*real(cw2(i,1,k), kind=mytype))&
-                  +(xa0+xa1)*xa1*(real(cw2(i,1,k), kind=mytype)*real(cw2(i,1,k), kind=mytype)),&
-                  xa0*xa1*(aimag(cw2(i,2,k))*aimag(cw2(i,1,k)))&
-                  +(xa0+xa1)*xa1*(aimag(cw2(i,1,k))*aimag(cw2(i,1,k))), kind=mytype)
-             a2(i,ny/2,k,2)=cmplx((xa0+xa1)*xa1*(real(cw2(i,ny/2,k), kind=mytype)*real(cw2(i,ny/2-1,k), kind=mytype))&
-                  +xa0*xa1*(real(cw2(i,ny/2-1,k), kind=mytype)*real(cw2(i,ny/2-1,k), kind=mytype)),&
-                  (xa0+xa1)*xa1*(aimag(cw2(i,ny/2,k))*aimag(cw2(i,ny/2-1,k)))&
-                  +xa0*xa1*(aimag(cw2(i,ny/2-1,k))*aimag(cw2(i,ny/2-1,k))), kind=mytype)
-          enddo
-       enddo
-       !inf diag -2
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)  
-             do j=3,ny/2
-                a(i,j,k,1)=cmplx(-real(cw22(i,j-1,k), kind=mytype)*real(cw22(i,j-2,k), kind=mytype)*xa1*xa1,&
-                     -aimag(cw22(i,j-1,k))*aimag(cw22(i,j-2,k))*xa1*xa1, kind=mytype)
-                a2(i,j,k,1)=cmplx(-real(cw2(i,j-1,k), kind=mytype)*real(cw2(i,j-2,k), kind=mytype)*xa1*xa1,&
-                     -aimag(cw2(i,j-1,k))*aimag(cw2(i,j-2,k))*xa1*xa1, kind=mytype)
-             enddo
-             a(i,1,k,1)=0.
-             a(i,2,k,1)=0.
-             a2(i,1,k,1)=0.
-             a2(i,2,k,1)=0.
-          enddo
-       enddo
-       !not to have a singular matrice
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)
-             if ((real(xk2(i), kind=mytype)==0.).and.(real(zk2(k), kind=mytype)==0)) then
-                a(i,1,k,3)=cmplx(1.,1., kind=mytype)
-                a(i,1,k,4)=0.
-                a(i,1,k,5)=0.
-             endif
-          enddo
-       enddo
-
-    else
-       xa0=alpha/pi+1./2./beta/pi
-       xa1=-1./4./beta/pi 
-       !
-       !construction of the pentadiagonal matrice
-       !   
-       do k=sp%yst(3),sp%yen(3)
-          do j=1,nym
-             do i=sp%yst(1),sp%yen(1)
-                cw22(i,j,k)=cmplx(real(yky(j), kind=mytype)*real(transx(i), kind=mytype)*real(transz(k), kind=mytype),&
-                     aimag(yky(j))*aimag(transx(i))*aimag(transz(k)), kind=mytype)
-             enddo
-          enddo
-       enddo
-
-       !main diagonal 
-       do k=sp%yst(3),sp%yen(3)
-          do j=2,nym-1
-             do i=sp%yst(1),sp%yen(1)
-                a3(i,j,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(j), kind=mytype)*real(transy(j), kind=mytype)*&
-                     real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                     -(real(zk2(k), kind=mytype)*real(transy(j), kind=mytype)*real(transy(j), kind=mytype)*&
-                     real(transx(i), kind=mytype)*real(transx(i), kind=mytype))&
-                     -real(cw22(i,j,k), kind=mytype)*real(cw22(i,j,k), kind=mytype)*xa0*xa0-&
-                     xa1*xa1*(real(cw22(i,j,k), kind=mytype)*real(cw22(i,j-1,k), kind=mytype)+real(cw22(i,j,k), kind=mytype)*&
-                     real(cw22(i,j+1,k), kind=mytype)),&
-                     -(aimag(xk2(i))*aimag(transy(j))*aimag(transy(j))*aimag(transz(k))*aimag(transz(k)))&
-                     -(aimag(zk2(k))*aimag(transy(j))*aimag(transy(j))*aimag(transx(i))*aimag(transx(i)))&
-                     -aimag(cw22(i,j,k))*aimag(cw22(i,j,k))*xa0*xa0-&
-                     xa1*xa1*(aimag(cw22(i,j,k))*aimag(cw22(i,j-1,k))+aimag(cw22(i,j,k))*aimag(cw22(i,j+1,k))), kind=mytype)
-             enddo
-          enddo
-       enddo
-
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)
-             a3(i,1,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(1), kind=mytype)*real(transy(1), kind=mytype)*&
-                  real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                  -(real(zk2(k), kind=mytype)*real(transy(1), kind=mytype)*real(transy(1), kind=mytype)*real(transx(i), kind=mytype)*&
-                  real(transx(i), kind=mytype))&
-                  -real(cw22(i,1,k), kind=mytype)*real(cw22(i,1,k), kind=mytype)*xa0*xa0-xa1*xa1*(real(cw22(i,1,k), kind=mytype)*&
-                  real(cw22(i,2,k), kind=mytype)),&
-                  -(aimag(xk2(i))*aimag(transy(1))*aimag(transy(1))*aimag(transz(k))*aimag(transz(k)))&
-                  -(aimag(zk2(k))*aimag(transy(1))*aimag(transy(1))*aimag(transx(i))*aimag(transx(i)))&
-                  -aimag(cw22(i,1,k))*aimag(cw22(i,1,k))*xa0*xa0-xa1*xa1*(aimag(cw22(i,1,k))*aimag(cw22(i,2,k))), kind=mytype)
-             a3(i,nym,k,3)=cmplx(-(real(xk2(i), kind=mytype)*real(transy(nym), kind=mytype)*real(transy(nym), kind=mytype)*&
-                  real(transz(k), kind=mytype)*real(transz(k), kind=mytype))&
-                  -(real(zk2(k), kind=mytype)*real(transy(nym), kind=mytype)*real(transy(nym), kind=mytype)*real(transx(i), kind=mytype)*&
-                  real(transx(i), kind=mytype))&
-                  -real(cw22(i,nym,k), kind=mytype)*real(cw22(i,nym,k), kind=mytype)*xa0*xa0-&
-                  xa1*xa1*(real(cw22(i,nym,k), kind=mytype)*real(cw22(i,nym-1,k), kind=mytype)),&
-                  -(aimag(xk2(i))*aimag(transy(nym))*aimag(transy(nym))*aimag(transz(k))*aimag(transz(k)))&
-                  -(aimag(zk2(k))*aimag(transy(nym))*aimag(transy(nym))*aimag(transx(i))*aimag(transx(i)))&
-                  -aimag(cw22(i,nym,k))*aimag(cw22(i,nym,k))*xa0*xa0-&
-                  xa1*xa1*(aimag(cw22(i,nym,k))*aimag(cw22(i,nym-1,k))), kind=mytype)
-          enddo
-       enddo
-
-
-
-
-       !sup diag +1
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)
-             do j=2,nym-1
-                a3(i,j,k,4)=cmplx(xa0*xa1*(real(cw22(i,j,k), kind=mytype)*real(cw22(i,j+1,k), kind=mytype)+real(cw22(i,j+1,k), kind=mytype)*&
-                     real(cw22(i,j+1,k), kind=mytype)),&
-                     xa0*xa1*(aimag(cw22(i,j,k))*aimag(cw22(i,j+1,k))+aimag(cw22(i,j+1,k))*aimag(cw22(i,j+1,k))), kind=mytype)
-             enddo
-             a3(i,1,k,4)=cmplx((xa0*xa1*(real(cw22(i,1,k), kind=mytype)*real(cw22(i,2,k), kind=mytype)+real(cw22(i,2,k), kind=mytype)*&
-                  real(cw22(i,2,k), kind=mytype))),&
-                  (xa0*xa1*(aimag(cw22(i,1,k))*aimag(cw22(i,2,k))+aimag(cw22(i,2,k))*aimag(cw22(i,2,k)))), kind=mytype)
-          enddo
-       enddo
-       !sup diag +2
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)
-             do j=1,nym-2
-                a3(i,j,k,5)=cmplx(-real(cw22(i,j+1,k), kind=mytype)*real(cw22(i,j+2,k), kind=mytype)*xa1*xa1,&
-                     -aimag(cw22(i,j+1,k))*aimag(cw22(i,j+2,k))*xa1*xa1, kind=mytype)
-             enddo
-             !a3(i,1,k,5)=a3(i,1,k,5)*2.
-             !a3(i,1,k,5)=0.
-             a3(i,nym-1,k,5)=0.
-             a3(i,nym,k,5)=0.
-          enddo
-       enddo
-
-
-       !inf diag -1
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)
-             do j=2,nym
-                a3(i,j,k,2)=cmplx(xa0*xa1*(real(cw22(i,j,k), kind=mytype)*real(cw22(i,j-1,k), kind=mytype)+real(cw22(i,j-1,k), kind=mytype)*&
-                     real(cw22(i,j-1,k), kind=mytype)),&
-                     xa0*xa1*(aimag(cw22(i,j,k))*aimag(cw22(i,j-1,k))+aimag(cw22(i,j-1,k))*aimag(cw22(i,j-1,k))), kind=mytype)
-             enddo
-             a3(i,1,k,2)=0.
-          enddo
-       enddo
-       !inf diag -2
-       do k=sp%yst(3),sp%yen(3)
-          do i=sp%yst(1),sp%yen(1)
-             do j=3,nym
-                a3(i,j,k,1)=cmplx(-real(cw22(i,j-1,k), kind=mytype)*real(cw22(i,j-2,k), kind=mytype)*xa1*xa1,&
-                     -aimag(cw22(i,j-1,k))*aimag(cw22(i,j-2,k))*xa1*xa1, kind=mytype)
-             enddo
-             a3(i,1,k,1)=0.
-             a3(i,2,k,1)=0.
-          enddo
-       enddo
-
-       !not to have a singular matrice
-       !   do k=sp%yst(3),sp%yen(3)
-       !   do i=sp%yst(1),sp%yen(1)
-       !      if ((xkx(i)==0.).and.(zkz(k)==0)) then
-       if (nrank==0) then
-          a3(1,1,1,3)=cmplx(1.,1., kind=mytype)
-          a3(1,1,1,4)=0.
-          a3(1,1,1,5)=0.
-       endif
-       !      endif
-       !   enddo
-       !   enddo
-    endif
-
-
-
-
-
-    return
-  end subroutine matrice_refinement
 
 end module decomp_2d_poisson
 

@@ -41,9 +41,10 @@ subroutine parameter()
 
   use iso_fortran_env
 
+  use x3dprecision, only : mytype, pi
   use param
   use variables
-  use decomp_2d
+  use decomp_2d, only : nrank
 
   implicit none
 
@@ -109,8 +110,8 @@ subroutine parameter()
 
   xnu=one/re
 
-  anglex = sin(pi*angle/onehundredeighty)
-  angley = cos(pi*angle/onehundredeighty)
+  anglex = sin(pi*angle/180._mytype)
+  angley = cos(pi*angle/180._mytype)
   !###########################################################################
   ! Log-output
   !###########################################################################
@@ -182,7 +183,6 @@ subroutine parameter_defaults()
 
   use param
   use variables
-  use decomp_2d
 
   implicit none
 
@@ -217,8 +217,4 @@ subroutine parameter_defaults()
   npress = 1 !! By default people only need one pressure field
   imodulo2 = 1
 
-
-  !! X3DIV
-  test_mode = .FALSE.
-  
 end subroutine parameter_defaults

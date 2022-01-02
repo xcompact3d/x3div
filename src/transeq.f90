@@ -43,7 +43,8 @@ contains
   !############################################################################
   subroutine calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
 
-    use decomp_2d, only : mytype, xsize, zsize
+    use x3dprecision, only : mytype
+    use decomp_2d, only : xsize, zsize
     use param, only : ntime
 
     implicit none
@@ -73,7 +74,12 @@ contains
 
     use param
     use variables
-    use decomp_2d
+    use x3dprecision, only : mytype
+    use decomp_2d , only : xsize, ysize, zsize
+    use decomp_2d, only : transpose_x_to_y, &
+                          transpose_y_to_z, &
+                          transpose_z_to_y, &
+                          transpose_y_to_x
     use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,di1
     use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2,di2
     use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3,di3

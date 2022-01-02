@@ -32,7 +32,8 @@
 module variables
   !USE param
   !USE var
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
 
   ! Boundary conditions : ncl = 2 --> Dirichlet
   ! Boundary conditions : ncl = 1 --> Free-slip
@@ -223,7 +224,8 @@ end module variables
 !############################################################################
 module param
 
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
 
   integer :: nclx1,nclxn,ncly1,nclyn,nclz1,nclzn
   integer :: nclxS1,nclxSn,nclyS1,nclySn,nclzS1,nclzSn
@@ -277,18 +279,6 @@ module param
   real(mytype), dimension(5) :: adt,bdt,cdt,ddt,gdt
   !numbers
 
-  real(mytype),parameter :: zpone=0.1_mytype
-  real(mytype),parameter :: zptwo=0.2_mytype
-  real(mytype),parameter :: zptwoone=0.21_mytype
-  real(mytype),parameter :: zptwofive=0.25_mytype
-  real(mytype),parameter :: zpthree=0.3_mytype
-  real(mytype),parameter :: zpfour=0.4_mytype
-  real(mytype),parameter :: zpfive=0.5_mytype
-  real(mytype),parameter :: zpsix=0.6_mytype
-  real(mytype),parameter :: zpseven=0.7_mytype
-  real(mytype),parameter :: zpeight=0.8_mytype
-  real(mytype),parameter :: zpnine=0.9_mytype
-
   real(mytype),parameter :: half=0.5_mytype
   real(mytype),parameter :: twothird=2._mytype/3._mytype
   real(mytype),parameter :: zero=0._mytype
@@ -304,79 +294,27 @@ module param
   real(mytype),parameter :: seven=7._mytype
   real(mytype),parameter :: eight=8._mytype
   real(mytype),parameter :: nine=9._mytype
-
   real(mytype),parameter :: ten=10._mytype
-  real(mytype),parameter :: eleven=11._mytype
-  real(mytype),parameter :: twelve=12._mytype
-  real(mytype),parameter :: thirteen=13._mytype
-  real(mytype),parameter :: fourteen=14._mytype
-  real(mytype),parameter :: fifteen=15._mytype
-  real(mytype),parameter :: sixteen=16._mytype
-  real(mytype),parameter :: seventeen=17._mytype
-  real(mytype),parameter :: eighteen=18._mytype
-
-  real(mytype),parameter :: twenty=20._mytype
-  real(mytype),parameter :: twentyone=21._mytype
-  real(mytype),parameter :: twentythree=23._mytype
-  real(mytype),parameter :: twentyfour=24._mytype
-  real(mytype),parameter :: twentyfive=25._mytype
-  real(mytype),parameter :: twentyseven=27._mytype
-  real(mytype),parameter :: twentyeight=28._mytype
-  !
-  real(mytype),parameter :: thirty=30._mytype
-  real(mytype),parameter :: thirtytwo=32._mytype
-  real(mytype),parameter :: thirtyfour=34._mytype
-  real(mytype),parameter :: thirtysix=36._mytype
-  real(mytype),parameter :: thirtyseven=37._mytype
-  !
-  real(mytype),parameter :: forty=40._mytype
-  real(mytype),parameter :: fortyfour=44._mytype
-  real(mytype),parameter :: fortyfive=45._mytype
-  real(mytype),parameter :: fortyeight=48._mytype
-  !
-  real(mytype),parameter :: fifty=50._mytype
-  real(mytype),parameter :: fiftyfour=54._mytype
-  real(mytype),parameter :: fiftyfive=55._mytype
-  real(mytype),parameter :: fiftynine=59._mytype
-  !
-  real(mytype),parameter :: sixty=60._mytype
-  real(mytype),parameter :: sixtytwo=62._mytype
-  real(mytype),parameter :: sixtythree=63._mytype
-  !
-  real(mytype),parameter :: seventy=70._mytype
-  real(mytype),parameter :: seventyfive=75._mytype
-  !
-  real(mytype),parameter :: onehundred=100._mytype
-  real(mytype),parameter :: onehundredtwentysix=126._mytype
-  real(mytype),parameter :: onehundredtwentyeight=128._mytype
-  real(mytype),parameter :: onehundredeighty=180._mytype
-  !
-  real(mytype),parameter :: twohundredsix=206._mytype
-  real(mytype),parameter :: twohundredeight=208._mytype
-  real(mytype),parameter :: twohundredfiftysix=256._mytype
-  real(mytype),parameter :: twohundredseventytwo=272._mytype
-  !
-  real(mytype),parameter :: onethousand=1000._mytype
-  real(mytype),parameter :: twothousand=2000._mytype
-  real(mytype),parameter :: threethousandsixhundred=3600._mytype
+  
   !
   complex(mytype),parameter :: cx_one_one=cmplx(one, one, kind=mytype)
 
 
-#ifdef DOUBLE_PREC
-  real(mytype),parameter :: pi=dacos(-one)
-  real(mytype),parameter :: twopi=two*dacos(-one)
-#else
-  real(mytype),parameter :: pi=acos(-one)
-  real(mytype),parameter :: twopi=two*acos(-one)
-#endif
+!#ifdef DOUBLE_PREC
+!  real(mytype),parameter :: pi=dacos(-one)
+!  real(mytype),parameter :: twopi=two*dacos(-one)
+!#else
+!  real(mytype),parameter :: pi=acos(-one)
+!  real(mytype),parameter :: twopi=two*acos(-one)
+!#endif
 
 end module param
 !############################################################################
 !############################################################################
 module derivX
 
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
 
   real(mytype) :: alcaix6,acix6,bcix6
   real(mytype) :: ailcaix6,aicix6,bicix6,cicix6,dicix6
@@ -396,7 +334,8 @@ end module derivX
 !############################################################################
 module derivY
 
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
 
   real(mytype) :: alcaiy6,aciy6,bciy6
   real(mytype) :: ailcaiy6,aiciy6,biciy6,ciciy6,diciy6
@@ -416,7 +355,8 @@ end module derivY
 !############################################################################
 module derivZ
 
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
 
   real(mytype) :: alcaiz6,aciz6,bciz6
   real(mytype) :: ailcaiz6,aiciz6,biciz6,ciciz6,diciz6
@@ -437,7 +377,8 @@ end module derivZ
 !############################################################################
 ! Describes the parameters for the discrete filters in X-Pencil
 module parfiX
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
   real(mytype) :: fial1x, fia1x, fib1x, fic1x, fid1x, fie1x, fif1x  ! Coefficients for filter at boundary point 1
   real(mytype) :: fial2x, fia2x, fib2x, fic2x, fid2x, fie2x, fif2x  ! Coefficients for filter at boundary point 2
   real(mytype) :: fial3x, fia3x, fib3x, fic3x, fid3x, fie3x, fif3x  ! Coefficients for filter at boundary point 3
@@ -450,7 +391,8 @@ end module parfiX
 !############################################################################
 module parfiY
 
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
   real(mytype) :: fial1y, fia1y, fib1y, fic1y, fid1y, fie1y, fif1y ! Coefficients for filter at boundary point 1
   real(mytype) :: fial2y, fia2y, fib2y, fic2y, fid2y, fie2y, fif2y ! Coefficients for filter at boundary point 2
   real(mytype) :: fial3y, fia3y, fib3y, fic3y, fid3y, fie3y, fif3y ! Coefficients for filter at boundary point 3
@@ -463,7 +405,8 @@ end module parfiY
 !############################################################################
 module parfiZ
 
-  use decomp_2d, only : mytype
+  !use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
   real(mytype) :: fial1z, fia1z, fib1z, fic1z, fid1z, fie1z, fif1z ! Coefficients for filter at boundary point 1
   real(mytype) :: fial2z, fia2z, fib2z, fic2z, fid2z, fie2z, fif2z ! Coefficients for filter at boundary point 2
   real(mytype) :: fial3z, fia3z, fib3z, fic3z, fid3z, fie3z, fif3z ! Coefficients for filter at boundary point 3

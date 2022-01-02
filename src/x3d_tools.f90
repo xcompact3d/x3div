@@ -32,7 +32,8 @@
 !##################################################################
 function rl(complexnumber)
 
-  use param
+  !use param
+  use x3dprecision, only : mytype
 
   implicit none
 
@@ -46,7 +47,8 @@ end function rl
 !##################################################################
 function iy(complexnumber)
 
-  use param
+  !use param
+  use x3dprecision, only : mytype
 
   implicit none
 
@@ -60,7 +62,8 @@ end function iy
 !##################################################################
 function cx(realpart,imaginarypart)
 
-  use param
+  !use param
+  use x3dprecision, only : mytype
 
   implicit none
 

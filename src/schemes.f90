@@ -42,6 +42,7 @@ subroutine schemes()
   USE derivZ
   USE variables
   USE var
+  use decomp_2d, only : nrank
 
   implicit none
 
@@ -176,7 +177,8 @@ subroutine first_derivative(alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
   !
   !*******************************************************************
 
-  use decomp_2d, only : mytype, nrank
+  use x3dprecision, only : mytype
+  use decomp_2d, only : nrank
   use param
   use MPI
 
@@ -206,7 +208,7 @@ subroutine first_derivative(alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
   elseif(ifirstder==4) then ! Sixth-order compact
      alfai= one/three
      afi  = (seven/nine)/d
-     bfi  = (one/thirtysix)/d
+     bfi  = (one/36._mytype)/d
   else
      if (nrank==0) then
         write(*,*) 'This is not an option. Please use ifirstder=1,2,3,4'
@@ -335,7 +337,8 @@ subroutine second_derivative(alsa1,as1,bs1,&
      sf,ss,sw,sfp,ssp,swp,d2,n,ncl1,ncln)
   !*******************************************************************
 
-  use decomp_2d, only : mytype, nrank
+  use x3dprecision, only : mytype, pi, twopi
+  use decomp_2d, only : nrank
   use param
   use MPI
   use variables, only : nu0nu,cnu
@@ -382,8 +385,8 @@ subroutine second_derivative(alsa1,as1,bs1,&
      if (nrank==0) write(*,*)'Set of coefficients not ready yet'
      call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
   elseif(isecondder==4) then ! Sixth-order compact Lele style (no extra dissipation)
-     alsai= two / eleven
-     asi  = (twelve / eleven)/d2
+     alsai= two / 11._mytype
+     asi  = (12._mytype / 11._mytype)/d2
      bsi  = (three / 44.0_mytype )/d2
      csi  = zero
      dsi = zero
@@ -399,7 +402,7 @@ subroutine second_derivative(alsa1,as1,bs1,&
      cstt = csi
   elseif(isecondder==5) then ! Sixth-order Hyperviscous operator
      if(nrank==0) write(*,*) 'Using the hyperviscous operator with (nu_0/nu,c_nu) = ', '(', nu0nu,',', cnu,')'
-     dpis3=two*pi/three
+     dpis3=twopi/three
      kppkc=pi*pi*(one+nu0nu)
      kppkm=dpis3*dpis3*(one+cnu*nu0nu) !exp(-((pi-dpis3)/(zpthree*pi-dpis3))**two)/xxnu+dpis3*dpis3
      xnpi2=kppkc
@@ -419,50 +422,50 @@ subroutine second_derivative(alsa1,as1,bs1,&
   endif
 
   ! Defined for the bounadies when dirichlet conditions are used
-  alsa1= eleven
-  as1  = (thirteen)/d2
-  bs1  =-(twentyseven)/d2
-  cs1  = (fifteen)/d2
+  alsa1= 11._mytype
+  as1  = (13._mytype)/d2
+  bs1  =-(27._mytype)/d2
+  cs1  = (15._mytype)/d2
   ds1  =-(one)/d2
 
   if (isecondder==1) then
      alsa2 = zero
      as2   = one / d2
   else
-     alsa2= zpone
+     alsa2= 0.1_mytype
      as2  = (six/five)/d2
   endif
 
-  alsa3= two/eleven
-  as3  = (twelve/eleven)/d2
-  bs3  = (three/fortyfour)/d2
+  alsa3= two/11._mytype
+  as3  = (12._mytype/11._mytype)/d2
+  bs3  = (three/44._mytype)/d2
 
-  alsa4= two/eleven
-  as4  = (twelve/eleven)/d2
-  bs4  = (three/fortyfour)/d2
+  alsa4= two/11._mytype
+  as4  = (12._mytype/11._mytype)/d2
+  bs4  = (three/44._mytype)/d2
   cs4  = zero
 
-  alsan= eleven
-  asn  = (thirteen)/d2
-  bsn  =-(twentyseven)/d2
-  csn  = (fifteen)/d2
+  alsan= 11._mytype
+  asn  = (13._mytype)/d2
+  bsn  =-(27._mytype)/d2
+  csn  = (15._mytype)/d2
   dsn  =-(one)/d2
 
   if (isecondder==1) then
      alsam = zero
      asm   = one / d2
   else
-     alsam= zpone
+     alsam= 0.1_mytype
      asm  = (six/five)/d2
   endif
 
-  alsat= two/eleven
-  ast  = (twelve/eleven)/d2
-  bst  = (three/fortyfour)/d2
+  alsat= two/11._mytype
+  ast  = (12._mytype/11._mytype)/d2
+  bst  = (three/44._mytype)/d2
 
-  alsatt = two/eleven
-  astt = (twelve/eleven)/d2
-  bstt = (three/fortyfour)/d2
+  alsatt = two/11._mytype
+  astt = (12._mytype/11._mytype)/d2
+  bstt = (three/44._mytype)/d2
   cstt = zero
 
   if     (ncl1.eq.0) then !Periodic
@@ -593,7 +596,8 @@ subroutine interpolation(dx,nxm,nx,nclx1,nclxn,&
   !
   !*******************************************************************
 
-  use decomp_2d, only : mytype
+  use x3dprecision, only : mytype
+  !use decomp_2d, only : mytype
   use param, only : zero, half, one, two, three, four, nine, ten
   use param, only : ipinter, ifirstder
 

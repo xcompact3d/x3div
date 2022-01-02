@@ -48,7 +48,8 @@ contains
   !############################################################################
   SUBROUTINE solve_poisson(pp3, px1, py1, pz1, ux1, uy1, uz1)
 
-    USE decomp_2d, ONLY : mytype, xsize, zsize, ph1
+    use x3dprecision, only : mytype
+    USE decomp_2d, ONLY : xsize, zsize, ph1
     USE decomp_2d_poisson, ONLY : poisson
     USE var, ONLY : nzmsize
     USE param, ONLY : npress
@@ -82,7 +83,8 @@ contains
   !############################################################################
   subroutine cor_vel (ux,uy,uz,px,py,pz)
 
-    USE decomp_2d
+    use x3dprecision, only : mytype
+    use decomp_2d, only : xsize
     USE variables
     USE param
 
@@ -106,8 +108,15 @@ contains
   !############################################################################
   subroutine divergence (pp3,ux1,uy1,uz1,nlock)
 
-    USE param
-    USE decomp_2d
+    use x3dprecision, only : mytype, real_type
+    use param
+    use decomp_2d, only : nrank, ph1, ph3, ph4, nproc
+    use decomp_2d, only : xsize, ysize, zsize
+    use decomp_2d, only : nx_global, ny_global, nz_global
+    use decomp_2d, only : transpose_x_to_y, &
+                          transpose_y_to_z, &
+                          transpose_z_to_y, &
+                          transpose_y_to_x
     USE variables
     USE var, ONLY: ta1, tb1, tc1, pp1, pgy1, pgz1, di1, &
          duxdxp2, uyp2, uzp2, duydypi2, upi2, ta2, dipp2, &
@@ -210,10 +219,15 @@ contains
   !############################################################################
   subroutine gradp(px1,py1,pz1,pp3)
 
+    use x3dprecision, only: mytype 
     USE param
-    USE decomp_2d
+    USE decomp_2d, only: xsize, ysize, zsize, ph2, ph3
+    use decomp_2d, only : transpose_x_to_y, &
+                          transpose_y_to_z, &
+                          transpose_z_to_y, &
+                          transpose_y_to_x
+    use decomp_2d, only: xstart, xend, ystart, yend, zstart, zend
     USE variables
-    USE MPI
     USE var, only: pp1,pgy1,pgz1,di1,pp2,ppi2,pgy2,pgz2,pgzi2,dip2,&
          pgz3,ppi3,dip3,nxmsize,nymsize,nzmsize
 

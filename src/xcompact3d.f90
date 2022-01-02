@@ -35,10 +35,11 @@ program xcompact3d
   use MPI
 
   use var
-
+  use decomp_2d, only : nrank 
+  use param,   only : dt, zero
   use transeq, only : calculate_transeq_rhs
-  use navier, only : solve_poisson, cor_vel
-  use mom, only : test_du, test_dv, test_dw
+  use navier,  only : solve_poisson, cor_vel
+  use mom,     only : test_du, test_dv, test_dw
 
   implicit none
 
@@ -102,7 +103,12 @@ end program xcompact3d
 subroutine init_xcompact3d(ndt_max)
 
   use MPI
-  use decomp_2d
+  use decomp_2d, only : nrank, nproc
+  use decomp_2d, only : decomp_2d_init, decomp_info_init
+  use decomp_2d, only : init_coarser_mesh_statS, &
+                        init_coarser_mesh_statV, &
+                        init_coarser_mesh_statP
+  use decomp_2d, only : ph1, ph2, ph3, ph4, phG
   USE decomp_2d_poisson, ONLY : decomp_2d_poisson_init
   use case
 
@@ -111,6 +117,7 @@ subroutine init_xcompact3d(ndt_max)
   use variables, only : nx, ny, nz, nxm, nym, nzm
   use variables, only : p_row, p_col
   use variables, only : test_mode
+  use variables, only : nstat, nprobe, nvisu
 
   implicit none
 
@@ -141,6 +148,7 @@ subroutine init_xcompact3d(ndt_max)
   p_row = 0; p_col = 0
   !trun = 5.0
   ndt_max = 10
+  test_mode = .false. 
   do arg = 1, nargin
      call get_command_argument(arg, InputFN, FNLength, status)
      read(InputFN, *, iostat=status) DecInd
@@ -163,6 +171,7 @@ subroutine init_xcompact3d(ndt_max)
         else
            test_mode = .true.
         end if
+        write(*,*) 'Test mode ', test_mode
      else
         print *, "Error: Too many arguments!"
         print *, "  x3div accepts"
@@ -204,8 +213,9 @@ endsubroutine init_xcompact3d
 subroutine init_flowfield()
   
   use case
-
   use var
+
+  use param, only: zero
 
   call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
   itime = 0
@@ -218,7 +228,7 @@ end subroutine
 subroutine finalise_xcompact3d()
 
   use MPI
-  use decomp_2d
+  use decomp_2d, only : decomp_2d_finalize
 
   implicit none
 

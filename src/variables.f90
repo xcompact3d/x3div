@@ -32,12 +32,17 @@
 
 module var
 
-  use decomp_2d
-  USE variables
-  USE param
+  use x3dprecision, only : mytype
+  !use decomp_2d, only : DECOMP_INFO
+  !use decomp_2d
+  !USE variables
+  !USE param
+
+  implicit none
   
   ! define all major arrays here
   real(mytype), save, allocatable, dimension(:,:,:) :: ux1, ux2, ux3, po3, dv3
+  !double precision, save, allocatable, dimension(:,:,:) :: ux1, ux2, ux3, po3, dv3
   real(mytype), save, allocatable, dimension(:,:,:,:) :: pp3
   real(mytype), save, allocatable, dimension(:,:,:) :: uy1, uy2, uy3
   real(mytype), save, allocatable, dimension(:,:,:) :: uz1, uz2, uz3
@@ -63,7 +68,20 @@ contains
 
   subroutine init_variables
 
+    !use decomp_2d  
+    use variables
+    use param
+    use decomp_2d, only : DECOMP_INFO
+    use decomp_2d , only : decomp_info_init 
+    use decomp_2d , only : alloc_x, alloc_y, alloc_z 
+    use decomp_2d , only : xsize, ysize, zsize, ph1, ph3
+    use decomp_2d , only : nrank
+    
+    implicit none
+
     TYPE(DECOMP_INFO), save :: ph! decomposition object
+
+    integer :: i, j , k
 
 #ifdef DEBG
     if (nrank == 0) write(*,*) '# Init_variables start'
@@ -126,7 +144,7 @@ contains
     call alloc_x(ti1)
     ti1 = zero
     call alloc_x(di1)
-    tdi1 = zero
+    di1 = zero
 
     allocate(pp1(nxmsize,xsize(2),xsize(3)))
     pp1 = zero
@@ -161,7 +179,7 @@ contains
     call alloc_y(uy2)
     uy2=zero
     call alloc_y(uz2)
-    uzj2=zero
+    uz2=zero
     call alloc_y(ta2)
     ta2=zero
     call alloc_y(tb2)
@@ -730,7 +748,6 @@ contains
        gdt(3)=gdt(1)
 
        ntime = 1
-       nrhotime = 2
     endif
     allocate(dux1(xsize(1),xsize(2),xsize(3),ntime))
     dux1=zero

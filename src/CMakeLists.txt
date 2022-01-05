@@ -25,6 +25,12 @@ target_link_libraries(xcompact3d PRIVATE decomp2d)
 if (MPI_FOUND)
   target_link_libraries(xcompact3d PRIVATE MPI::MPI_Fortran)
 endif (MPI_FOUND)
+if (FFTW_FOUND)
+  message(STATUS "FFTW_DOUBLE     : ${FFTW_DOUBLE_LIB}")
+  message(STATUS "FFTW_SINGLE     : ${FFTW_FLOAT_LIB}")
+  target_link_libraries(xcompact3d PRIVATE ${FFTW_DOUBLE_LIB})
+  target_link_libraries(xcompact3d PRIVATE ${FFTW_FLOAT_LIB})
+endif (FFTW_FOUND)
 
 install(TARGETS xcompact3d
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

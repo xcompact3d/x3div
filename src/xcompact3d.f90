@@ -36,7 +36,7 @@ program xcompact3d
 
   use var
   use decomp_2d, only : nrank 
-  use param,   only : dt, zero
+  use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
   use mom,     only : test_du, test_dv, test_dw
@@ -63,6 +63,7 @@ program xcompact3d
   end if
   
   do while(ndt < ndt_max)
+     itr = 1 ! no inner iterations
      call init_flowfield()
 
      tstart = MPI_Wtime()

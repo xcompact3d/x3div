@@ -15,6 +15,7 @@ add_executable(xcompact3d
                     parameters.f90
                     poisson.f90
                     schemes.f90
+		    thomas.f90
                     transeq.f90
                     variables.f90
                     xcompact3d.f90)

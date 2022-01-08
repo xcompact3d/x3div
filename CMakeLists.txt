@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0.2)                        
-cmake_policy(SET CMP0048 NEW)
+cmake_minimum_required(VERSION 3.12)                        
+cmake_policy(SET CMP0074 NEW)
 
 project(xcompact3d LANGUAGES Fortran)
 
@@ -158,6 +158,20 @@ if(${FFT_Choice} MATCHES "fftw")
 
 endif(${FFT_Choice} MATCHES "fftw")
 
+# Look for unit testing library pfunit
+option(USE_PFUNIT "Unit testing library pFUnit" OFF)
+if (MPI_FOUND)
+  if (USE_PFUNIT)
+    find_package(PFUNIT)
+  endif (USE_PFUNIT)
+  if (PFUNIT_FOUND)
+    message(STATUS "pFunit directory : ${PFUNIT_DIR}")
+    enable_testing()
+  else (PFUNIT_FOUND)
+    message(STATUS "pFUnit not found")
+  endif (PFUNIT_FOUND)
+endif (MPI_FOUND)
+
 # Create a static library for the fft
 add_subdirectory(decomp2d)
 
@@ -173,6 +187,15 @@ if (${BUILD_TESTING})
   include(CTest)
   message(STATUS "MPI INCL ALSO FOUND: ${MPI_INCLUDE_PATH}")
   message(STATUS "MPI EXEC: ${MPIEXEC_EXECUTABLE}")
-  add_test(NAME TestAPP COMMAND ${MPIEXEC_EXECUTABLE} -n ${MPIEXEC_MAX_NUMPROCS} ${CMAKE_INSTALL_PREFIX}/bin/xcompact3d WORKING_DIRECTORY ${test_dir})
+  file(MAKE_DIRECTORY ${test_dir}/App)
+  add_test(NAME TestAPP COMMAND ${MPIEXEC_EXECUTABLE} -n ${MPIEXEC_MAX_NUMPROCS} ${CMAKE_INSTALL_PREFIX}/bin/xcompact3d WORKING_DIRECTORY ${test_dir}/App)
+  #if (PFUNIT_FOUND)
+  #  file(MAKE_DIRECTORY ${test_dir}/Verif_x_00)
+  #  add_test(NAME Test_dx_00 COMMAND ${MPIEXEC_EXECUTABLE} -n ${MPIEXEC_MAX_NUMPROCS} ${CMAKE_INSTALL_PREFIX}/bin/verif_x_00 WORKING_DIRECTORY ${test_dir}/Verif_x_00)
+  #endif (PFUNIT_FOUND)
 endif()
 
+# Folder for unit tests
+if (PFUNIT_FOUND)
+  add_subdirectory(verification)
+endif()

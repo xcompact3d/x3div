@@ -115,11 +115,7 @@ subroutine parameter()
   !###########################################################################
   ! Log-output
   !###########################################################################
-  if (nrank==0) call system('mkdir data out probes 2> /dev/null')
 
-#ifdef DEBG
-  if (nrank == 0) write(*,*) '# parameter input.i3d done'
-#endif
   if (nrank==0) then
      write(*,"(' Reynolds number Re     : ',F17.3)") re
      write(*,"(' xnu                    : ',F17.8)") xnu

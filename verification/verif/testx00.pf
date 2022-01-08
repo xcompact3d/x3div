@@ -1,0 +1,69 @@
+module testx00
+
+   use MPI
+   use pFunit
+   use iso_c_binding
+   use x3d_unit_testing_tools
+   implicit none
+
+contains
+
+   ! Serial test
+   @test
+   subroutine verif_derx_00()
+
+      use decomp_2d   , only : xsize
+      use x3dprecision, only : mytype, pi, twopi
+      use param       , only : zero,two, dx
+      use var
+      use variables
+      use tools, only : error_l1_l2_linf
+
+      implicit none
+
+      real(mytype), dimension(xsize(1),xsize(2),xsize(3)) :: input, output, sol
+      real(mytype) :: x, l1, l2, linf, sl1, sl2, slinf, t1, t2
+      integer :: i
+
+      ! Lx = Ly = Lz = 1 set in paramters.f90
+      do i = 1, xsize(1)
+         x = real(i-1,mytype) * dx
+         input(i,:,:) = sin(twopi*x) + cos(two*twopi*x)
+      enddo
+
+      ! test derx
+      do i = 1, xsize(1)
+         x = real(i-1,mytype) * dx
+         sol(i,:,:) = twopi*cos(twopi*x) - two*twopi*sin(two*twopi*x)
+      enddo
+      call error_l1_l2_linf(sol, sl1, sl2, slinf)
+      call cpu_time(t1)
+      call derx(output,input,di1,sx,ffxp,fsxp,fwxp,xsize(1),xsize(2),xsize(3),1)
+      call cpu_time(t2)
+      !do i = 1, xsize(1)
+      !  write(*,*) 'Derx1 ', i, output(i,1,1), sol(i,1,1)
+      !enddo
+      call error_l1_l2_linf(output-sol, l1, l2, linf)
+      call log("derx00p", l1/sl1, l2/sl2, linf/slinf, t2-t1)
+      if (check_error) then
+         @assertEqual(l1/sl1, zero, tolerance=2.d-6)
+         @assertEqual(l2/sl2, zero, tolerance=2.d-6)
+         @assertEqual(linf/slinf, zero, tolerance=2.d-6)
+      endif
+      call cpu_time(t1)
+      call derx(output,input,di1,sx,ffx,fsx,fwx,xsize(1),xsize(2),xsize(3),0)
+      call cpu_time(t2)
+      !do i = 1, xsize(1)
+      !  write(*,*) 'Derx0 ', i, output(i,1,1), sol(i,1,1)
+      !enddo
+      call error_l1_l2_linf(output-sol, l1, l2, linf)
+      call log("derx00", l1/sl1, l2/sl2, linf/slinf, t2-t1)
+      if (check_error) then
+         @assertEqual(l1/sl1, zero, tolerance=2.d-6)
+         @assertEqual(l2/sl2, zero, tolerance=2.d-6)
+         @assertEqual(linf/slinf, zero, tolerance=2.d-6)
+      endif
+
+   end subroutine verif_derx_00
+
+end module testx00

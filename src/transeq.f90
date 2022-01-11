@@ -99,9 +99,12 @@ contains
 
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
-    ta1(:,:,:) = ux1(:,:,:) * ux1(:,:,:)
-    tb1(:,:,:) = ux1(:,:,:) * uy1(:,:,:)
-    tc1(:,:,:) = ux1(:,:,:) * uz1(:,:,:)
+    
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
+      tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
+      tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
+    enddo
 
     call derx (td1,ta1,di1,sx,ffxp,fsxp,fwxp,xsize(1),xsize(2),xsize(3),1)
     call derx (te1,tb1,di1,sx,ffx,fsx,fwx,xsize(1),xsize(2),xsize(3),0)
@@ -111,9 +114,11 @@ contains
     call derx (tc1,uz1,di1,sx,ffxp,fsxp,fwxp,xsize(1),xsize(2),xsize(3),1)
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
-    tg1(:,:,:) = td1(:,:,:) + ux1(:,:,:) * ta1(:,:,:)
-    th1(:,:,:) = te1(:,:,:) + ux1(:,:,:) * tb1(:,:,:)
-    ti1(:,:,:) = tf1(:,:,:) + ux1(:,:,:) * tc1(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      tg1(i,j,k) = td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k)
+      th1(i,j,k) = te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k)
+      ti1(i,j,k) = tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k)
+    enddo
     ! TODO: save the x-convective terms already in dux1, duy1, duz1
 
     call test_du(ta1)
@@ -123,9 +128,12 @@ contains
     call transpose_x_to_y(uz1,uz2)
 
     !WORK Y-PENCILS
-    td2(:,:,:) = ux2(:,:,:) * uy2(:,:,:)
-    te2(:,:,:) = uy2(:,:,:) * uy2(:,:,:)
-    tf2(:,:,:) = uz2(:,:,:) * uy2(:,:,:)
+    
+    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+      td2(i,j,k) = ux2(i,j,k) * uy2(i,j,k)
+      te2(i,j,k) = uy2(i,j,k) * uy2(i,j,k)
+      tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
+    enddo
 
     call dery (tg2,td2,di2,sy,ffy,fsy,fwy,ppy,ysize(1),ysize(2),ysize(3),0)
     call dery (th2,te2,di2,sy,ffyp,fsyp,fwyp,ppy,ysize(1),ysize(2),ysize(3),1)
@@ -135,10 +143,12 @@ contains
     call dery (tf2,uz2,di2,sy,ffyp,fsyp,fwyp,ppy,ysize(1),ysize(2),ysize(3),1)
 
     ! Convective terms of y-pencil in tg2,th2,ti2
-    tg2(:,:,:) = tg2(:,:,:) + uy2(:,:,:) * td2(:,:,:)
-    th2(:,:,:) = th2(:,:,:) + uy2(:,:,:) * te2(:,:,:)
-    ti2(:,:,:) = ti2(:,:,:) + uy2(:,:,:) * tf2(:,:,:)
-
+    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+      tg2(i,j,k) = tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k)
+      th2(i,j,k) = th2(i,j,k) + uy2(i,j,k) * te2(i,j,k)
+      ti2(i,j,k) = ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k)
+    enddo
+    
     call test_dv(te2)
     
     call transpose_y_to_z(ux2,ux3)
@@ -146,9 +156,11 @@ contains
     call transpose_y_to_z(uz2,uz3)
 
     !WORK Z-PENCILS
-    td3(:,:,:) = ux3(:,:,:) * uz3(:,:,:)
-    te3(:,:,:) = uy3(:,:,:) * uz3(:,:,:)
-    tf3(:,:,:) = uz3(:,:,:) * uz3(:,:,:)
+    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+      td3(i,j,k) = ux3(i,j,k) * uz3(i,j,k)
+      te3(i,j,k) = uy3(i,j,k) * uz3(i,j,k)
+      tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)
+    enddo
 
     call derz (tg3,td3,di3,sz,ffz,fsz,fwz,zsize(1),zsize(2),zsize(3),0)
     call derz (th3,te3,di3,sz,ffz,fsz,fwz,zsize(1),zsize(2),zsize(3),0)
@@ -158,9 +170,11 @@ contains
     call derz (tf3,uz3,di3,sz,ffz,fsz,fwz,zsize(1),zsize(2),zsize(3),0)
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
-    ta3(:,:,:) = tg3(:,:,:) + uz3(:,:,:) * td3(:,:,:)
-    tb3(:,:,:) = th3(:,:,:) + uz3(:,:,:) * te3(:,:,:)
-    tc3(:,:,:) = ti3(:,:,:) + uz3(:,:,:) * tf3(:,:,:)
+    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+      ta3(i,j,k) = tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k)
+      tb3(i,j,k) = th3(i,j,k) + uz3(i,j,k) * te3(i,j,k)
+      tc3(i,j,k) = ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k)
+    enddo 
 
     call test_dw(tf3)
     
@@ -175,9 +189,11 @@ contains
     call transpose_y_to_x(tf2,tc1) !diff+conv. terms
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
-    dux1(:,:,:,1) = ta1(:,:,:)
-    duy1(:,:,:,1) = tb1(:,:,:)
-    duz1(:,:,:,1) = tc1(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      dux1(i,j,k,1) = ta1(i,j,k)
+      duy1(i,j,k,1) = tb1(i,j,k)
+      duz1(i,j,k,1) = tc1(i,j,k)
+    enddo
 
   end subroutine momentum_rhs_eq
   !############################################################################

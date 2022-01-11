@@ -35,7 +35,7 @@ program xcompact3d
   use MPI
 
   use var
-  use decomp_2d, only : nrank 
+  use decomp_2d, only : nrank, xsize 
   use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
@@ -45,6 +45,7 @@ program xcompact3d
 
   double precision :: tstart, tend, telapsed, tmin, tmax
   !real :: trun
+  integer :: i, j, k
   integer :: ndt, ndt_max
   integer :: ierr
   integer :: mpi_real_type
@@ -66,25 +67,31 @@ program xcompact3d
   
   do while(ndt < ndt_max)
      itr = 1 ! no inner iterations
-     call init_flowfield()
+     !call init_flowfield()
 
      tstart = MPI_Wtime()
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-
-     ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
-     uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
-     uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
+   
+     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
+       ux1(i,j,k) = ux1(i,j,k) + dt * dux1(i,j,k,1)
+       uy1(i,j,k) = uy1(i,j,k) + dt * duy1(i,j,k,1)
+       uz1(i,j,k) = uz1(i,j,k) + dt * duz1(i,j,k,1)
+     enddo
      
-     divu3(:,:,:) = zero
+     !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1)) 
+     !  divu3(:,:,:) = zero
+     !enddo
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
 
      tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)
+     tmin = telapsed
+     tmax = telapsed
 
-     call MPI_Allreduce(telapsed, tmin, 1, mpi_real_type, MPI_MIN, MPI_COMM_WORLD, ierr)
-     call MPI_Allreduce(telapsed, tmax, 1, mpi_real_type, MPI_MAX, MPI_COMM_WORLD, ierr)
+     !call MPI_Allreduce(telapsed, tmin, 1, mpi_real_type, MPI_MIN, MPI_COMM_WORLD, ierr)
+     !call MPI_Allreduce(telapsed, tmax, 1, mpi_real_type, MPI_MAX, MPI_COMM_WORLD, ierr)
      if (nrank == 0) then
         print *, "Elapse time min ", tmin, " max ", tmax
      end if

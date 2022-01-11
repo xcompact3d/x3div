@@ -90,12 +90,16 @@ contains
 
     implicit none
 
+    integer :: i,j,k
+
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux,uy,uz
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)),intent(in) :: px,py,pz
 
-    ux(:,:,:)=ux(:,:,:)-px(:,:,:)
-    uy(:,:,:)=uy(:,:,:)-py(:,:,:)
-    uz(:,:,:)=uz(:,:,:)-pz(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      ux(i,j,k)=ux(i,j,k)-px(i,j,k)
+      uy(i,j,k)=uy(i,j,k)-py(i,j,k)
+      uz(i,j,k)=uz(i,j,k)-pz(i,j,k)
+    enddo
 
     return
   end subroutine cor_vel

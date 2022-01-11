@@ -342,41 +342,36 @@ contains
     cw1 = cw1 / real(nx, kind=mytype) /real(ny, kind=mytype) &
          / real(nz, kind=mytype)
 
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-
-             ! post-processing in spectral space
-
+    do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
              ! POST PROCESSING IN Z
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bz(k) + tmp2 * az(k), &
-                             tmp2 * bz(k) - tmp1 * az(k))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bz(k) + tmp2 * az(k), &
+                             tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
 
              ! POST PROCESSING IN Y
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
              if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! POST PROCESSING IN X
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bx(i) + tmp2 * ax(i), &
-                             tmp2 * bx(i) - tmp1 * ax(i))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                             tmp2 * bx(i) - tmp1 * ax(i), kind=mytype)
              if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! Solve Poisson
-             tmp1 = rl(kxyz(i,j,k))
-             tmp2 = iy(kxyz(i,j,k))
+             tmp1 = real(kxyz(i,j,k), kind=mytype)
+             tmp2 = aimag(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
              if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
                 cw1(i,j,k) = zero
              else
-                cw1(i,j,k) = cx(rl(cw1(i,j,k)) / (-tmp1), &
-                                iy(cw1(i,j,k)) / (-tmp2))
+                cw1(i,j,k) = cmplx(real(cw1(i,j,k),kind=mytype) / (-tmp1), &
+                                  aimag(cw1(i,j,k)) / (-tmp2), kind=mytype)
              end if
 
              !Print result in spectal space after Poisson
@@ -387,27 +382,27 @@ contains
              ! post-processing backward
 
              ! POST PROCESSING IN Z
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bz(k) - tmp2 * az(k), &
-                            -tmp2 * bz(k) - tmp1 * az(k))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bz(k) - tmp2 * az(k), &
+                            -tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
 
              ! POST PROCESSING IN Y
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
              if (j > (ny/2 + 1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! POST PROCESSING IN X
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bx(i) + tmp2 * ax(i), &
-                            -tmp2 * bx(i) + tmp1 * ax(i))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                            -tmp2 * bx(i) + tmp1 * ax(i), kind=mytype)
              if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
+       ! post-processing in spectral space
 
-          end do
-       end do
+
     end do
 
     ! compute c2r transform

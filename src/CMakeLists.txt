@@ -38,8 +38,8 @@ if (FFTW_FOUND)
   target_link_libraries(xcompact3d PRIVATE ${FFTW_DOUBLE_LIB})
   target_link_libraries(xcompact3d PRIVATE ${FFTW_FLOAT_LIB})
 elseif(${FFT_Choice} MATCHES "cufft")
-  target_link_libraries(xcompact3d PRIVATE CUDA::cudart)
   target_link_libraries(xcompact3d PRIVATE CUDA::cufft)
+  target_link_libraries(xcompact3d PRIVATE CUDA::cudart)
 endif (FFTW_FOUND)
 
 install(TARGETS xcompact3d x3d

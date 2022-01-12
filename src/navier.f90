@@ -150,9 +150,11 @@ contains
 
     nvect3=(ph1%zen(1)-ph1%zst(1)+1)*(ph1%zen(2)-ph1%zst(2)+1)*nzmsize
 
-    ta1(:,:,:) = ux1(:,:,:)
-    tb1(:,:,:) = uy1(:,:,:)
-    tc1(:,:,:) = uz1(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))    
+       ta1(i,j,k) = ux1(i,j,k)
+       tb1(i,j,k) = uy1(i,j,k)
+       tc1(i,j,k) = uz1(i,j,k)
+   enddo
 
     !WORK X-PENCILS
 
@@ -169,8 +171,10 @@ contains
     call interyvp(upi2,duxdxp2,dipp2,sy,cifyp6,cisyp6,ciwyp6,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),1)
     call deryvp(duydypi2,uyp2,dipp2,sy,cfy6,csy6,cwy6,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),0)
 
-    !! Compute sum dudx + dvdy
-    duydypi2(:,:,:) = duydypi2(:,:,:) + upi2(:,:,:)
+    !! Compute sum dudx + dvdy !ph1%yst(1):ph1%yen(1),nymsize,ysize(3)
+    do concurrent (k=1:ysize(3), j=1:nymsize, i=ph1%yst(1):ph1%yen(1))
+      duydypi2(i,j,k) = duydypi2(i,j,k) + upi2(i,j,k)
+    enddo
 
     call interyvp(upi2,uzp2,dipp2,sy,cifyp6,cisyp6,ciwyp6,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),1)
 
@@ -184,21 +188,21 @@ contains
          (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize,0)
 
     !! Compute sum dudx + dvdy + dwdz
-    pp3(:,:,:) = pp3(:,:,:) + po3(:,:,:)
+    do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
+       pp3(i,j,k) = pp3(i,j,k) + po3(i,j,k)
+    enddo
 
     if (nlock==2) then
-       pp3(:,:,:)=pp3(:,:,:)-pp3(ph1%zst(1),ph1%zst(2),nzmsize)
+       do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
+          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1%zst(1),ph1%zst(2),nzmsize)
+       enddo
     endif
 
     tmax=-1609._mytype
     tmoy=zero
-    do k=1,nzmsize
-       do j=ph1%zst(2),ph1%zen(2)
-          do i=ph1%zst(1),ph1%zen(1)
-             if (pp3(i,j,k).gt.tmax) tmax=pp3(i,j,k)
-             tmoy=tmoy+abs(pp3(i,j,k))
-          enddo
-       enddo
+    do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
+       if (pp3(i,j,k).gt.tmax) tmax=pp3(i,j,k)
+       tmoy=tmoy+abs(pp3(i,j,k))
     enddo
     tmoy=tmoy/nvect3
 

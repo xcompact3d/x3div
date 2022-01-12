@@ -361,14 +361,10 @@ pos = decomp%y1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=i1,i2
-do i=1,n1
-out(pos) = in(i,j,k)
-pos = pos + 1
-end do
-end do
-end do
+   do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+      out(pos) = in(i,j,k)
+      pos = pos + 1
+   end do
 end do
 
 return
@@ -407,14 +403,10 @@ pos = decomp%y1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=i1,i2
-do i=1,n1
-out(pos) = in(i,j,k)
-pos = pos + 1
-end do
-end do
-end do
+   do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+      out(pos) = in(i,j,k)
+      pos = pos + 1
+   end do
 end do
 
 return
@@ -453,14 +445,10 @@ pos = decomp%x1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=1,n2
-do i=i1,i2
-out(i,j,k) = in(pos)
-pos = pos + 1
-end do
-end do
-end do
+   do concurrent (k=1:n3, j=1:n2, i=i1:i2)
+      out(i,j,k) = in(pos)
+      pos = pos + 1
+   end do
 end do
 
 return

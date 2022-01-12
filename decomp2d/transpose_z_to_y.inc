@@ -372,13 +372,9 @@ subroutine mem_split_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 #endif
 
-     do k=i1,i2
-        do j=1,n2
-           do i=1,n1
-              out(pos) = in(i,j,k)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=i1:i2, j=1:n2, i=1:n1)
+        out(pos) = in(i,j,k)
+        pos = pos + 1
      end do
   end do
 
@@ -418,13 +414,9 @@ subroutine mem_split_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 #endif
 
-     do k=i1,i2
-        do j=1,n2
-           do i=1,n1
-              out(pos) = in(i,j,k)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=i1:i2, j=1:n2, i=1:n1)
+        out(pos) = in(i,j,k)
+        pos = pos + 1
      end do
   end do
 
@@ -464,13 +456,9 @@ subroutine mem_merge_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 #endif
 
-     do k=1,n3
-        do j=i1,i2
-           do i=1,n1
-              out(i,j,k) = in(pos)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+        out(i,j,k) = in(pos)
+        pos = pos + 1
      end do
   end do
 
@@ -510,13 +498,9 @@ subroutine mem_merge_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 #endif
 
-     do k=1,n3
-        do j=i1,i2
-           do i=1,n1
-              out(i,j,k) = in(pos)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+        out(i,j,k) = in(pos)
+        pos = pos + 1
      end do
   end do
 

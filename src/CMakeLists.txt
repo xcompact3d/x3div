@@ -22,6 +22,7 @@ set(X3DFILES
 
 add_executable(xcompact3d xcompact3d.f90)
 
+
 add_library(x3d STATIC ${X3DFILES})
 
 target_include_directories(x3d PRIVATE ${PROJECT_BINARY_DIR}/decomp2d)
@@ -38,8 +39,9 @@ if (FFTW_FOUND)
   target_link_libraries(xcompact3d PRIVATE ${FFTW_DOUBLE_LIB})
   target_link_libraries(xcompact3d PRIVATE ${FFTW_FLOAT_LIB})
 elseif(${FFT_Choice} MATCHES "cufft")
-  target_link_libraries(xcompact3d PRIVATE CUDA::cufft)
-  target_link_libraries(xcompact3d PRIVATE CUDA::cudart)
+  #target_link_libraries(xcompact3d PUBLIC "-static")
+  #target_link_libraries(xcompact3d PRIVATE CUDA::cufft)
+  target_link_libraries(xcompact3d PRIVATE CUDA::cudart_static)
 endif (FFTW_FOUND)
 
 install(TARGETS xcompact3d x3d

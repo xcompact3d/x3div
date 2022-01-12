@@ -130,7 +130,7 @@ module decomp_2d_fft
        res = cudaMallocHost(cptr_c2d, Nx*Ny*Nz*c_sizeof(size1))
        call c_f_pointer(cptr_c2d, c2d, [Nx,Ny,Nz])
        c1d = c1
-       call fft_1m_c2c(Nx, Ny*Nz, c1d, c2d, isign)
+       !call fft_1m_c2c(Nx, Ny*Nz, c1d, c2d, isign)
        c2 = c2d
     else if (type == 2) then
        res = cudaMallocHost(cptr_c1d, Nx*Ny*Nz*c_sizeof(size1))
@@ -146,7 +146,7 @@ module decomp_2d_fft
           end do
        end do
        c1d = wk1
-       call fft_1m_c2c(Ny, Nx*Nz, c1d, c2d, isign)
+       !call fft_1m_c2c(Ny, Nx*Nz, c1d, c2d, isign)
        wk1 = c2d
        do k=1,Nz
           do j=1,Ny
@@ -170,7 +170,7 @@ module decomp_2d_fft
           end do
        end do
        c1d = wk2
-       call fft_1m_c2c(Nz, Nx*Ny, c1d, c2d, isign)
+       !call fft_1m_c2c(Nz, Nx*Ny, c1d, c2d, isign)
        wk2 = c2d
        do k=1,Nz
           do j=1,Ny
@@ -219,7 +219,7 @@ module decomp_2d_fft
     res = cudaMallocHost(cptr_rd, Nx*Ny*Nz*c_sizeof(size2))
     call c_f_pointer(cptr_rd,rd, [Nx,Ny,Nz])
     rd = r
-    call fft_1m_r2c(Nx, Ny*Nz, rd, cd)
+    !call fft_1m_r2c(Nx, Ny*Nz, rd, cd)
     c = cd
     res = cudaFreeHost(cptr_rd)
     res = cudaFreeHost(cptr_cd)
@@ -297,7 +297,7 @@ module decomp_2d_fft
     res = cudaMallocHost(cptr_rd, Nx*Ny*Nz*c_sizeof(size2))
     call c_f_pointer(cptr_rd,rd, [Nx,Ny,Nz])
     cd = c
-    call fft_1m_c2r(Nx, Ny*Nz, cd, rd)
+    !call fft_1m_c2r(Nx, Ny*Nz, cd, rd)
     r = rd
     res = cudaFreeHost(cptr_rd)
     res = cudaFreeHost(cptr_cd)

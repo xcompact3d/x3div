@@ -363,8 +363,8 @@ subroutine mem_split_xy_real(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 
      do concurrent (k=1:n3, j=1:n2, i=i1:i2)
+        pos = i-i1+1 + (j-1)*(i2-i1+1) + (k-1)*n2*(i2-i1+1)
         out(pos) = in(i,j,k)
-        pos = pos + 1
      end do
   end do
 
@@ -405,8 +405,8 @@ subroutine mem_split_xy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 
      do concurrent (k=1:n3, j=1:n2, i=i1:i2)
+        pos = i-i1+1 + (j-1)*(i2-i1+1) + (k-1)*n2*(i2-i1+1)
         out(pos) = in(i,j,k)
-        pos = pos + 1
      end do
   end do
 
@@ -447,8 +447,8 @@ subroutine mem_merge_xy_real(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 
      do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+        pos = i + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
         out(i,j,k) = in(pos)
-        pos = pos + 1
      end do
   end do
 
@@ -489,8 +489,8 @@ subroutine mem_merge_xy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 
      do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+        pos = i + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
         out(i,j,k) = in(pos)
-        pos = pos + 1
      end do
   end do
 

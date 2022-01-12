@@ -25,7 +25,8 @@ else ifeq ($(CMP),gcc)
 FC = mpif90
 #FC = mpif90-mpich-mp
 #FFLAGS = -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -x f95-cpp-input
-FFLAGS = -cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch
+FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu 
+#-cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch
 #-ffpe-trap=invalid,zero
 else ifeq ($(CMP),nagfor)
 FC = mpinagfor
@@ -49,8 +50,7 @@ SRCDECOMP = $(DECOMPDIR)/decomp_2d.f90 $(DECOMPDIR)/glassman.f90 $(DECOMPDIR)/ff
 OBJDECOMP = $(SRCDECOMP:%.f90=%.o)
 #SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/parameters.f90 #$(SRCDIR)/*.f90
 OBJ = $(SRC:%.f90=%.o)
-SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/x3d_parallel.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/x3d_tools.f90 $(SRCDIR)/xcompact3d.f90
-
+SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/x3d_parallel.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/x3d_tools.f90 $(SRCDIR)/xcompact3d.f90
 
 #######FFT settings##########
 ifeq ($(FFT),fftw3)

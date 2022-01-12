@@ -490,6 +490,7 @@ subroutine derz_00(tz,uz,rz,sz,ffz,fsz,fwz,nx,ny,nz,npaire)
   USE param
   use thomas
   use derivZ
+  use nvtx
 
   implicit none
 
@@ -537,7 +538,9 @@ subroutine derz_00(tz,uz,rz,sz,ffz,fsz,fwz,nx,ny,nz,npaire)
   endif
 
   ! Solve tri-diagonal system
+  call nvtxStartRange("zthomas")
   call zthomas(tz, rz, sz, ffz, fsz, fwz, alfakz, nx, ny, nz)
+  call nvtxEndRange
 
 end subroutine derz_00
 

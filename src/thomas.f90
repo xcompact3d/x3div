@@ -246,20 +246,30 @@ contains
     integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
-       
-    do k=2,nz
-       do concurrent (j=1:ny, i=1:nx)
+
+    do concurrent (j=1:ny, i=1:nx)
+       do k=2,nz
           tt(i,j,k) = tt(i,j,k) - tt(i,j,k-1)*fs(k)
        enddo
-    enddo 
-    do concurrent (j=1:ny, i=1:nx)
        tt(i,j,nz) = tt(i,j,nz) * fw(nz)
-    enddo
-    do k=nz-1,1,-1
-       do concurrent (j=1:ny, i=1:nx)
+       do k=nz-1,1,-1
           tt(i,j,k) = (tt(i,j,k)-ff(k)*tt(i,j,k+1)) * fw(k)
        enddo
     enddo 
+       
+    !do k=2,nz
+    !   do concurrent (j=1:ny, i=1:nx)
+    !      tt(i,j,k) = tt(i,j,k) - tt(i,j,k-1)*fs(k)
+    !   enddo
+    !enddo 
+    !do concurrent (j=1:ny, i=1:nx)
+    !   tt(i,j,nz) = tt(i,j,nz) * fw(nz)
+    !enddo
+    !do k=nz-1,1,-1
+    !   do concurrent (j=1:ny, i=1:nx)
+    !      tt(i,j,k) = (tt(i,j,k)-ff(k)*tt(i,j,k+1)) * fw(k)
+    !   enddo
+    !enddo 
 
   end subroutine zthomas_12
 

@@ -53,6 +53,7 @@ contains
     USE decomp_2d_poisson, ONLY : poisson
     USE var, ONLY : nzmsize
     USE param, ONLY : npress
+    use nvtx
 
     implicit none
 
@@ -68,9 +69,17 @@ contains
 
     nlock = 1 !! Corresponds to computing div(u*)
 
+    call nvtxStartRange("divergence")
     CALL divergence(pp3(:,:,:,1),ux1,uy1,uz1,nlock)
+    call nvtxEndRange
+    !
+    call nvtxStartRange("poisson")
     CALL poisson(pp3(:,:,:,1))
+    call nvtxEndRange
+    !
+    call nvtxStartRange("gradp")
     CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
+    call nvtxEndRange
 
   END SUBROUTINE solve_poisson
   !############################################################################

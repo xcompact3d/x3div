@@ -158,14 +158,21 @@ contains
 
     !WORK X-PENCILS
 
+    
     call derxvp(pp1,ta1,di1,sx,cfx6,csx6,cwx6,xsize(1),nxmsize,xsize(2),xsize(3),0)
 
     call interxvp(pgy1,tb1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
     call interxvp(pgz1,tc1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
 
+    call nvtxStartRange("Transpose xty pp1")
     call transpose_x_to_y(pp1,duxdxp2,ph4)!->NXM NY NZ
+    call nvtxEndRange
+    call nvtxStartRange("Transpose xty pgy")
     call transpose_x_to_y(pgy1,uyp2,ph4)
+    call nvtxEndRange
+    call nvtxStartRange("Transpose xty pgz")
     call transpose_x_to_y(pgz1,uzp2,ph4)
+    call nvtxEndRange
 
     !WORK Y-PENCILS
     call interyvp(upi2,duxdxp2,dipp2,sy,cifyp6,cisyp6,ciwyp6,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),1)
@@ -178,7 +185,9 @@ contains
 
     call interyvp(upi2,uzp2,dipp2,sy,cifyp6,cisyp6,ciwyp6,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),1)
 
+    call nvtxStartRange("Transpose ytz duy")
     call transpose_y_to_z(duydypi2,duxydxyp3,ph3)!->NXM NYM NZ
+    call nvtxEndRange
     call transpose_y_to_z(upi2,uzp3,ph3)
 
     !WORK Z-PENCILS

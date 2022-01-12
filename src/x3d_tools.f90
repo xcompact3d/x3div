@@ -136,7 +136,7 @@ subroutine init_xcompact3d(ndt_max)
   nx = 32; ny = 32; nz = 32
   p_row = 0; p_col = 0
   !trun = 5.0
-  ndt_max = 10
+  ndt_max = 5
   test_mode = .false. 
   do arg = 1, nargin
      call get_command_argument(arg, InputFN, FNLength, status)

@@ -135,6 +135,7 @@ contains
          duxdxp2, uyp2, uzp2, duydypi2, upi2, ta2, dipp2, &
          duxydxyp3, uzp3, po3, dipp3, nxmsize, nymsize, nzmsize
     USE MPI
+    use nvtx
 
     implicit none
 

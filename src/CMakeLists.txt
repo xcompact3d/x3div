@@ -18,6 +18,7 @@ set(X3DFILES
             transeq.f90
             variables.f90
             x3d_tools.f90
+	    x3d_parallel.f90
             x3d_precision.f90)
 
 add_executable(xcompact3d xcompact3d.f90)

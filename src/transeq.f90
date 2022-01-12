@@ -75,6 +75,7 @@ contains
     use param
     use variables
     use x3dprecision, only : mytype
+    use x3dparallel
     use decomp_2d , only : xsize, ysize, zsize
     use decomp_2d, only : transpose_x_to_y, &
                           transpose_y_to_z, &
@@ -123,9 +124,9 @@ contains
 
     call test_du(ta1)
     
-    call transpose_x_to_y(ux1,ux2)
-    call transpose_x_to_y(uy1,uy2)
-    call transpose_x_to_y(uz1,uz2)
+    call x3d_transpose_x_to_y(ux1,ux2)
+    call x3d_transpose_x_to_y(uy1,uy2)
+    call x3d_transpose_x_to_y(uz1,uz2)
 
     !WORK Y-PENCILS
     
@@ -151,9 +152,9 @@ contains
     
     call test_dv(te2)
     
-    call transpose_y_to_z(ux2,ux3)
-    call transpose_y_to_z(uy2,uy3)
-    call transpose_y_to_z(uz2,uz3)
+    call x3d_transpose_y_to_z(ux2,ux3)
+    call x3d_transpose_y_to_z(uy2,uy3)
+    call x3d_transpose_y_to_z(uz2,uz3)
 
     !WORK Z-PENCILS
     do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
@@ -179,14 +180,14 @@ contains
     call test_dw(tf3)
     
     !WORK Y-PENCILS
-    call transpose_z_to_y(ta3,td2)
-    call transpose_z_to_y(tb3,te2)
-    call transpose_z_to_y(tc3,tf2)
+    call x3d_transpose_z_to_y(ta3,td2)
+    call x3d_transpose_z_to_y(tb3,te2)
+    call x3d_transpose_z_to_y(tc3,tf2)
 
     !WORK X-PENCILS
-    call transpose_y_to_x(td2,ta1)
-    call transpose_y_to_x(te2,tb1)
-    call transpose_y_to_x(tf2,tc1) !diff+conv. terms
+    call x3d_transpose_y_to_x(td2,ta1)
+    call x3d_transpose_y_to_x(te2,tb1)
+    call x3d_transpose_y_to_x(tf2,tc1) !diff+conv. terms
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))

@@ -372,7 +372,7 @@ subroutine mem_split_yz_real(in,n1,n2,n3,out,iproc,dist,decomp)
 #endif
 #endif
 
-     do concurrent (k=1:n3, j=i1:i2, i=1,n1)
+     do concurrent (k=1:n3, j=i1:i2, i=1:n1)
         out(pos) = in(i,j,k)
         pos = pos + 1
      end do

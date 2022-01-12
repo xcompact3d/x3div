@@ -78,7 +78,7 @@ contains
     ! Optimized solver, rr is pre-determined
     if (thomas_optim) then
        tmp = (/-one, (zero, i=2,nx-1), alfa/)
-       call xthomas_12(tmp, ff, fs, fw, nx, 1, 1)
+       call thomas1d(tmp, ff, fs, fw, nx)
        do concurrent (k=1:nz, j=1:ny)
           ss(j,k) = (    tt(1,j,k)-alfa*tt(nx,j,k)) &
                   / (one+tmp(1)   -alfa*tmp(nx))
@@ -141,7 +141,7 @@ contains
     ! Optimized solver, rr is pre-determined
     if (thomas_optim) then
        tmp = (/-one, (zero, j=2,ny-1), alfa/)
-       call ythomas_12(tmp, ff, fs, fw, 1, ny, 1)
+       call thomas1d(tmp, ff, fs, fw, ny)
        do concurrent (k=1:nz)
           do concurrent (i=1:nx)
              ss(i,k) = (    tt(i,1,k)-alfa*tt(i,ny,k)) &
@@ -214,7 +214,7 @@ contains
     ! Optimized solver, rr is constant
     if (thomas_optim) then
        tmp = (/-one, (zero, k=2, nz-1), alfa/)
-       call zthomas_12(tmp, ff, fs, fw, 1, 1, nz)
+       call thomas1d(tmp, ff, fs, fw, nz)
        do concurrent (j=1:ny, i=1:nx)
           ss(i,j) = (    tt(i,j,1)-alfa*tt(i,j,nz)) &
                   / (one+tmp(1)   -alfa*tmp(nz))
@@ -272,5 +272,26 @@ contains
     !enddo 
 
   end subroutine zthomas_12
+
+  ! Thomas algorithm for a 1D vector
+  subroutine thomas1d(tt, ff, fs, fw, nn)
+
+    implicit none
+
+    real(mytype), intent(inout), dimension(nn) :: tt
+    real(mytype), intent(in), dimension(nn) :: ff, fs, fw
+    integer, intent(in) :: nn
+
+    integer :: k
+
+    do k = 2, nn
+       tt(k) = tt(k) - tt(k-1)*fs(k)
+    enddo
+    tt(nn) = tt(nn) * fw(nn)
+    do k = nn-1, 1, -1
+       tt(k) = (tt(k)-ff(k)*tt(k+1)) * fw(k)
+    enddo
+
+  end subroutine thomas1d
 
 end module thomas

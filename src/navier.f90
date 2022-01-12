@@ -296,60 +296,48 @@ contains
 
     !we are in X pencils:
     if (nclx1.eq.2) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             dpdyx1(j,k)=py1(1,j,k)/gdt(itr)
-             dpdzx1(j,k)=pz1(1,j,k)/gdt(itr)
-          enddo
+       do concurrent (k=1:xsize(3),j=1:xsize(2))
+          dpdyx1(j,k)=py1(1,j,k)/gdt(itr)
+          dpdzx1(j,k)=pz1(1,j,k)/gdt(itr)
        enddo
     endif
     if (nclxn.eq.2) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             dpdyxn(j,k)=py1(nx,j,k)/gdt(itr)
-             dpdzxn(j,k)=pz1(nx,j,k)/gdt(itr)
-          enddo
+       do concurrent (k=1:xsize(3),j=1:xsize(2))
+          dpdyxn(j,k)=py1(nx,j,k)/gdt(itr)
+          dpdzxn(j,k)=pz1(nx,j,k)/gdt(itr)
        enddo
     endif
 
     if (ncly1.eq.2) then
        if (xstart(2)==1) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                dpdxy1(i,k)=px1(i,1,k)/gdt(itr)
-                dpdzy1(i,k)=pz1(i,1,k)/gdt(itr)
-             enddo
+          do concurrent (k=1:xsize(3),i=1:xsize(1))
+             dpdxy1(i,k)=px1(i,1,k)/gdt(itr)
+             dpdzy1(i,k)=pz1(i,1,k)/gdt(itr)
           enddo
        endif
     endif
     if (nclyn.eq.2) then
        if (xend(2)==ny) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                dpdxyn(i,k)=px1(i,xsize(2),k)/gdt(itr)
-                dpdzyn(i,k)=pz1(i,xsize(2),k)/gdt(itr)
-             enddo
+          do concurrent (k=1:xsize(3),i=1:xsize(1))
+             dpdxyn(i,k)=px1(i,xsize(2),k)/gdt(itr)
+             dpdzyn(i,k)=pz1(i,xsize(2),k)/gdt(itr)
           enddo
        endif
     endif
 
     if (nclz1.eq.2) then
        if (xstart(3)==1) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                dpdxz1(i,j)=py1(i,j,1)/gdt(itr)
-                dpdyz1(i,j)=pz1(i,j,1)/gdt(itr)
-             enddo
+          do concurrent (j=1:xsize(2),i=1:xsize(1))
+             dpdxz1(i,j)=py1(i,j,1)/gdt(itr)
+             dpdyz1(i,j)=pz1(i,j,1)/gdt(itr)
           enddo
        endif
     endif
     if (nclzn.eq.2) then
        if (xend(3)==nz) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                dpdxzn(i,j)=py1(i,j,xsize(3))/gdt(itr)
-                dpdyzn(i,j)=pz1(i,j,xsize(3))/gdt(itr)
-             enddo
+          do concurrent (j=1:xsize(2),i=1:xsize(1))
+             dpdxzn(i,j)=py1(i,j,xsize(3))/gdt(itr)
+             dpdyzn(i,j)=pz1(i,j,xsize(3))/gdt(itr)
           enddo
        endif
     endif

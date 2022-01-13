@@ -351,7 +351,7 @@ subroutine mem_split_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2,pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then 
@@ -363,17 +363,17 @@ subroutine mem_split_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%z2disp_o(m) + 1
+     pos0 = decomp%z2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%z2count + 1
+     pos0 = m * decomp%z2count + 1
 #else
-     pos = decomp%z2disp(m) + 1
+     pos0 = decomp%z2disp(m) + 1
 #endif
 #endif
 
      do concurrent (k=i1:i2, j=1:n2, i=1:n1)
-        pos = i + (j-1)*n1 + (k-i1)*n2*n1
+        pos = pos0 + i-1 + (j-1)*n1 + (k-i1)*n2*n1
         out(pos) = in(i,j,k)
      end do
   end do
@@ -393,7 +393,7 @@ subroutine mem_split_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2,pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then 
@@ -405,17 +405,17 @@ subroutine mem_split_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%z2disp_o(m) + 1
+     pos0 = decomp%z2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%z2count + 1
+     pos0 = m * decomp%z2count + 1
 #else
-     pos = decomp%z2disp(m) + 1
+     pos0 = decomp%z2disp(m) + 1
 #endif
 #endif
 
      do concurrent (k=i1:i2, j=1:n2, i=1:n1)
-        pos = i + (j-1)*n1 + (k-i1)*n2*n1
+        pos = pos0 + i-1 + (j-1)*n1 + (k-i1)*n2*n1
         out(pos) = in(i,j,k)
      end do
   end do
@@ -435,7 +435,7 @@ subroutine mem_merge_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2, pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then
@@ -447,17 +447,17 @@ subroutine mem_merge_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%y2disp_o(m) + 1
+     pos0 = decomp%y2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%y2count + 1
+     pos0 = m * decomp%y2count + 1
 #else
-     pos = decomp%y2disp(m) + 1
+     pos0 = decomp%y2disp(m) + 1
 #endif
 #endif
 
      do concurrent (k=1:n3, j=i1:i2, i=1:n1)
-        pos = i + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
+        pos = pos0 + i-1 + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
         out(i,j,k) = in(pos)
      end do
   end do
@@ -477,7 +477,7 @@ subroutine mem_merge_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2, pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then
@@ -489,17 +489,17 @@ subroutine mem_merge_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%y2disp_o(m) + 1
+     pos0 = decomp%y2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%y2count + 1
+     pos0 = m * decomp%y2count + 1
 #else
-     pos = decomp%y2disp(m) + 1
+     pos0 = decomp%y2disp(m) + 1
 #endif
 #endif
 
      do concurrent (k=1:n3, j=i1:i2, i=1:n1)
-        pos = i + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
+        pos = pos0 + i-1 + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
         out(i,j,k) = in(pos)
      end do
   end do

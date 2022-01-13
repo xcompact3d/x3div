@@ -41,7 +41,7 @@ if (FFTW_FOUND)
 elseif(${FFT_Choice} MATCHES "cufft")
   #target_link_libraries(xcompact3d PUBLIC "-static")
   #target_link_libraries(xcompact3d PRIVATE CUDA::cufft)
-  target_link_libraries(xcompact3d PRIVATE CUDA::cudart_static)
+  #target_link_libraries(xcompact3d PRIVATE CUDA::cudart_static)
 endif (FFTW_FOUND)
 
 install(TARGETS xcompact3d x3d

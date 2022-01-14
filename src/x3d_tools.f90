@@ -107,6 +107,7 @@ subroutine init_xcompact3d(ndt_max)
   use decomp_2d, only : ph1, ph2, ph3, ph4, phG
   USE decomp_2d_poisson, ONLY : decomp_2d_poisson_init
   use x3d_operator_1d, only : x3d_operator_1d_init
+  use x3d_derive, only : x3d_derive_init
   use case
 
   use var
@@ -192,6 +193,7 @@ subroutine init_xcompact3d(ndt_max)
 
   call schemes()
   call x3d_operator_1d_init()
+  call x3d_derive_init()
 
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
@@ -221,12 +223,14 @@ subroutine finalise_xcompact3d(flag)
   use MPI
   use decomp_2d, only : decomp_2d_finalize
   use x3d_operator_1d, only : x3d_operator_1d_finalize
+  use x3d_derive, only : x3d_derive_finalize
 
   implicit none
 
   logical, intent(in) :: flag
   integer :: ierr
 
+  call x3d_derive_finalize()
   call x3d_operator_1d_finalize()
 
   call decomp_2d_finalize()

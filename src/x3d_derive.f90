@@ -89,6 +89,54 @@ module x3d_derive
 
 contains
 
+  !
+  ! Associate pointers with subroutines
+  !
+  subroutine x3d_derive_init()
+
+    use param, only : nclx1, ncly1, nclz1, nclxn, nclyn, nclzn
+
+    implicit none
+
+    ! Velocity
+    ! First derivative
+    if (nclx1.eq.0.and.nclxn.eq.0) derx => derx_00
+    if (nclx1.eq.1.and.nclxn.eq.1) derx => derx_11
+    if (nclx1.eq.1.and.nclxn.eq.2) derx => derx_12
+    if (nclx1.eq.2.and.nclxn.eq.1) derx => derx_21
+    if (nclx1.eq.2.and.nclxn.eq.2) derx => derx_22
+    !
+    if (ncly1.eq.0.and.nclyn.eq.0) dery => dery_00
+    if (ncly1.eq.1.and.nclyn.eq.1) dery => dery_11
+    if (ncly1.eq.1.and.nclyn.eq.2) dery => dery_12
+    if (ncly1.eq.2.and.nclyn.eq.1) dery => dery_21
+    if (ncly1.eq.2.and.nclyn.eq.2) dery => dery_22
+    !
+    if (nclz1.eq.0.and.nclzn.eq.0) derz => derz_00
+    if (nclz1.eq.1.and.nclzn.eq.1) derz => derz_11
+    if (nclz1.eq.1.and.nclzn.eq.2) derz => derz_12
+    if (nclz1.eq.2.and.nclzn.eq.1) derz => derz_21
+    if (nclz1.eq.2.and.nclzn.eq.2) derz => derz_22
+    ! Second derivative
+
+  end subroutine x3d_derive_init
+
+  !
+  ! Associate pointers with subroutines
+  !
+  subroutine x3d_derive_finalize()
+
+    implicit none
+
+    ! Velocity
+    ! First derivative
+    nullify(derx)
+    nullify(dery)
+    nullify(derz)
+    ! Second derivative
+
+  end subroutine x3d_derive_finalize
+
 subroutine derx_00(tx,ux,rx,sx,x3dop,nx,ny,nz)
 
   use derivX

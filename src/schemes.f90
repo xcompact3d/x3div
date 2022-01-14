@@ -43,7 +43,6 @@ subroutine schemes()
   USE variables
   USE var
   use decomp_2d, only : nrank
-  use x3d_derive
 
   implicit none
 
@@ -52,27 +51,6 @@ subroutine schemes()
 #ifdef DEBG
   if (nrank  ==  0) write(*,*)'# schemes start'
 #endif
-
-  !Velocity
-  ! First derivative
-  if (nclx1.eq.0.and.nclxn.eq.0) derx => derx_00
-  if (nclx1.eq.1.and.nclxn.eq.1) derx => derx_11
-  if (nclx1.eq.1.and.nclxn.eq.2) derx => derx_12
-  if (nclx1.eq.2.and.nclxn.eq.1) derx => derx_21
-  if (nclx1.eq.2.and.nclxn.eq.2) derx => derx_22
-  !
-  if (ncly1.eq.0.and.nclyn.eq.0) dery => dery_00
-  if (ncly1.eq.1.and.nclyn.eq.1) dery => dery_11
-  if (ncly1.eq.1.and.nclyn.eq.2) dery => dery_12
-  if (ncly1.eq.2.and.nclyn.eq.1) dery => dery_21
-  if (ncly1.eq.2.and.nclyn.eq.2) dery => dery_22
-  !
-  if (nclz1.eq.0.and.nclzn.eq.0) derz => derz_00
-  if (nclz1.eq.1.and.nclzn.eq.1) derz => derz_11
-  if (nclz1.eq.1.and.nclzn.eq.2) derz => derz_12
-  if (nclz1.eq.2.and.nclzn.eq.1) derz => derz_21
-  if (nclz1.eq.2.and.nclzn.eq.2) derz => derz_22
-  ! Second derivative
 
   call first_derivative(alfa1x,af1x,bf1x,cf1x,df1x,alfa2x,af2x,alfanx,afnx,bfnx,&
        cfnx,dfnx,alfamx,afmx,alfaix,afix,bfix,&

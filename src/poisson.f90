@@ -32,7 +32,7 @@
 
 module decomp_2d_poisson
 
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   use decomp_2d, only : DECOMP_INFO
   use decomp_2d, only : decomp_info_init, &
                         decomp_info_finalize, &

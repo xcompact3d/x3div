@@ -34,10 +34,11 @@ module mom
 
   use MPI
  
-  use x3dprecision, only : mytype, real_type, twopi
+  use decomp_2d, only : mytype, real_type
   use decomp_2d, only : nrank 
   use decomp_2d, only : xsize, ysize, zsize
   use decomp_2d, only : xstart, ystart, zstart
+  use x3dprecision, only : twopi
   use param    , only : dx, dy, dz, xlx, yly, zlz
   use variables, only : test_mode
   use variables, only : nx, ny, nz

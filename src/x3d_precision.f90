@@ -35,28 +35,19 @@
 module x3dprecision
 
   use MPI
+  use decomp_2d, only : mytype
   
   implicit none
 
-  private        ! Make everything private unless declared public
-
 #ifdef DOUBLE_PREC
-  integer, parameter, public :: mytype = KIND(0.0D0)
-  integer, parameter, public :: real_type = MPI_DOUBLE_PRECISION
-  integer, parameter, public :: real2_type = MPI_2DOUBLE_PRECISION
-  integer, parameter, public :: complex_type = MPI_DOUBLE_COMPLEX
   real(mytype),parameter, public :: pi=dacos(-1.d0)
   real(mytype),parameter, public :: twopi=2.d0*dacos(-1.d0)
 #else
-  integer, parameter, public :: mytype = KIND(0.0)
-  integer, parameter, public :: real_type = MPI_REAL
-  integer, parameter, public :: real2_type = MPI_2REAL
-  integer, parameter, public :: complex_type = MPI_COMPLEX
-  integer, parameter, public :: mytype_single = KIND(0.0)
-  integer, parameter, public :: real_type_single = MPI_REAL
   real(mytype),parameter, public :: pi=acos(-1.0)
   real(mytype),parameter, public :: twopi=2.0*acos(-1.0)
 #endif
+
+  private        ! Make everything private unless declared public
 
   public ::  sin_prec,  cos_prec,  tan_prec, &
             asin_prec, acos_prec, atan_prec, &

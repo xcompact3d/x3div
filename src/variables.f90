@@ -32,7 +32,7 @@
 
 module var
 
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   !use decomp_2d, only : DECOMP_INFO
   !use decomp_2d
   !USE variables

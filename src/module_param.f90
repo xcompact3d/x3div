@@ -32,8 +32,7 @@
 module variables
   !USE param
   !USE var
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
 
   ! Boundary conditions : ncl = 2 --> Dirichlet
   ! Boundary conditions : ncl = 1 --> Free-slip
@@ -82,12 +81,12 @@ module variables
   real(mytype),allocatable,dimension(:,:) :: fisz,fivz
 
   !module derivative
-  real(mytype),allocatable,dimension(:) :: ffx,sfx,fsx,fwx,ssx,swx
-  real(mytype),allocatable,dimension(:) :: ffxp,sfxp,fsxp,fwxp,ssxp,swxp
-  real(mytype),allocatable,dimension(:) :: ffy,sfy,fsy,fwy,ssy,swy
-  real(mytype),allocatable,dimension(:) :: ffyp,sfyp,fsyp,fwyp,ssyp,swyp
-  real(mytype),allocatable,dimension(:) :: ffz,sfz,fsz,fwz,ssz,swz
-  real(mytype),allocatable,dimension(:) :: ffzp,sfzp,fszp,fwzp,sszp,swzp
+  real(mytype),target,allocatable,dimension(:) :: ffx,sfx,fsx,fwx,ssx,swx
+  real(mytype),target,allocatable,dimension(:) :: ffxp,sfxp,fsxp,fwxp,ssxp,swxp
+  real(mytype),target,allocatable,dimension(:) :: ffy,sfy,fsy,fwy,ssy,swy
+  real(mytype),target,allocatable,dimension(:) :: ffyp,sfyp,fsyp,fwyp,ssyp,swyp
+  real(mytype),target,allocatable,dimension(:) :: ffz,sfz,fsz,fwz,ssz,swz
+  real(mytype),target,allocatable,dimension(:) :: ffzp,sfzp,fszp,fwzp,sszp,swzp
 
   real(mytype),allocatable,dimension(:) :: ffxS,sfxS,fsxS,fwxS,ssxS,swxS
   real(mytype),allocatable,dimension(:) :: ffxpS,sfxpS,fsxpS,fwxpS,ssxpS,swxpS
@@ -103,84 +102,10 @@ module variables
   !! X3DIV
   logical :: test_mode
 
-  ABSTRACT INTERFACE
-     SUBROUTINE DERIVATIVE_X(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(ny,nz):: s
-       real(mytype), dimension(nx):: ff,fs,fw
-     END SUBROUTINE DERIVATIVE_X
-     SUBROUTINE DERIVATIVE_Y(t,u,r,s,ff,fs,fw,pp,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(nx,nz):: s
-       real(mytype), dimension(ny):: ff,fs,fw,pp
-     END SUBROUTINE DERIVATIVE_Y
-     SUBROUTINE DERIVATIVE_YY(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(nx,nz):: s
-       real(mytype), dimension(ny):: ff,fs,fw
-     END SUBROUTINE DERIVATIVE_YY
-     SUBROUTINE DERIVATIVE_Z(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(nx,ny):: s
-       real(mytype), dimension(nz):: ff,fs,fw
-     END SUBROUTINE DERIVATIVE_Z
-  END INTERFACE
-
-  PROCEDURE (DERIVATIVE_X) derx_00,derx_11,derx_12,derx_21,derx_22,&
-       derxx_00,derxx_11,derxx_12,derxx_21,derxx_22
-  PROCEDURE (DERIVATIVE_X), POINTER :: derx,derxx,derxS,derxxS
-  PROCEDURE (DERIVATIVE_Y) dery_00,dery_11,dery_12,dery_21,dery_22
-  PROCEDURE (DERIVATIVE_Y), POINTER :: dery,deryS
-  PROCEDURE (DERIVATIVE_YY) &
-       deryy_00,deryy_11,deryy_12,deryy_21,deryy_22
-  PROCEDURE (DERIVATIVE_YY), POINTER :: deryy,deryyS
-  PROCEDURE (DERIVATIVE_Z) derz_00,derz_11,derz_12,derz_21,derz_22,&
-       derzz_00,derzz_11,derzz_12,derzz_21,derzz_22
-  PROCEDURE (DERIVATIVE_Z), POINTER :: derz,derzz,derzS,derzzS
-
   !O6SVV
   real(mytype),allocatable,dimension(:) :: newsm,newtm,newsmt,newtmt
   !real(mytype),allocatable,dimension(:) :: newrm,ttm,newrmt,ttmt
   real(mytype),allocatable,dimension(:) :: newrm,newrmt
-
-  ABSTRACT INTERFACE
-     SUBROUTINE FILTER_X(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(ny,nz):: s
-       real(mytype), dimension(nx):: ff,fs,fw
-     END SUBROUTINE FILTER_X
-     SUBROUTINE FILTER_Y(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(nx,nz):: s
-       real(mytype), dimension(ny):: ff,fs,fw
-     END SUBROUTINE FILTER_Y
-     SUBROUTINE FILTER_Z(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
-       use decomp_2d, only : mytype
-       integer :: nx,ny,nz,npaire
-       real(mytype), dimension(nx,ny,nz) :: t,u,r
-       real(mytype), dimension(nx,ny):: s
-       real(mytype), dimension(nz):: ff,fs,fw
-     END SUBROUTINE FILTER_Z
-  END INTERFACE
-
-  PROCEDURE (FILTER_X) filx_00,filx_11, filx_12, filx_21, filx_22
-  PROCEDURE (FILTER_X), POINTER :: filx,filxS
-  PROCEDURE (FILTER_Y) fily_00,fily_11, fily_12, fily_21, fily_22
-  PROCEDURE (FILTER_Y), POINTER :: fily,filyS
-  PROCEDURE (FILTER_Z) filz_00,filz_11, filz_12, filz_21, filz_22
-  PROCEDURE (FILTER_Z), POINTER :: filz,filzS
 
   !module pressure
   real(mytype), save, allocatable, dimension(:,:) :: dpdyx1,dpdyxn,dpdzx1,dpdzxn
@@ -188,24 +113,24 @@ module variables
   real(mytype), save, allocatable, dimension(:,:) :: dpdxz1,dpdxzn,dpdyz1,dpdyzn
 
   !module derpres
-  real(mytype),allocatable,dimension(:) :: cfx6,ccx6,cbx6,cfxp6,ciwxp6,csxp6,&
+  real(mytype),target,allocatable,dimension(:) :: cfx6,ccx6,cbx6,cfxp6,ciwxp6,csxp6,&
        cwxp6,csx6,cwx6,cifx6,cicx6,cisx6
-  real(mytype),allocatable,dimension(:) :: cibx6,cifxp6,cisxp6,ciwx6
-  real(mytype),allocatable,dimension(:) :: cfi6,cci6,cbi6,cfip6,csip6,cwip6,csi6,&
+  real(mytype),target,allocatable,dimension(:) :: cibx6,cifxp6,cisxp6,ciwx6
+  real(mytype),target,allocatable,dimension(:) :: cfi6,cci6,cbi6,cfip6,csip6,cwip6,csi6,&
        cwi6,cifi6,cici6,cibi6,cifip6
-  real(mytype),allocatable,dimension(:) :: cisip6,ciwip6,cisi6,ciwi6
-  real(mytype),allocatable,dimension(:) :: cfy6,ccy6,cby6,cfyp6,csyp6,cwyp6,csy6
-  real(mytype),allocatable,dimension(:) :: cwy6,cify6,cicy6,ciby6,cifyp6,cisyp6,&
+  real(mytype),target,allocatable,dimension(:) :: cisip6,ciwip6,cisi6,ciwi6
+  real(mytype),target,allocatable,dimension(:) :: cfy6,ccy6,cby6,cfyp6,csyp6,cwyp6,csy6
+  real(mytype),target,allocatable,dimension(:) :: cwy6,cify6,cicy6,ciby6,cifyp6,cisyp6,&
        ciwyp6,cisy6,ciwy6
-  real(mytype),allocatable,dimension(:) :: cfi6y,cci6y,cbi6y,cfip6y,csip6y,cwip6y,&
+  real(mytype),target,allocatable,dimension(:) :: cfi6y,cci6y,cbi6y,cfip6y,csip6y,cwip6y,&
        csi6y,cwi6y,cifi6y,cici6y
-  real(mytype),allocatable,dimension(:) :: cibi6y,cifip6y,cisip6y,ciwip6y,cisi6y,ciwi6y
-  real(mytype),allocatable,dimension(:) :: cfz6,ccz6,cbz6,cfzp6,cszp6,cwzp6,csz6
-  real(mytype),allocatable,dimension(:) :: cwz6,cifz6,cicz6,cibz6,cifzp6,ciszp6,&
+  real(mytype),target,allocatable,dimension(:) :: cibi6y,cifip6y,cisip6y,ciwip6y,cisi6y,ciwi6y
+  real(mytype),target,allocatable,dimension(:) :: cfz6,ccz6,cbz6,cfzp6,cszp6,cwzp6,csz6
+  real(mytype),target,allocatable,dimension(:) :: cwz6,cifz6,cicz6,cibz6,cifzp6,ciszp6,&
        ciwzp6,cisz6,ciwz6
-  real(mytype),allocatable,dimension(:) :: cfi6z,cci6z,cbi6z,cfip6z,csip6z,cwip6z,&
+  real(mytype),target,allocatable,dimension(:) :: cfi6z,cci6z,cbi6z,cfip6z,csip6z,cwip6z,&
        csi6z,cwi6z,cifi6z,cici6z
-  real(mytype),allocatable,dimension(:) :: cibi6z,cifip6z,cisip6z,ciwip6z,cisi6z,ciwi6z
+  real(mytype),target,allocatable,dimension(:) :: cibi6z,cifip6z,cisip6z,ciwip6z,cisi6z,ciwi6z
 
   !module waves
   complex(mytype),allocatable,dimension(:) :: zkz,zk2,ezs
@@ -224,8 +149,7 @@ end module variables
 !############################################################################
 module param
 
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
 
   integer :: nclx1,nclxn,ncly1,nclyn,nclz1,nclzn
   integer :: nclxS1,nclxSn,nclyS1,nclySn,nclzS1,nclzSn
@@ -313,8 +237,7 @@ end module param
 !############################################################################
 module derivX
 
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
 
   real(mytype) :: alcaix6,acix6,bcix6
   real(mytype) :: ailcaix6,aicix6,bicix6,cicix6,dicix6
@@ -334,8 +257,7 @@ end module derivX
 !############################################################################
 module derivY
 
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
 
   real(mytype) :: alcaiy6,aciy6,bciy6
   real(mytype) :: ailcaiy6,aiciy6,biciy6,ciciy6,diciy6
@@ -355,8 +277,7 @@ end module derivY
 !############################################################################
 module derivZ
 
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
 
   real(mytype) :: alcaiz6,aciz6,bciz6
   real(mytype) :: ailcaiz6,aiciz6,biciz6,ciciz6,diciz6
@@ -377,8 +298,7 @@ end module derivZ
 !############################################################################
 ! Describes the parameters for the discrete filters in X-Pencil
 module parfiX
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   real(mytype) :: fial1x, fia1x, fib1x, fic1x, fid1x, fie1x, fif1x  ! Coefficients for filter at boundary point 1
   real(mytype) :: fial2x, fia2x, fib2x, fic2x, fid2x, fie2x, fif2x  ! Coefficients for filter at boundary point 2
   real(mytype) :: fial3x, fia3x, fib3x, fic3x, fid3x, fie3x, fif3x  ! Coefficients for filter at boundary point 3
@@ -391,8 +311,7 @@ end module parfiX
 !############################################################################
 module parfiY
 
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   real(mytype) :: fial1y, fia1y, fib1y, fic1y, fid1y, fie1y, fif1y ! Coefficients for filter at boundary point 1
   real(mytype) :: fial2y, fia2y, fib2y, fic2y, fid2y, fie2y, fif2y ! Coefficients for filter at boundary point 2
   real(mytype) :: fial3y, fia3y, fib3y, fic3y, fid3y, fie3y, fif3y ! Coefficients for filter at boundary point 3
@@ -405,8 +324,7 @@ end module parfiY
 !############################################################################
 module parfiZ
 
-  !use decomp_2d, only : mytype
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   real(mytype) :: fial1z, fia1z, fib1z, fic1z, fid1z, fie1z, fif1z ! Coefficients for filter at boundary point 1
   real(mytype) :: fial2z, fia2z, fib2z, fic2z, fid2z, fie2z, fif2z ! Coefficients for filter at boundary point 2
   real(mytype) :: fial3z, fia3z, fib3z, fic3z, fid3z, fie3z, fif3z ! Coefficients for filter at boundary point 3

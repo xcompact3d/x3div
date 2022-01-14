@@ -41,7 +41,8 @@ subroutine parameter()
 
   use iso_fortran_env
 
-  use x3dprecision, only : mytype, pi
+  use decomp_2d, only : mytype
+  use x3dprecision, only : pi
   use param
   use variables
   use decomp_2d, only : nrank

@@ -43,6 +43,7 @@ subroutine schemes()
   USE variables
   USE var
   use decomp_2d, only : nrank
+  use x3d_derive
 
   implicit none
 
@@ -177,7 +178,7 @@ subroutine first_derivative(alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
   !
   !*******************************************************************
 
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   use decomp_2d, only : nrank
   use param
   use MPI
@@ -337,8 +338,8 @@ subroutine second_derivative(alsa1,as1,bs1,&
      sf,ss,sw,sfp,ssp,swp,d2,n,ncl1,ncln)
   !*******************************************************************
 
-  use x3dprecision, only : mytype, pi, twopi
-  use decomp_2d, only : nrank
+  use decomp_2d, only : mytype, nrank
+  use x3dprecision, only : pi, twopi
   use param
   use MPI
   use variables, only : nu0nu,cnu
@@ -596,7 +597,7 @@ subroutine interpolation(dx,nxm,nx,nclx1,nclxn,&
   !
   !*******************************************************************
 
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   !use decomp_2d, only : mytype
   use param, only : zero, half, one, two, three, four, nine, ten
   use param, only : ipinter, ifirstder

@@ -34,6 +34,8 @@
 
 module x3dparallel
 
+  use decomp_2d, only : mytype, nproc
+
   implicit none
 
   private        ! Make everything private unless declared public
@@ -54,9 +56,7 @@ contains
   subroutine x3d_transpose_x_to_y(data_in, data_out)
     
     use decomp_2d, only : xsize, ysize
-    use decomp_2d, only : nproc
     use decomp_2d, only : transpose_x_to_y
-    use x3dprecision, only: mytype
 
     implicit none
 
@@ -85,8 +85,6 @@ contains
   subroutine x3d_transpose_y_to_z(data_in, data_out)
     
     use decomp_2d, only : ysize, zsize
-    use decomp_2d, only : nproc
-    use x3dprecision, only: mytype
     use decomp_2d, only : transpose_y_to_z
 
     implicit none
@@ -116,8 +114,6 @@ contains
   subroutine x3d_transpose_z_to_y(data_in, data_out)
     
     use decomp_2d, only : ysize, zsize
-    use decomp_2d, only : nproc
-    use x3dprecision, only: mytype
     use decomp_2d, only : transpose_z_to_y
 
     implicit none
@@ -147,8 +143,6 @@ contains
   subroutine x3d_transpose_y_to_x(data_in, data_out)
     
     use decomp_2d, only : ysize, xsize
-    use decomp_2d, only : nproc
-    use x3dprecision, only: mytype
     use decomp_2d, only : transpose_y_to_x
 
     implicit none

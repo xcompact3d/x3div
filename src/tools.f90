@@ -48,7 +48,7 @@ contains
   subroutine error_L1_L2_Linf_xsize(err, l1, l2, linf)
 
     USE variables   , only : nx, ny, nz
-    use x3dprecision, only : mytype
+    use decomp_2d, only : mytype
     use decomp_2d   , only : xsize
 
     implicit none
@@ -66,7 +66,7 @@ contains
 
     ! Compute L1, L2 and Linf norm of given 3D array
     USE param       , only : zero
-    use x3dprecision, only : mytype, real_type
+    use decomp_2d, only : mytype, real_type
     USE MPI
     use decomp_2d   , only : decomp_2d_abort
     

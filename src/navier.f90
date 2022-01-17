@@ -244,12 +244,9 @@ contains
 
     use x3d_operator_1d
     use x3d_staggered
+    use x3d_transpose
     USE param
     USE decomp_2d, only: mytype, xsize, ysize, zsize, ph2, ph3
-    use decomp_2d, only : transpose_x_to_y, &
-                          transpose_y_to_z, &
-                          transpose_z_to_y, &
-                          transpose_y_to_x
     use decomp_2d, only: xstart, xend, ystart, yend, zstart, zend
     USE variables
     USE var, only: pp1,pgy1,pgz1,di1,pp2,ppi2,pgy2,pgz2,pgzi2,dip2,&
@@ -269,8 +266,8 @@ contains
          (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3))
 
     !WORK Y-PENCILS
-    call transpose_z_to_y(pgz3,pgz2,ph3) !nxm nym nz
-    call transpose_z_to_y(ppi3,pp2,ph3)
+    call x3d_transpose_z_to_y(pgz3,pgz2,ph3) !nxm nym nz
+    call x3d_transpose_z_to_y(ppi3,pp2,ph3)
 
     call interypv(ppi2,pp2,dip2,sy,x3d_op_intypv,&
          (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
@@ -281,9 +278,9 @@ contains
 
     !WORK X-PENCILS
 
-    call transpose_y_to_x(ppi2,pp1,ph2) !nxm ny nz
-    call transpose_y_to_x(pgy2,pgy1,ph2)
-    call transpose_y_to_x(pgzi2,pgz1,ph2)
+    call x3d_transpose_y_to_x(ppi2,pp1,ph2) !nxm ny nz
+    call x3d_transpose_y_to_x(pgy2,pgy1,ph2)
+    call x3d_transpose_y_to_x(pgzi2,pgz1,ph2)
 
     call derxpv(px1,pp1,di1,sx,x3d_op_derxpv,nxmsize,xsize(1),xsize(2),xsize(3))
     call interxpv(py1,pgy1,di1,sx,x3d_op_intxpv,nxmsize,xsize(1),xsize(2),xsize(3))

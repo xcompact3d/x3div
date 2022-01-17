@@ -35,14 +35,11 @@ module decomp_2d_poisson
   use decomp_2d, only : mytype
   use decomp_2d, only : DECOMP_INFO
   use decomp_2d, only : decomp_info_init, &
-                        decomp_info_finalize, &
-                        transpose_x_to_y, &                       
-                        transpose_y_to_z, &                       
-                        transpose_z_to_y, &                       
-                        transpose_y_to_x                       
+                        decomp_info_finalize
   use decomp_2d_fft, only : decomp_2d_fft_init, &
                             decomp_2d_fft_3d,   &
                             decomp_2d_fft_finalize 
+  use x3d_transpose
   use param
   use variables
 
@@ -440,8 +437,8 @@ contains
     nz = nz_global
 
     ! rhs is in Z-pencil but requires global operations in X
-    call transpose_z_to_y(rhs,rw2,ph)
-    call transpose_y_to_x(rw2,rw1,ph)
+    call x3d_transpose_z_to_y(rhs,rw2,ph)
+    call x3d_transpose_y_to_x(rw2,rw1,ph)
     do k=ph%xst(3),ph%xen(3)
        do j=ph%xst(2),ph%xen(2)
           do i=1,nx/2
@@ -453,8 +450,8 @@ contains
        enddo
     end do
 
-    call transpose_x_to_y(rw1b,rw2,ph)
-    call transpose_y_to_z(rw2,rhs,ph)
+    call x3d_transpose_x_to_y(rw1b,rw2,ph)
+    call x3d_transpose_y_to_z(rw2,rhs,ph)
 
     if (.not. fft_initialised) then
        call decomp_2d_fft_init(PHYSICAL_IN_Z,nx,ny,nz)
@@ -648,8 +645,8 @@ contains
     call decomp_2d_fft_3d(cw1,rhs)
 
     ! rhs is in Z-pencil but requires global operations in X
-    call transpose_z_to_y(rhs,rw2,ph)
-    call transpose_y_to_x(rw2,rw1,ph)
+    call x3d_transpose_z_to_y(rhs,rw2,ph)
+    call x3d_transpose_y_to_x(rw2,rw1,ph)
     do k = ph%xst(3), ph%xen(3)
        do j = ph%xst(2), ph%xen(2)
           do i = 1, nx/2
@@ -660,8 +657,8 @@ contains
           enddo
        enddo
     end do
-    call transpose_x_to_y(rw1b,rw2,ph)
-    call transpose_y_to_z(rw2,rhs,ph)
+    call x3d_transpose_x_to_y(rw1b,rw2,ph)
+    call x3d_transpose_y_to_z(rw2,rhs,ph)
 
     !  call decomp_2d_fft_finalize
 

@@ -96,7 +96,7 @@ integer :: status, errorcode, ierror
 
 if (initialised) then
 errorcode = 4
-call decomp_2d_abort(errorcode, &
+call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
 'FFT library should only be initialised once')
 end if
 
@@ -108,6 +108,7 @@ nz_fft = nz
 ! determine the processor grid in use
 call MPI_CART_GET(DECOMP_2D_COMM_CART_X, 2, &
 dims, dummy_periods, dummy_coords, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_GET")
 
 ! for c2r/r2c interface:
 ! if in physical space, a real array is of size: nx*ny*nz
@@ -131,7 +132,7 @@ allocate(wk13(sp%zsz(1),sp%zsz(2),sp%zsz(3)), STAT=status)
 end if
 if (status /= 0) then
 errorcode = 3
-call decomp_2d_abort(errorcode, &
+call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
 'Out of memory when initialising FFT')
 end if
 
@@ -153,7 +154,9 @@ implicit none
 call decomp_info_finalize(ph)
 call decomp_info_finalize(sp)
 
-deallocate(wk2_c2c, wk2_r2c, wk13)
+if (allocated(wk2_c2c)) deallocate(wk2_c2c)
+if (allocated(wk2_r2c)) deallocate(wk2_r2c)
+if (allocated(wk13)) deallocate(wk13)
 
 call finalize_fft_engine
 

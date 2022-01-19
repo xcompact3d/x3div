@@ -88,9 +88,9 @@ program xcompact3d
      tmin = telapsed
      tmax = telapsed
 
-     !call MPI_Allreduce(telapsed, tmin, 1, real_type, MPI_MIN, MPI_COMM_WORLD, code)
+     !call MPI_Allreduce(telapsed, tmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, code)
      !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
-     !call MPI_Allreduce(telapsed, tmax, 1, real_type, MPI_MAX, MPI_COMM_WORLD, code)
+     !call MPI_Allreduce(telapsed, tmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, code)
      !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
      if (nrank == 0) then
         print *, "Elapse time min ", tmin, " max ", tmax

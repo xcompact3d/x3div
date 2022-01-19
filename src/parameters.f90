@@ -147,7 +147,9 @@ subroutine parameter()
      write(*,"(' nu0nu                  : ',F17.8)") nu0nu
      write(*,"(' cnu                    : ',F17.8)") cnu
      write(*,*)'==========================================================='
-
+     write(*,"(' High and low speed : u1=',F6.2,' and u2=',F6.2)") u1,u2
+     write(*,*)'==========================================================='
+     ! Show the compile flags detected
 #ifdef DOUBLE_PREC
 #ifdef SAVE_SINGLE
      write(*,*)'Numerical precision: Double, saving in single'
@@ -157,9 +159,29 @@ subroutine parameter()
 #else
      write(*,*)'Numerical precision: Single'
 #endif
+#ifdef DEBUG
+     write(*,*)'Compile flag DEBUG detected'
+#endif
+#ifdef SHM
+     write(*,*)'Compile flag SHM detected'
+#endif
+#ifdef EVEN
+     write(*,*)'Compile flag EVEN detected'
+#endif
+#ifdef OCC
+     write(*,*)'Compile flag OCC detected'
+#endif
+#ifdef OVERWRITE
+     write(*,*)'Compile flag OVERWRITE detected'
+#endif
+#ifdef HALO_DEBUG
+     write(*,*)'Compile flag HALO_DEBUG detected'
+#endif
+#ifdef SHM_DEBUG
+     write(*,*)'Compile flag SHM_DEBUG detected'
+#endif
      write(*,*)'==========================================================='
-     write(*,"(' High and low speed : u1=',F6.2,' and u2=',F6.2)") u1,u2
-     write(*,*)'==========================================================='
+
   endif
 
 #ifdef DEBUG

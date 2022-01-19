@@ -42,10 +42,10 @@ module x3dprecision
 
 #ifdef DOUBLE_PREC
   real(mytype),parameter, public :: pi=dacos(-1._real64)
-  real(mytype),parameter, public :: twopi=2.d0*dacos(-1._real64)
+  real(mytype),parameter, public :: twopi=2._real64*dacos(-1._real64)
 #else
   real(mytype),parameter, public :: pi=acos(-1._real32)
-  real(mytype),parameter, public :: twopi=2.0*acos(-1._real32)
+  real(mytype),parameter, public :: twopi=2._real32*acos(-1._real32)
 #endif
 
   private        ! Make everything private unless declared public

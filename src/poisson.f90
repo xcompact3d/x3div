@@ -145,7 +145,7 @@ contains
     if (bcy==1) ny=ny-1
     if (bcz==1) nz=nz-1
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init start'
 #endif
 
@@ -154,14 +154,14 @@ contains
     allocate(az(nz),bz(nz))
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init'
 #endif
 
     call decomp_info_init(nx, ny, nz, ph)
     call decomp_info_init(nx, ny, nz/2+1, sp)
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init ok'
 #endif
 
@@ -241,13 +241,13 @@ contains
        allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))      
     end if
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init before waves'
 #endif
 
     call waves()
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init end'
 #endif
 

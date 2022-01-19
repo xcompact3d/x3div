@@ -51,7 +51,7 @@ subroutine parameter()
 
   real(mytype) :: theta, cfl,cf2
   integer :: longueur ,impi,j, is, total
-#ifdef DEBG
+#ifdef DEBUG
   if (nrank == 0) write(*,*) '# parameter start'
 #endif
 
@@ -162,7 +162,7 @@ subroutine parameter()
      write(*,*)'==========================================================='
   endif
 
-#ifdef DEBG
+#ifdef DEBUG
   if (nrank .eq. 0) write(*,*)'# parameter done'
 #endif
 

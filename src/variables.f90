@@ -83,7 +83,7 @@ contains
 
     integer :: i, j , k
 
-#ifdef DEBG
+#ifdef DEBUG
     if (nrank == 0) write(*,*) '# Init_variables start'
 #endif
 
@@ -761,7 +761,7 @@ contains
 
 
 
-#ifdef DEBG
+#ifdef DEBUG
     if (nrank ==  0) write(*,*) '# init_variables done'
 #endif
     return

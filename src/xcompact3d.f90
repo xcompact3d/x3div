@@ -35,7 +35,7 @@ program xcompact3d
   use MPI
 
   use var
-  use decomp_2d, only : nrank, xsize 
+  use decomp_2d, only : nrank, xsize, real_type, decomp_2d_warning 
   use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
@@ -48,8 +48,7 @@ program xcompact3d
   !real :: trun
   integer :: i, j, k
   integer :: ndt, ndt_max
-  integer :: ierr
-  integer :: mpi_real_type
+  integer :: code
 
   call boot_xcompact3d()
 
@@ -60,12 +59,6 @@ program xcompact3d
 
   ndt = 1
 
-  if (kind(telapsed) == kind(0.0d0)) then
-     mpi_real_type = MPI_DOUBLE
-  else
-     mpi_real_type = MPI_FLOAT
-  end if
-  
   do while(ndt < ndt_max)
      itr = 1 ! no inner iterations
      !call init_flowfield()
@@ -95,8 +88,10 @@ program xcompact3d
      tmin = telapsed
      tmax = telapsed
 
-     !call MPI_Allreduce(telapsed, tmin, 1, mpi_real_type, MPI_MIN, MPI_COMM_WORLD, ierr)
-     !call MPI_Allreduce(telapsed, tmax, 1, mpi_real_type, MPI_MAX, MPI_COMM_WORLD, ierr)
+     !call MPI_Allreduce(telapsed, tmin, 1, real_type, MPI_MIN, MPI_COMM_WORLD, code)
+     !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
+     !call MPI_Allreduce(telapsed, tmax, 1, real_type, MPI_MAX, MPI_COMM_WORLD, code)
+     !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
      if (nrank == 0) then
         print *, "Elapse time min ", tmin, " max ", tmax
      end if

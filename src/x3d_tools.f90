@@ -82,16 +82,19 @@ end function cx
 subroutine boot_xcompact3d()
   
   use MPI
-  use decomp_2d, only : nrank, nproc
+  use decomp_2d, only : nrank, nproc, decomp_2d_abort
   
   implicit none
 
-  integer :: ierr
+  integer :: code
 
   !! Initialise MPI
-  call MPI_INIT(ierr)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,nrank,ierr)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ierr)
+  call MPI_INIT(code)
+  if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_INIT")
+  call MPI_COMM_RANK(MPI_COMM_WORLD,nrank,code)
+  if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_COMM_RANK")
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,code)
+  if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_COMM_SIZE")
 
 
 endsubroutine boot_xcompact3d

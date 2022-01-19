@@ -34,7 +34,7 @@ module mom
 
   use MPI
  
-  use decomp_2d, only : mytype, real_type
+  use decomp_2d, only : mytype, real_type, decomp_2d_warning
   use decomp_2d, only : nrank 
   use decomp_2d, only : xsize, ysize, zsize
   use decomp_2d, only : xstart, ystart, zstart
@@ -83,7 +83,7 @@ contains
 
     real(mytype) :: x, y, z
     integer :: i, j, k
-    integer :: ierr
+    integer :: code
 
     real(mytype) :: err, errloc
     real(mytype) :: du_ana
@@ -113,7 +113,8 @@ contains
              enddo
           enddo
        enddo
-       call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
+       call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
        err = sqrt(err / nx / ny / nz)
 
        if (nrank .eq. 0) then
@@ -135,7 +136,7 @@ contains
 
     real(mytype) :: x, y, z
     integer :: i, j, k
-    integer :: ierr
+    integer :: code
 
     real(mytype) :: err, errloc
     real(mytype) :: dv_ana
@@ -164,7 +165,8 @@ contains
              enddo
           enddo
        enddo
-       call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
+       call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
        err = sqrt(err / nx / ny / nz)
 
        if (nrank .eq. 0) then
@@ -184,7 +186,7 @@ contains
 
     real(mytype) :: x, y, z
     integer :: i, j, k
-    integer :: ierr
+    integer :: code
 
     real(mytype) :: err, errloc
     real(mytype) :: dw_ana
@@ -213,7 +215,8 @@ contains
              enddo
           enddo
        enddo
-       call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, ierr)
+       call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
        err = sqrt(err / nx / ny / nz)
 
        if (nrank .eq. 0) then

@@ -156,10 +156,8 @@ subroutine first_derivative(alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
   !
   !*******************************************************************
 
-  use decomp_2d, only : mytype
-  use decomp_2d, only : nrank
+  use decomp_2d, only : mytype, decomp_2d_abort
   use param
-  use MPI
 
   implicit none
 
@@ -168,7 +166,7 @@ subroutine first_derivative(alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
   real(mytype),dimension(n),intent(out) :: ff,fs,fw,ffp,fsp,fwp
   real(mytype),intent(out) :: alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
        cfn,dfn,alfam,afm,alfai,afi,bfi
-  integer :: i,code,ierror
+  integer :: i
   real(mytype),dimension(n) :: fb,fc
 
   ff=zero;fs=zero;fw=zero;ffp=zero;fsp=zero;fwp=zero
@@ -179,20 +177,15 @@ subroutine first_derivative(alfa1,af1,bf1,cf1,df1,alfa2,af2,alfan,afn,bfn,&
      afi  = one/(two*d)
      bfi  = zero
   elseif(ifirstder==2) then ! Fourth-order central
-     if (nrank==0) write(*,*)'Set of coefficients not ready yet'
-     call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
+     call decomp_2d_abort(__FILE__, __LINE__, ifirstder, "Set of coefficients not ready yet")
   elseif(ifirstder==3) then ! Fourth-order compact
-     if (nrank==0) write(*,*)'Set of coefficients not ready yet'
-     call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
+     call decomp_2d_abort(__FILE__, __LINE__, ifirstder, "Set of coefficients not ready yet")
   elseif(ifirstder==4) then ! Sixth-order compact
      alfai= one/three
      afi  = (seven/nine)/d
      bfi  = (one/36._mytype)/d
   else
-     if (nrank==0) then
-        write(*,*) 'This is not an option. Please use ifirstder=1,2,3,4'
-     endif
-     call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
+     call decomp_2d_abort(__FILE__, __LINE__, ifirstder, "This is not an option. Please use ifirstder=1,2,3,4")
   endif
 
   if (ifirstder==1) then
@@ -316,17 +309,15 @@ subroutine second_derivative(alsa1,as1,bs1,&
      sf,ss,sw,sfp,ssp,swp,d2,n,ncl1,ncln)
   !*******************************************************************
 
-  use decomp_2d, only : mytype, nrank
+  use decomp_2d, only : mytype, nrank, decomp_2d_abort
   use x3dprecision, only : pi, twopi
   use param
-  use MPI
   use variables, only : nu0nu,cnu
 
   implicit none
 
   real(mytype),intent(in) :: d2
   integer,intent(in) :: n,ncl1,ncln
-  integer :: code,ierror
   real(mytype),dimension(n),intent(out) :: sf,ss,sw,sfp,ssp,swp
   real(mytype),intent(out) :: alsa1,as1,bs1,&
        cs1,ds1,alsa2,as2,alsan,asn,bsn,csn,dsn,alsam,&
@@ -358,11 +349,9 @@ subroutine second_derivative(alsa1,as1,bs1,&
      bstt = bsi
      cstt = csi
   elseif(isecondder==2) then ! Fourth-order central
-     if (nrank==0) write(*,*)'Set of coefficients not ready yet'
-     call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
+     call decomp_2d_abort(__FILE__, __LINE__, isecondder, "Set of coefficients not ready yet")
   elseif(isecondder==3) then ! Fourth-order compact
-     if (nrank==0) write(*,*)'Set of coefficients not ready yet'
-     call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
+     call decomp_2d_abort(__FILE__, __LINE__, isecondder, "Set of coefficients not ready yet")
   elseif(isecondder==4) then ! Sixth-order compact Lele style (no extra dissipation)
      alsai= two / 11._mytype
      asi  = (12._mytype / 11._mytype)/d2

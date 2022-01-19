@@ -123,7 +123,7 @@ contains
 
     use x3d_operator_1d
     use x3d_staggered
-    use decomp_2d, only : mytype, real_type
+    use decomp_2d, only : mytype, real_type, decomp_2d_warning
     use param
     use decomp_2d, only : nrank, ph1, ph3, ph4, nproc
     use decomp_2d, only : xsize, ysize, zsize
@@ -215,7 +215,9 @@ contains
 
     if (test_mode) then
        call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
        call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
        if ((nrank==0).and.(nlock.gt.0)) then
           if (nlock==2) then
              print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)

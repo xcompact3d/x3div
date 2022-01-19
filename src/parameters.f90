@@ -159,6 +159,8 @@ subroutine parameter()
 #else
      write(*,*)'Numerical precision: Single'
 #endif
+     write(*,*)'Compiled with ', compiler_version()
+     write(*,*)'Compiler options : ', compiler_options()
 #ifdef DEBUG
      write(*,*)'Compile flag DEBUG detected'
 #endif

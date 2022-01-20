@@ -1657,7 +1657,7 @@ contains
     integer, intent(OUT) :: best_p_row, best_p_col
 
     integer, allocatable, dimension(:) :: factors
-    integer :: nfact, i, row, col, i_best
+    integer :: nfact, i, col, i_best
 
     if (nrank==0) write(*,*) 'In auto-tuning mode......'
 

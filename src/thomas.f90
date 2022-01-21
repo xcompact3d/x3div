@@ -65,11 +65,11 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt, rr
     real(mytype), intent(out), dimension(ny,nz) :: ss
     real(mytype), intent(in), dimension(nx):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
-    integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
 
@@ -102,9 +102,9 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
     real(mytype), intent(in), dimension(nx):: ff, fs, fw
-    integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
 
@@ -125,11 +125,11 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt, rr
     real(mytype), intent(out), dimension(nx,nz) :: ss
     real(mytype), intent(in), dimension(ny):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
-    integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
 
@@ -166,9 +166,9 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
     real(mytype), intent(in), dimension(ny):: ff, fs, fw
-    integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
 
@@ -195,11 +195,11 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt, rr
     real(mytype), intent(out), dimension(nx,ny) :: ss
     real(mytype), intent(in), dimension(nz):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
-    integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
 
@@ -232,9 +232,9 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
     real(mytype), intent(in), dimension(nz):: ff, fs, fw
-    integer, intent(in) :: nx, ny, nz
 
     integer :: i, j, k
 
@@ -269,9 +269,9 @@ contains
 
     implicit none
 
+    integer, intent(in) :: nn
     real(mytype), intent(inout), dimension(nn) :: tt
     real(mytype), intent(in), dimension(nn) :: ff, fs, fw
-    integer, intent(in) :: nn
 
     integer :: k
 

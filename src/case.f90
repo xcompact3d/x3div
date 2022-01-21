@@ -33,10 +33,8 @@
 module case
 
   use param
-  !use decomp_2d
+  use decomp_2d, only : mytype
   use variables
-
-  use var, only : nzmsize
 
   implicit none
 
@@ -49,11 +47,11 @@ contains
        pp3, px1, py1, pz1)
 
     use mom, only : vel
-    use decomp_2d, only : mytype, xsize, ph1
+    use decomp_2d, only : xsize, ph1
 
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux1,uy1,uz1
     real(mytype),dimension(xsize(1),xsize(2),xsize(3),ntime) :: dux1,duy1,duz1
-    real(mytype),dimension(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize, npress) :: pp3
+    real(mytype),dimension(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress) :: pp3
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1, py1, pz1
 
     INTEGER :: it, is

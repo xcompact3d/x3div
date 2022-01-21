@@ -11,7 +11,6 @@ set(X3DFILES
             navier.f90
             parameters.f90
             poisson.f90
-            schemes.f90
             thomas.f90
 	    tools.f90
             transeq.f90
@@ -19,6 +18,9 @@ set(X3DFILES
 	    x3d_derive.f90
 	    x3d_filters.f90
 	    x3d_operator_1d.f90
+	    x3d_operator_x_data.f90
+	    x3d_operator_y_data.f90
+	    x3d_operator_z_data.f90
 	    x3d_staggered.f90
             x3d_tools.f90
 	    x3d_transpose.f90

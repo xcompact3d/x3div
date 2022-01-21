@@ -40,7 +40,8 @@ module x3d_derive
   
   implicit none
 
-  public          ! Make everything public unless declared private
+  ! Make everything public unless declared private
+  public
 
   ABSTRACT INTERFACE
      SUBROUTINE DERIVATIVE_X(t,u,r,s,x3dop,nx,ny,nz)
@@ -139,7 +140,7 @@ contains
 
 subroutine derx_00(tx,ux,rx,sx,x3dop,nx,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -185,9 +186,9 @@ end subroutine derx_00
 
 !********************************************************************
 !
-subroutine derx_ij(tx,ux,sx,ffx,fsx,fwx,nx,ny,nz,npaire,ncl1,ncln)
+subroutine derx_ij(tx,ux,sx,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -196,7 +197,7 @@ subroutine derx_ij(tx,ux,sx,ffx,fsx,fwx,nx,ny,nz,npaire,ncl1,ncln)
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
   real(mytype), intent(out), dimension(ny,nz):: sx
-  real(mytype), intent(in), dimension(nx):: ffx, fsx, fwx
+  real(mytype), intent(in), dimension(nx):: ff, fs, fw
 
   ! Local variables
   integer :: i, j, k
@@ -241,7 +242,7 @@ subroutine derx_ij(tx,ux,sx,ffx,fsx,fwx,nx,ny,nz,npaire,ncl1,ncln)
   enddo
 
   ! Solve tri-diagonal system
-  call xthomas(tx, ffx, fsx, fwx, nx, ny, nz)
+  call xthomas(tx, ff, fs, fw, nx, ny, nz)
 
 end subroutine derx_ij
 
@@ -315,7 +316,7 @@ subroutine dery_00(ty,uy,ry,sy,x3dop,ppy,nx,ny,nz)
   !
   !********************************************************************
 
-  use derivY
+  use x3d_operator_y_data
 
   implicit none
 
@@ -382,9 +383,9 @@ end subroutine dery_00
 
 !********************************************************************
 !
-subroutine dery_ij(ty,uy,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire,ncl1,ncln)
+subroutine dery_ij(ty,uy,sy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
 
-  use derivY
+  use x3d_operator_y_data
 
   implicit none
 
@@ -393,7 +394,7 @@ subroutine dery_ij(ty,uy,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire,ncl1,ncln)
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
   real(mytype), intent(out), dimension(nx,nz)  :: sy
-  real(mytype), intent(in), dimension(ny) :: ffy,fsy,fwy,ppy
+  real(mytype), intent(in), dimension(ny) :: ff,fs,fw,ppy
 
   ! Local variables
   integer :: i, j, k
@@ -462,7 +463,7 @@ subroutine dery_ij(ty,uy,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire,ncl1,ncln)
   enddo
 
   ! Solve tri-diagonal system
-  call ythomas(ty, ffy, fsy, fwy, nx, ny, nz)
+  call ythomas(ty, ff, fs, fw, nx, ny, nz)
 
   ! Apply stretching if needed
   if (istret /= 0) then
@@ -549,7 +550,7 @@ end subroutine dery_22
 !
 subroutine derz_00(tz,uz,rz,sz,x3dop,nx,ny,nz)
 
-  use derivZ
+  use x3d_operator_z_data
   use nvtx
 
   implicit none
@@ -606,9 +607,9 @@ end subroutine derz_00
 
 !********************************************************************
 !
-subroutine derz_ij(tz,uz,sz,ffz,fsz,fwz,nx,ny,nz,npaire,ncl1,ncln)
+subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
-  use derivZ
+  use x3d_operator_z_data
 
   implicit none
 
@@ -617,7 +618,7 @@ subroutine derz_ij(tz,uz,sz,ffz,fsz,fwz,nx,ny,nz,npaire,ncl1,ncln)
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
   real(mytype), intent(out), dimension(nx,ny) :: sz
-  real(mytype), intent(in), dimension(nz) :: ffz,fsz,fwz
+  real(mytype), intent(in), dimension(nz) :: ff,fs,fw
 
   ! Local variables
   integer :: i, j, k
@@ -685,7 +686,7 @@ subroutine derz_ij(tz,uz,sz,ffz,fsz,fwz,nx,ny,nz,npaire,ncl1,ncln)
   endif
 
   ! Solve tri-diagonal system
-  call zthomas(tz, ffz, fsz, fwz, nx, ny, nz)
+  call zthomas(tz, ff, fs, fw, nx, ny, nz)
 
 end subroutine derz_ij
 

@@ -40,7 +40,8 @@ module x3d_filters
   
   implicit none
 
-  public          ! Make everything public unless declared private
+  ! Make everything public unless declared private
+  public
 
   ABSTRACT INTERFACE
      SUBROUTINE FILTER_X(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)

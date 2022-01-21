@@ -33,10 +33,6 @@
 module var
 
   use decomp_2d, only : mytype
-  !use decomp_2d, only : DECOMP_INFO
-  !use decomp_2d
-  !USE variables
-  !USE param
 
   implicit none
   
@@ -62,49 +58,32 @@ module var
        te3,tf3,tg3,th3,ti3,di3
   real(mytype), save, allocatable, dimension(:,:,:) :: pgz3,ppi3,dip3,dipp3,duxydxyp3,uzp3
 
-  integer, save :: nxmsize, nymsize, nzmsize
 
 contains
 
-  subroutine init_variables
 
-    !use decomp_2d  
+  !
+  ! Allocate memory and initialize arrays
+  !
+  subroutine var_init()
+
     use variables
     use param
     use decomp_2d, only : DECOMP_INFO
-    use decomp_2d , only : decomp_info_init 
-    use decomp_2d , only : alloc_x, alloc_y, alloc_z 
+    use decomp_2d , only : alloc_x, alloc_y, alloc_z
     use decomp_2d , only : xsize, ysize, zsize, ph1, ph3
     use decomp_2d , only : nrank
-    
-    implicit none
 
-    TYPE(DECOMP_INFO), save :: ph! decomposition object
+    implicit none
 
     integer :: i, j , k
 
 #ifdef DEBUG
-    if (nrank == 0) write(*,*) '# Init_variables start'
+    if (nrank == 0) write(*,*) '# var_init start'
 #endif
 
     if (nrank == 0) write(*,*) '# Initializing variables...'
 
-    if (nclx) then
-       nxmsize = xsize(1)
-    else
-       nxmsize = xsize(1) -1
-    endif
-    if (ncly) then
-       nymsize = ysize(2)
-    else
-       nymsize = ysize(2) -1
-    endif
-    if (nclz) then
-       nzmsize = zsize(3)
-    else
-       nzmsize = zsize(3) -1
-    endif
-    call decomp_info_init(nxmsize, nymsize, nzmsize, ph)
     !xsize(i), ysize(i), zsize(i), i=1,2,3 - sizes of the sub-domains held by the current process. The first letter refers to the pencil orientation and the three 1D array elements contain the sub-domain sizes in X, Y and Z directions, respectively. In a 2D pencil decomposition, there is always one dimension which completely resides in local memory. So by definition xsize(1)==nx_global, ysize(2)==ny_global and zsize(3)==nz_global.
 
     !xstart(i), ystart(i), zstart(i), xend(i), yend(i), zend(i), i=1,2,3 - the starting and ending indices for each sub-domain, as in the global coordinate system. Obviously, it can be seen that xsize(i)=xend(i)-xstart(i)+1. It may be convenient for certain applications to use global coordinate (for example when extracting a 2D plane from a 3D domain, it is easier to know which process owns the plane if global index is used).
@@ -146,11 +125,11 @@ contains
     call alloc_x(di1)
     di1 = zero
 
-    allocate(pp1(nxmsize,xsize(2),xsize(3)))
+    allocate(pp1(nxm,xsize(2),xsize(3)))
     pp1 = zero
-    allocate(pgy1(nxmsize,xsize(2),xsize(3)))
+    allocate(pgy1(nxm,xsize(2),xsize(3)))
     pgy1 = zero
-    allocate(pgz1(nxmsize,xsize(2),xsize(3)))
+    allocate(pgz1(nxm,xsize(2),xsize(3)))
     pgz1 = zero
 
     !pre_correc 2d array
@@ -202,9 +181,9 @@ contains
     tj2=zero
     call alloc_y(di2)
     di2=zero
-    allocate(pgz2(ph3%yst(1):ph3%yen(1),nymsize,ysize(3)))
+    allocate(pgz2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
     pgz2=zero
-    allocate(pp2(ph3%yst(1):ph3%yen(1),nymsize,ysize(3)))
+    allocate(pp2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
     pp2=zero
     allocate(dip2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
     dip2=zero
@@ -222,9 +201,9 @@ contains
     uzp2=zero
     allocate(dipp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
     dipp2=zero
-    allocate(upi2(ph1%yst(1):ph1%yen(1),nymsize,ysize(3)))
+    allocate(upi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
     upi2=zero
-    allocate(duydypi2(ph1%yst(1):ph1%yen(1),nymsize,ysize(3)))
+    allocate(duydypi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
     duydypi2=zero
 
     !Z PENCILS
@@ -269,172 +248,16 @@ contains
     dipp3=zero
 
 
-    allocate(pp3(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize, npress))
+    allocate(pp3(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress))
     pp3=zero
 
-    call alloc_z(dv3,ph,.true.)
+    call alloc_z(dv3, ph1, .true.)
     dv3=zero
-    call alloc_z(po3,ph,.true.)
+    call alloc_z(po3, ph1, .true.)
     po3=zero
 
 
     !module derivative
-    allocate(ffx(nx))
-    ffx=zero
-    allocate(sfx(nx))
-    sfx=zero
-    allocate(fsx(nx))
-    fsx=zero
-    allocate(fwx(nx))
-    fwx=zero
-    allocate(ssx(nx))
-    ssx=zero
-    allocate(swx(nx))
-    swx=zero
-
-    allocate(ffxp(nx))
-    ffxp=zero
-    allocate(sfxp(nx))
-    sfxp=zero
-    allocate(fsxp(nx))
-    fsxp=zero
-    allocate(fwxp(nx))
-    fwxp=zero
-    allocate(ssxp(nx))
-    ssxp=zero
-    allocate(swxp(nx))
-    swxp=zero
-
-    allocate(ffy(ny))
-    ffy=zero
-    allocate(sfy(ny))
-    sfy=zero
-    allocate(fsy(ny))
-    fsy=zero
-    allocate(fwy(ny))
-    fwy=zero
-    allocate(ssy(ny))
-    ssy=zero
-    allocate(swy(ny))
-    swy=zero
-
-    allocate(ffyp(ny))
-    ffyp=zero
-    allocate(sfyp(ny))
-    sfyp=zero
-    allocate(fsyp(ny))
-    fsyp=zero
-    allocate(fwyp(ny))
-    fwyp=zero
-    allocate(ssyp(ny))
-    ssyp=zero
-    allocate(swyp(ny))
-    swyp=zero
-
-    allocate(ffz(nz))
-    ffz=zero
-    allocate(sfz(nz))
-    sfz=zero
-    allocate(fsz(nz))
-    fsz=zero
-    allocate(fwz(nz))
-    fwz=zero
-    allocate(ssz(nz))
-    ssz=zero
-    allocate(swz(nz))
-    swz=zero
-
-    allocate(ffzp(nz))
-    ffzp=zero
-    allocate(sfzp(nz))
-    sfzp=zero
-    allocate(fszp(nz))
-    fszp=zero
-    allocate(fwzp(nz))
-    fwzp=zero
-    allocate(sszp(nz))
-    sszp=zero
-    allocate(swzp(nz))
-    swzp=zero
-
-    allocate(ffxS(nx))
-    ffxS=zero
-    allocate(sfxS(nx))
-    sfxS=zero
-    allocate(fsxS(nx))
-    fsxS=zero
-    allocate(fwxS(nx))
-    fwxS=zero
-    allocate(ssxS(nx))
-    ssxS=zero
-    allocate(swxS(nx))
-    swxS=zero
-
-    allocate(ffxpS(nx))
-    ffxpS=zero
-    allocate(sfxpS(nx))
-    sfxpS=zero
-    allocate(fsxpS(nx))
-    fsxpS=zero
-    allocate(fwxpS(nx))
-    fwxpS=zero
-    allocate(ssxpS(nx))
-    ssxpS=zero
-    allocate(swxpS(nx))
-    swxpS=zero
-
-    allocate(ffyS(ny))
-    ffyS=zero
-    allocate(sfyS(ny))
-    sfyS=zero
-    allocate(fsyS(ny))
-    fsyS=zero
-    allocate(fwyS(ny))
-    fwyS=zero
-    allocate(ssyS(ny))
-    ssyS=zero
-    allocate(swyS(ny))
-    swyS=zero
-
-    allocate(ffypS(ny))
-    ffypS=zero
-    allocate(sfypS(ny))
-    sfypS=zero
-    allocate(fsypS(ny))
-    fsypS=zero
-    allocate(fwypS(ny))
-    fwypS=zero
-    allocate(ssypS(ny))
-    ssypS=zero
-    allocate(swypS(ny))
-    swypS=zero
-
-    allocate(ffzS(nz))
-    ffzS=zero
-    allocate(sfzS(nz))
-    sfzS=zero
-    allocate(fszS(nz))
-    fszS=zero
-    allocate(fwzS(nz))
-    fwzS=zero
-    allocate(sszS(nz))
-    sszS=zero
-    allocate(swzS(nz))
-    swzS=zero
-
-    allocate(ffzpS(nz))
-    ffzpS=zero
-    allocate(sfzpS(nz))
-    sfzpS=zero
-    allocate(fszpS(nz))
-    fszpS=zero
-    allocate(fwzpS(nz))
-    fwzpS=zero
-    allocate(sszpS(nz))
-    sszpS=zero
-    allocate(swzpS(nz))
-    swzpS=zero
-
     allocate(sx(xsize(2),xsize(3)))
     sx=zero
     allocate(vx(xsize(2),xsize(3)))
@@ -449,212 +272,6 @@ contains
     sz=zero
     allocate(vz(zsize(1),zsize(2)))
     vz=zero
-
-
-    !module derpres
-    allocate(cfx6(nxm))
-    cfx6=zero
-    allocate(ccx6(nxm))
-    ccx6=zero
-    allocate(cbx6(nxm))
-    cbx6=zero
-    allocate(cfxp6(nxm))
-    cfxp6=zero
-    allocate(ciwxp6(nxm))
-    ciwxp6=zero
-    allocate(csxp6(nxm))
-    csxp6=zero
-    allocate(cwxp6(nxm))
-    cwxp6=zero
-    allocate(csx6(nxm))
-    csx6=zero
-    allocate(cwx6(nxm))
-    cwx6=zero
-    allocate(cifx6(nxm))
-    cifx6=zero
-    allocate(cicx6(nxm))
-    cicx6=zero
-    allocate(cisx6(nxm))
-    cisx6=zero
-
-    allocate(cibx6(nxm))
-    cibx6=zero
-    allocate(cifxp6(nxm))
-    cifxp6=zero
-    allocate(cisxp6(nxm))
-    cisxp6=zero
-    allocate(ciwx6(nxm))
-    ciwx6=zero
-
-    allocate(cfi6(nx))
-    cfi6=zero
-    allocate(cci6(nx))
-    cci6=zero
-    allocate(cbi6(nx))
-    cbi6=zero
-    allocate(cfip6(nx))
-    cfip6=zero
-    allocate(csip6(nx))
-    csip6=zero
-    allocate(cwip6(nx))
-    cwip6=zero
-    allocate(csi6(nx))
-    csi6=zero
-    allocate(cwi6(nx))
-    cwi6=zero
-    allocate(cifi6(nx))
-    cifi6=zero
-    allocate(cici6(nx))
-    cici6=zero
-    allocate(cibi6(nx))
-    cibi6=zero
-    allocate(cifip6(nx))
-    cifip6=zero
-
-    allocate(cisip6(nx))
-    cisip6=zero
-    allocate(ciwip6(nx))
-    ciwip6=zero
-    allocate(cisi6(nx))
-    cisi6=zero
-    allocate(ciwi6(nx))
-    ciwi6=zero
-
-    allocate(cfy6(nym))
-    cfy6=zero
-    allocate(ccy6(nym))
-    ccy6=zero
-    allocate(cby6(nym))
-    cby6=zero
-    allocate(cfyp6(nym))
-    cfyp6=zero
-    allocate(csyp6(nym))
-    csyp6=zero
-    allocate(cwyp6(nym))
-    cwyp6=zero
-    allocate(csy6(nym))
-    csy6=zero
-
-    allocate(cwy6(nym))
-    cwy6=zero
-    allocate(cify6(nym))
-    cify6=zero
-    allocate(cicy6(nym))
-    cicy6=zero
-    allocate(ciby6(nym))
-    ciby6=zero
-    allocate(cifyp6(nym))
-    cifyp6=zero
-    allocate(cisyp6(nym))
-    cisyp6=zero
-    allocate(ciwyp6(nym))
-    ciwyp6=zero
-    allocate(cisy6(nym))
-    cisy6=zero
-    allocate(ciwy6(nym))
-    ciwy6=zero
-
-    allocate(cfi6y(ny))
-    cfi6y=zero
-    allocate(cci6y(ny))
-    cci6y=zero
-    allocate(cbi6y(ny))
-    cbi6y=zero
-    allocate(cfip6y(ny))
-    cfip6y=zero
-    allocate(csip6y(ny))
-    csip6y=zero
-    allocate(cwip6y(ny))
-    cwip6y=zero
-    allocate(csi6y(ny))
-    csi6y=zero
-    allocate(cwi6y(ny))
-    cwi6y=zero
-    allocate(cifi6y(ny))
-    cifi6y=zero
-    allocate(cici6y(ny))
-    cici6y=zero
-
-    allocate(cibi6y(ny))
-    cibi6y=zero
-    allocate(cifip6y(ny))
-    cifip6y=zero
-    allocate(cisip6y(ny))
-    cisip6y=zero
-    allocate(ciwip6y(ny))
-    ciwip6y=zero
-    allocate(cisi6y(ny))
-    cisi6y=zero
-    allocate(ciwi6y(ny))
-    ciwi6y=zero
-
-    allocate(cfz6(nzm))
-    cfz6=zero
-    allocate(ccz6(nzm))
-    ccz6=zero
-    allocate(cbz6(nzm))
-    cbz6=zero
-    allocate(cfzp6(nzm))
-    cfzp6=zero
-    allocate(cszp6(nzm))
-    cszp6=zero
-    allocate(cwzp6(nzm))
-    cwzp6=zero
-    allocate(csz6(nzm))
-    csz6=zero
-
-    allocate(cwz6(nzm))
-    cwz6=zero
-    allocate(cifz6(nzm))
-    cifz6=zero
-    allocate(cicz6(nzm))
-    cicz6=zero
-    allocate(cibz6(nzm))
-    cibz6=zero
-    allocate(cifzp6(nzm))
-    cifzp6=zero
-    allocate(ciszp6(nzm))
-    ciszp6=zero
-    allocate(ciwzp6(nzm))
-    ciwzp6=zero
-    allocate(cisz6(nzm))
-    cisz6=zero
-    allocate(ciwz6(nzm))
-    ciwz6=zero
-
-    allocate(cfi6z(nz))
-    cfi6z=zero
-    allocate(cci6z(nz))
-    cci6z=zero
-    allocate(cbi6z(nz))
-    cbi6z=zero
-    allocate(cfip6z(nz))
-    cfip6z=zero
-    allocate(csip6z(nz))
-    csip6z=zero
-    allocate(cwip6z(nz))
-    cwip6z=zero
-    allocate(csi6z(nz))
-    csi6z=zero
-    allocate(cwi6z(nz))
-    cwi6z=zero
-    allocate(cifi6z(nz))
-    cifi6z=zero
-    allocate(cici6z(nz))
-    cici6z=zero
-
-    allocate(cibi6z(nz))
-    cibi6z=zero
-    allocate(cifip6z(nz))
-    cifip6z=zero
-    allocate(cisip6z(nz))
-    cisip6z=zero
-    allocate(ciwip6z(nz))
-    ciwip6z=zero
-    allocate(cisi6z(nz))
-    cisi6z=zero
-    allocate(ciwi6z(nz))
-    ciwi6z=zero
 
     !module waves
     allocate(zkz(nz/2+1))
@@ -759,11 +376,159 @@ contains
     call alloc_z(divu3, opt_global=.true.) !global indices
     divu3=zero
 
-
-
 #ifdef DEBUG
-    if (nrank ==  0) write(*,*) '# init_variables done'
+    if (nrank ==  0) write(*,*) '# var_init done'
 #endif
-    return
-  end subroutine init_variables
+
+  end subroutine var_init
+
+  !
+  ! Free memory
+  !
+  subroutine var_finalize()
+
+    use variables
+    use param
+
+    implicit none
+
+    !X PENCILS
+    deallocate(ux1)
+    deallocate(uy1)
+    deallocate(uz1)
+    deallocate(px1)
+    deallocate(py1)
+    deallocate(pz1)
+
+    deallocate(ta1)
+    deallocate(tb1)
+    deallocate(tc1)
+    deallocate(td1)
+    deallocate(te1)
+    deallocate(tf1)
+    deallocate(tg1)
+    deallocate(th1)
+    deallocate(ti1)
+    deallocate(di1)
+
+    deallocate(pp1)
+    deallocate(pgy1)
+    deallocate(pgz1)
+
+    !pre_correc 2d array
+    deallocate(dpdyx1,dpdyxn)
+    deallocate(dpdzx1,dpdzxn)
+    deallocate(dpdxy1,dpdxyn)
+    deallocate(dpdzy1,dpdzyn)
+    deallocate(dpdxz1,dpdxzn)
+    deallocate(dpdyz1,dpdyzn)
+
+    !Y PENCILS
+    deallocate(ux2)
+    deallocate(uy2)
+    deallocate(uz2)
+    deallocate(ta2)
+    deallocate(tb2)
+    deallocate(tc2)
+    deallocate(td2)
+    deallocate(te2)
+    deallocate(tf2)
+    deallocate(tg2)
+    deallocate(th2)
+    deallocate(ti2)
+    deallocate(tj2)
+    deallocate(di2)
+    deallocate(pgz2)
+    deallocate(pp2)
+    deallocate(dip2)
+    deallocate(ppi2)
+    deallocate(pgy2)
+    deallocate(pgzi2)
+    deallocate(duxdxp2)
+    deallocate(uyp2)
+    deallocate(uzp2)
+    deallocate(dipp2)
+    deallocate(upi2)
+    deallocate(duydypi2)
+
+    !Z PENCILS
+    deallocate(ux3)
+    deallocate(uy3)
+    deallocate(uz3)
+    deallocate(ta3)
+    deallocate(tb3)
+    deallocate(tc3)
+    deallocate(td3)
+    deallocate(te3)
+    deallocate(tf3)
+    deallocate(tg3)
+    deallocate(th3)
+    deallocate(ti3)
+    deallocate(di3)
+    deallocate(pgz3)
+    deallocate(ppi3)
+    deallocate(dip3)
+
+    deallocate(duxydxyp3)
+    deallocate(uzp3)
+    deallocate(dipp3)
+
+    deallocate(pp3)
+
+    deallocate(dv3)
+    deallocate(po3)
+
+    !module derivative
+    deallocate(sx)
+    deallocate(vx)
+
+    deallocate(sy)
+    deallocate(vy)
+
+    deallocate(sz)
+    deallocate(vz)
+
+    !module waves
+    deallocate(zkz)
+    deallocate(zk2)
+    deallocate(ezs)
+
+    deallocate(yky)
+    deallocate(yk2)
+    deallocate(eys)
+
+    deallocate(xkx)
+    deallocate(xk2)
+    deallocate(exs)
+
+    !module mesh
+    deallocate(ppy)
+    deallocate(pp2y)
+    deallocate(pp4y)
+
+    deallocate(ppyi)
+    deallocate(pp2yi)
+    deallocate(pp4yi)
+
+    deallocate(xp)
+    deallocate(xpi)
+
+    deallocate(yp)
+    deallocate(ypi)
+    deallocate(del)
+
+    deallocate(zp)
+    deallocate(zpi)
+
+    deallocate(yeta)
+    deallocate(yetai)
+
+    deallocate(dux1)
+    deallocate(duy1)
+    deallocate(duz1)
+
+    deallocate(divu3)
+
+  end subroutine var_finalize
+
 end module var

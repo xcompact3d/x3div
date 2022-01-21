@@ -297,9 +297,9 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine poisson_000(rhs)
 
-    use derivX
-    use derivY
-    use derivZ
+    use x3d_operator_x_data
+    use x3d_operator_y_data
+    use x3d_operator_z_data
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d_fft, only : PHYSICAL_IN_Z
 
@@ -731,11 +731,10 @@ contains
     !
     !***********************************************************
 
-    use derivX 
-    use derivY 
-    use derivZ 
+    use x3d_operator_x_data 
+    use x3d_operator_y_data
+    use x3d_operator_z_data
     use param
-    !use decomp_2d
     use variables
     use decomp_2d_fft
     use x3dprecision, only: sin_prec, cos_prec, pi, twopi

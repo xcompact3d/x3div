@@ -485,7 +485,19 @@ contains
   subroutine decomp_2d_finalize
     
     implicit none
-    
+ 
+    integer :: ierror
+
+    call MPI_COMM_FREE(DECOMP_2D_COMM_ROW, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_COL, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_CART_X, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_CART_Y, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_CART_Z, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
     call decomp_info_finalize(decomp_main)
 
     decomp_buf_size = 0

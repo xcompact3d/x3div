@@ -39,15 +39,18 @@ module x3d_staggered
   
   implicit none
 
-  public          ! Make everything public unless declared private
+  ! Make everything public unless declared private
+  public
+
 
 contains
+
 
 !********************************************************************
 !
 subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -135,7 +138,7 @@ end subroutine derxvp
 !
 subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -251,7 +254,7 @@ end subroutine interxvp
 !
 subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -324,7 +327,7 @@ end subroutine derxpv
 !
 subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -447,7 +450,7 @@ end subroutine interxpv
 !
 subroutine interyvp(ty,uy,ry,sy,x3dop,nx,ny,nym,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -593,7 +596,7 @@ end subroutine interyvp
 !
 subroutine deryvp(ty,uy,ry,sy,x3dop,ppyi,nx,ny,nym,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -696,7 +699,7 @@ end subroutine deryvp
 !
 subroutine interypv(ty,uy,ry,sy,x3dop,nx,nym,ny,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -853,7 +856,7 @@ end subroutine interypv
 !
 subroutine derypv(ty,uy,ry,sy,x3dop,ppy,nx,nym,ny,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -953,7 +956,7 @@ end subroutine derypv
 !
 subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -1065,7 +1068,7 @@ end subroutine derzvp
 !
 subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -1207,7 +1210,7 @@ end subroutine interzvp
 !
 subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -1296,7 +1299,7 @@ end subroutine derzpv
 !
 subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 

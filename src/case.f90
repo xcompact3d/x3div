@@ -58,7 +58,7 @@ contains
     integer :: i, j, k 
 
     !! Zero out the pressure field
-    do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1)) 
+    do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
       pp3(i,j,k,1) = zero
     enddo
     

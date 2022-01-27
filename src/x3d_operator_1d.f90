@@ -49,6 +49,12 @@ module x3d_operator_1d
     real(mytype), dimension(:), pointer :: f, s, w
     ! Array needed by the optimized Thomas solver
     real(mytype), dimension(:), allocatable :: periodic
+
+    contains
+
+      procedure, public :: init
+      procedure, public :: finalize
+
   end type x3doperator1d
 
   ! First derivative on the velocity grid
@@ -192,7 +198,7 @@ contains
     implicit none
 
     ! Arguments
-    type(x3doperator1d) :: x3dop
+    class(x3doperator1d) :: x3dop
     real(mytype), dimension(:), target, intent(in) :: f, s, w
     integer, intent(in) :: n, paire
     logical, intent(in) :: ncl
@@ -222,7 +228,7 @@ contains
 
     implicit none
 
-    type(x3doperator1d) :: x3dop
+    class(x3doperator1d) :: x3dop
 
     x3dop%n = 0
     x3dop%npaire = 0

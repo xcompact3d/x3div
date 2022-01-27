@@ -216,7 +216,7 @@ subroutine init_flowfield()
   call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
   itime = 0
 
-  divu3(:,:,:) = zero
+  !divu3(:,:,:) = zero
 
 end subroutine
 !########################################################################

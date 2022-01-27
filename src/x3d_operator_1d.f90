@@ -37,40 +37,46 @@ module x3d_operator_1d
   
   implicit none
 
-  type :: x3doperator1d
+  type, public :: x3doperator1d
     ! Size
-    integer :: n
+    integer :: n = 0
     ! Odd or even
     integer :: npaire
     ! Extra-diag coefficient
     real(mytype) :: alfa
     ! Arrays needed by the Thomas solver
     ! See subroutine prepare(b,c,f,s,w,n) in schemes.f90
-    real(mytype), dimension(:), pointer :: f, s, w
+    real(mytype), dimension(:), pointer :: f=>null(), s=>null(), w=>null()
     ! Array needed by the optimized Thomas solver
     real(mytype), dimension(:), allocatable :: periodic
+
+    contains
+
+      procedure, public :: init
+      procedure, public :: finalize
+
   end type x3doperator1d
 
   ! First derivative on the velocity grid
-  type(x3doperator1d), public :: x3d_op_derx, x3d_op_derxp
-  type(x3doperator1d), public :: x3d_op_dery, x3d_op_deryp
-  type(x3doperator1d), public :: x3d_op_derz, x3d_op_derzp
+  type(x3doperator1d), save, public :: x3d_op_derx, x3d_op_derxp
+  type(x3doperator1d), save, public :: x3d_op_dery, x3d_op_deryp
+  type(x3doperator1d), save, public :: x3d_op_derz, x3d_op_derzp
 
   ! First derivative from velocity grid => pressure grid
-  type(x3doperator1d), public :: x3d_op_derxvp, x3d_op_deryvp, x3d_op_derzvp
+  type(x3doperator1d), save, public :: x3d_op_derxvp, x3d_op_deryvp, x3d_op_derzvp
 
   ! First derivative from pressure grid => velocity grid
-  type(x3doperator1d), public :: x3d_op_derxpv, x3d_op_derypv, x3d_op_derzpv
+  type(x3doperator1d), save, public :: x3d_op_derxpv, x3d_op_derypv, x3d_op_derzpv
 
   ! Interpolation from velocity grid => pressure grid
-  type(x3doperator1d), public :: x3d_op_intxvp, x3d_op_intyvp, x3d_op_intzvp
+  type(x3doperator1d), save, public :: x3d_op_intxvp, x3d_op_intyvp, x3d_op_intzvp
 
   ! Interpolation from pressure grid => velocity grid
-  type(x3doperator1d), public :: x3d_op_intxpv, x3d_op_intypv, x3d_op_intzpv
+  type(x3doperator1d), save, public :: x3d_op_intxpv, x3d_op_intypv, x3d_op_intzpv
 
   private        ! Make everything private unless declared public
 
-  public :: x3d_operator_1d_init, x3d_operator_1d_finalize, x3doperator1d
+  public :: x3d_operator_1d_init, x3d_operator_1d_finalize
 
 
 contains
@@ -192,7 +198,7 @@ contains
     implicit none
 
     ! Arguments
-    type(x3doperator1d) :: x3dop
+    class(x3doperator1d) :: x3dop
     real(mytype), dimension(:), target, intent(in) :: f, s, w
     integer, intent(in) :: n, paire
     logical, intent(in) :: ncl
@@ -222,7 +228,7 @@ contains
 
     implicit none
 
-    type(x3doperator1d) :: x3dop
+    class(x3doperator1d) :: x3dop
 
     x3dop%n = 0
     x3dop%npaire = 0

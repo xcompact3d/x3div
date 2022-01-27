@@ -190,7 +190,7 @@ contains
        allocate(rw1(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
             ph%xst(3):ph%xen(3)))
        rw1 = zero
-       allocate(rw1b, source=rW&)
+       allocate(rw1b, source=rw1)
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
        rw2 = zero

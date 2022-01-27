@@ -125,7 +125,7 @@ contains
     use x3d_staggered
     use decomp_2d, only : mytype, real_type, decomp_2d_warning
     use param
-    use decomp_2d, only : nrank, ph1, ph3, ph4, nproc
+    use decomp_2d, only : nrank, ph1, ph2, ph3, nproc
     use decomp_2d, only : xsize, ysize, zsize
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d, only : transpose_x_to_y, &
@@ -168,13 +168,13 @@ contains
     call interxvp(pgz1,tc1,di1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
 
     call nvtxStartRange("Transpose xty pp1")
-    call transpose_x_to_y(pp1,duxdxp2,ph4)!->NXM NY NZ
+    call transpose_x_to_y(pp1,duxdxp2,ph2)!->NXM NY NZ
     call nvtxEndRange
     call nvtxStartRange("Transpose xty pgy")
-    call transpose_x_to_y(pgy1,uyp2,ph4)
+    call transpose_x_to_y(pgy1,uyp2,ph2)
     call nvtxEndRange
     call nvtxStartRange("Transpose xty pgz")
-    call transpose_x_to_y(pgz1,uzp2,ph4)
+    call transpose_x_to_y(pgz1,uzp2,ph2)
     call nvtxEndRange
 
     !WORK Y-PENCILS

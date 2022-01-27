@@ -107,7 +107,7 @@ subroutine init_xcompact3d(ndt_max)
   use decomp_2d, only : init_coarser_mesh_statS, &
                         init_coarser_mesh_statV, &
                         init_coarser_mesh_statP
-  use decomp_2d, only : ph1, ph2, ph3, ph4, phG
+  use decomp_2d, only : ph1, ph2, ph3, phG
   USE decomp_2d_poisson, ONLY : decomp_2d_poisson_init
   use x3d_operator_x_data, only : x3d_operator_x_data_init
   use x3d_operator_y_data, only : x3d_operator_y_data_init
@@ -190,7 +190,6 @@ subroutine init_xcompact3d(ndt_max)
   call init_coarser_mesh_statP(nprobe,nprobe,nprobe,.true.) !start from 1 == true
   !div: nx ny nz --> nxm ny nz --> nxm nym nz --> nxm nym nzm
   call decomp_info_init(nxm, nym, nzm, ph1)
-  call decomp_info_init(nxm, ny, nz, ph4)
   !gradp: nxm nym nzm -> nxm nym nz --> nxm ny nz --> nx ny nz
   call decomp_info_init(nxm, ny, nz, ph2)
   call decomp_info_init(nxm, nym, nz, ph3)
@@ -229,7 +228,7 @@ subroutine finalise_xcompact3d(flag)
 
   use MPI
   use decomp_2d, only : decomp_2d_finalize, decomp_info_finalize, &
-                        ph1, ph2, ph3, ph4, phG
+                        ph1, ph2, ph3, phG
   use decomp_2d_poisson, only : decomp_2d_poisson_finalize
   use x3d_operator_x_data, only : x3d_operator_x_data_finalize
   use x3d_operator_y_data, only : x3d_operator_y_data_finalize
@@ -246,7 +245,6 @@ subroutine finalise_xcompact3d(flag)
   call decomp_info_finalize(ph1)
   call decomp_info_finalize(ph2)
   call decomp_info_finalize(ph3)
-  call decomp_info_finalize(ph4)
   call decomp_info_finalize(phG)
   call decomp_2d_poisson_finalize()
 

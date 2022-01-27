@@ -88,7 +88,7 @@ module decomp_2d_poisson
        real(mytype), dimension(:,:,:), intent(inout) :: rhs
      end subroutine poisson_xxx
   end interface
-  procedure (poisson_xxx), pointer :: poisson
+  procedure (poisson_xxx), pointer :: poisson=>null()
 
   public :: decomp_2d_poisson_init,decomp_2d_poisson_finalize,poisson
 contains
@@ -261,6 +261,8 @@ contains
   subroutine decomp_2d_poisson_finalize
 
     implicit none
+
+    nullify(poisson)
 
     deallocate(ax,bx,ay,by,az,bz)
 

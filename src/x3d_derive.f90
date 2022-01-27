@@ -83,10 +83,12 @@ module x3d_derive
      END SUBROUTINE DERIVATIVE_Z
   END INTERFACE
 
-  PROCEDURE (DERIVATIVE_X), POINTER :: derx,derxx,derxS,derxxS
-  PROCEDURE (DERIVATIVE_Y), POINTER :: dery,deryS
-  PROCEDURE (DERIVATIVE_YY), POINTER :: deryy,deryyS
-  PROCEDURE (DERIVATIVE_Z), POINTER :: derz,derzz,derzS,derzzS
+  PROCEDURE (DERIVATIVE_X), POINTER :: derx=>null(), derxx=>null(), &
+                                       derxS=>null(), derxxS=>null()
+  PROCEDURE (DERIVATIVE_Y), POINTER :: dery=>null(), deryS=>null()
+  PROCEDURE (DERIVATIVE_YY), POINTER :: deryy=>null(), deryyS=>null()
+  PROCEDURE (DERIVATIVE_Z), POINTER :: derz=>null(), derzz=>null(), &
+                                       derzS=>null(), derzzS=>null()
 
 contains
 

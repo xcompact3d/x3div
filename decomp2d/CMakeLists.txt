@@ -22,9 +22,6 @@ set(SRCFILES ${files_decomp} ${files_fft})
 
 add_library(decomp2d STATIC ${SRCFILES})
 message (STATUS "List decomp2d files " ${SRCFILES})
-if(${FFT_Choice} MATCHES "cufft")
-  target_sources(decomp2d PRIVATE cuda_fft_1m.cu)
-endif(${FFT_Choice} MATCHES "cufft")
 
 if (MPI_FOUND)
   target_link_libraries(decomp2d PRIVATE MPI::MPI_Fortran)

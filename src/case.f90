@@ -54,22 +54,29 @@ contains
     real(mytype),dimension(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress) :: pp3
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1, py1, pz1
 
-    INTEGER :: it, is
+    integer :: it, is
+    integer :: i, j, k 
 
     !! Zero out the pressure field
-    pp3(:,:,:,1) = zero
-    px1(:,:,:) = zero
-    py1(:,:,:) = zero
-    pz1(:,:,:) = zero
-
+    do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1)) 
+      pp3(i,j,k,1) = zero
+    enddo
+    
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
+      px1(i,j,k) = zero
+      py1(i,j,k) = zero
+      pz1(i,j,k) = zero
+    enddo
 
     call vel(ux1, uy1, uz1)
     
     !! Setup old arrays
     do it = 1, ntime
-       dux1(:,:,:,it)=ux1(:,:,:)
-       duy1(:,:,:,it)=uy1(:,:,:)
-       duz1(:,:,:,it)=uz1(:,:,:)
+      do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
+        dux1(i,j,k,it)=ux1(i,j,k)
+        duy1(i,j,k,it)=uy1(i,j,k)
+        duz1(i,j,k,it)=uz1(i,j,k)
+      enddo
     enddo
 
 

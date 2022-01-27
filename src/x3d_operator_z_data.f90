@@ -91,123 +91,69 @@ contains
 
       allocate (ffz(nz))
       ffz = zero
-      allocate (sfz(nz))
-      sfz = zero
-      allocate (fsz(nz))
-      fsz = zero
-      allocate (fwz(nz))
-      fwz = zero
-      allocate (ssz(nz))
-      ssz = zero
-      allocate (swz(nz))
-      swz = zero
+      allocate (sfz, source=ffz)
+      allocate (fsz, source=ffz)
+      allocate (fwz, source=ffz)
+      allocate (ssz, source=ffz)
+      allocate (swz, source=ffz)
 
-      allocate (ffzp(nz))
-      ffzp = zero
-      allocate (sfzp(nz))
-      sfzp = zero
-      allocate (fszp(nz))
-      fszp = zero
-      allocate (fwzp(nz))
-      fwzp = zero
-      allocate (sszp(nz))
-      sszp = zero
-      allocate (swzp(nz))
-      swzp = zero
+      allocate (ffzp, source=ffz)
+      allocate (sfzp, source=ffz)
+      allocate (fszp, source=ffz)
+      allocate (fwzp, source=ffz)
+      allocate (sszp, source=ffz)
+      allocate (swzp, source=ffz)
 
-      allocate (ffzS(nz))
-      ffzS = zero
-      allocate (sfzS(nz))
-      sfzS = zero
-      allocate (fszS(nz))
-      fszS = zero
-      allocate (fwzS(nz))
-      fwzS = zero
-      allocate (sszS(nz))
-      sszS = zero
-      allocate (swzS(nz))
-      swzS = zero
+      allocate (ffzS, source=ffz)
+      allocate (sfzS, source=ffz)
+      allocate (fszS, source=ffz)
+      allocate (fwzS, source=ffz)
+      allocate (sszS, source=ffz)
+      allocate (swzS, source=ffz)
 
-      allocate (ffzpS(nz))
-      ffzpS = zero
-      allocate (sfzpS(nz))
-      sfzpS = zero
-      allocate (fszpS(nz))
-      fszpS = zero
-      allocate (fwzpS(nz))
-      fwzpS = zero
-      allocate (sszpS(nz))
-      sszpS = zero
-      allocate (swzpS(nz))
-      swzpS = zero
+      allocate (ffzpS, source=ffz)
+      allocate (sfzpS, source=ffz)
+      allocate (fszpS, source=ffz)
+      allocate (fwzpS, source=ffz)
+      allocate (sszpS, source=ffz)
+      allocate (swzpS, source=ffz)
 
       allocate (cfz6(nzm))
       cfz6 = zero
-      allocate (ccz6(nzm))
-      ccz6 = zero
-      allocate (cbz6(nzm))
-      cbz6 = zero
-      allocate (cfzp6(nzm))
-      cfzp6 = zero
-      allocate (cszp6(nzm))
-      cszp6 = zero
-      allocate (cwzp6(nzm))
-      cwzp6 = zero
-      allocate (csz6(nzm))
-      csz6 = zero
+      allocate (ccz6, source=cfz6)
+      allocate (cbz6, source=cfz6)
+      allocate (cfzp6, source=cfz6)
+      allocate (cszp6, source=cfz6)
+      allocate (cwzp6, source=cfz6)
+      allocate (csz6, source=cfz6)
 
-      allocate (cwz6(nzm))
-      cwz6 = zero
-      allocate (cifz6(nzm))
-      cifz6 = zero
-      allocate (cicz6(nzm))
-      cicz6 = zero
-      allocate (cibz6(nzm))
-      cibz6 = zero
-      allocate (cifzp6(nzm))
-      cifzp6 = zero
-      allocate (ciszp6(nzm))
-      ciszp6 = zero
-      allocate (ciwzp6(nzm))
-      ciwzp6 = zero
-      allocate (cisz6(nzm))
-      cisz6 = zero
-      allocate (ciwz6(nzm))
-      ciwz6 = zero
+      allocate (cwz6, source=cfz6)
+      allocate (cifz6, source=cfz6)
+      allocate (cicz6, source=cfz6)
+      allocate (cibz6, source=cfz6)
+      allocate (cifzp6, source=cfz6)
+      allocate (ciszp6, source=cfz6)
+      allocate (ciwzp6, source=cfz6)
+      allocate (cisz6, source=cfz6)
+      allocate (ciwz6, source=cfz6)
 
-      allocate (cfi6z(nz))
-      cfi6z = zero
-      allocate (cci6z(nz))
-      cci6z = zero
-      allocate (cbi6z(nz))
-      cbi6z = zero
-      allocate (cfip6z(nz))
-      cfip6z = zero
-      allocate (csip6z(nz))
-      csip6z = zero
-      allocate (cwip6z(nz))
-      cwip6z = zero
-      allocate (csi6z(nz))
-      csi6z = zero
-      allocate (cwi6z(nz))
-      cwi6z = zero
-      allocate (cifi6z(nz))
-      cifi6z = zero
-      allocate (cici6z(nz))
-      cici6z = zero
+      allocate (cfi6z, source=ffz)
+      allocate (cci6z, source=ffz)
+      allocate (cbi6z, source=ffz)
+      allocate (cfip6z, source=ffz)
+      allocate (csip6z, source=ffz)
+      allocate (cwip6z, source=ffz)
+      allocate (csi6z, source=ffz)
+      allocate (cwi6z, source=ffz)
+      allocate (cifi6z, source=ffz)
+      allocate (cici6z, source=ffz)
 
-      allocate (cibi6z(nz))
-      cibi6z = zero
-      allocate (cifip6z(nz))
-      cifip6z = zero
-      allocate (cisip6z(nz))
-      cisip6z = zero
-      allocate (ciwip6z(nz))
-      ciwip6z = zero
-      allocate (cisi6z(nz))
-      cisi6z = zero
-      allocate (ciwi6z(nz))
-      ciwi6z = zero
+      allocate (cibi6z, source=ffz)
+      allocate (cifip6z, source=ffz)
+      allocate (cisip6z, source=ffz)
+      allocate (ciwip6z, source=ffz)
+      allocate (cisi6z, source=ffz)
+      allocate (ciwi6z, source=ffz)
 
    end subroutine x3d_operator_z_data_init
 

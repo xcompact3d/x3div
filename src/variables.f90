@@ -92,245 +92,109 @@ contains
     !X PENCILS
     call alloc_x(ux1, opt_global=.true.) !global indices
     ux1 = zero
-    call alloc_x(uy1, opt_global=.true.) !global indices
-    uy1 = zero
-    call alloc_x(uz1, opt_global=.true.) !global indices
-    uz1 = zero
-    call alloc_x(px1, opt_global=.true.) !global indices
-    px1 = zero
-    call alloc_x(py1, opt_global=.true.) !global indices
-    py1 = zero
-    call alloc_x(pz1, opt_global=.true.) !global indices
-    pz1 = zero
-
+    allocate(uy1, uz1, px1, py1, pz1, source=ux1)
 
     call alloc_x(ta1)
     ta1 = zero
-    call alloc_x(tb1)
-    tb1 = zero
-    call alloc_x(tc1)
-    tc1 = zero
-    call alloc_x(td1)
-    td1 = zero
-    call alloc_x(te1)
-    te1 = zero
-    call alloc_x(tf1)
-    tf1 = zero
-    call alloc_x(tg1)
-    tg1 = zero
-    call alloc_x(th1)
-    th1 = zero
-    call alloc_x(ti1)
-    ti1 = zero
-    call alloc_x(di1)
-    di1 = zero
+    allocate(tb1, tc1, td1, te1, tf1, tg1, th1, ti1, di1, source=ta1)
 
     allocate(pp1(nxm,xsize(2),xsize(3)))
     pp1 = zero
-    allocate(pgy1(nxm,xsize(2),xsize(3)))
-    pgy1 = zero
-    allocate(pgz1(nxm,xsize(2),xsize(3)))
-    pgz1 = zero
+    allocate(pgy1, source=pp1)
+    allocate(pgz1, source=pp1)
 
     !pre_correc 2d array
-    allocate(dpdyx1(xsize(2),xsize(3)),dpdyxn(xsize(2),xsize(3)))
+    allocate(dpdyx1(xsize(2),xsize(3)))
     dpdyx1=zero
-    dpdyxn=zero
-    allocate(dpdzx1(xsize(2),xsize(3)),dpdzxn(xsize(2),xsize(3)))
-    dpdzx1=zero
-    dpdzxn=zero
-    allocate(dpdxy1(xsize(1),xsize(3)),dpdxyn(xsize(1),xsize(3)))
+    allocate(dpdyxn, dpdzx1, dpdzxn, source=dpdyx1)
+    allocate(dpdxy1(xsize(1),xsize(3)))
     dpdxy1=zero
-    dpdxyn=zero
-    allocate(dpdzy1(xsize(1),xsize(3)),dpdzyn(xsize(1),xsize(3)))
-    dpdzy1=zero
-    dpdzyn=zero
-    allocate(dpdxz1(xsize(1),xsize(2)),dpdxzn(xsize(1),xsize(2)))
+    allocate(dpdxyn, dpdzy1, dpdzyn, source=dpdxy1)
+    allocate(dpdxz1(xsize(1),xsize(2)))
     dpdxz1=zero
-    dpdxzn=zero
-    allocate(dpdyz1(xsize(1),xsize(2)),dpdyzn(xsize(1),xsize(2)))
-    dpdyz1=zero
-    dpdyzn=zero
+    allocate(dpdxzn, dpdyz1, dpdyzn, source=dpdxz1)
 
     !Y PENCILS
     call alloc_y(ux2)
     ux2=zero
-    call alloc_y(uy2)
-    uy2=zero
-    call alloc_y(uz2)
-    uz2=zero
-    call alloc_y(ta2)
-    ta2=zero
-    call alloc_y(tb2)
-    tb2=zero
-    call alloc_y(tc2)
-    tc2=zero
-    call alloc_y(td2)
-    td2=zero
-    call alloc_y(te2)
-    te2=zero
-    call alloc_y(tf2)
-    tf2=zero
-    call alloc_y(tg2)
-    tg2=zero
-    call alloc_y(th2)
-    th2=zero
-    call alloc_y(ti2)
-    ti2=zero
-    call alloc_y(tj2)
-    tj2=zero
-    call alloc_y(di2)
-    di2=zero
-    allocate(pgz2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
-    pgz2=zero
+    allocate(uy2, uz2, ta2, tb2, tc2, td2, te2, tf2, tg2, th2, ti2, tj2, di2, source=ux2)
     allocate(pp2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
     pp2=zero
-    allocate(dip2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
-    dip2=zero
+    allocate(pgz2, source=pp2)
     allocate(ppi2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
     ppi2=zero
-    allocate(pgy2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
-    pgy2=zero
-    allocate(pgzi2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
-    pgzi2=zero
+    allocate(dip2, pgy2, pgzi2, source=ppi2)
     allocate(duxdxp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
     duxdxp2=zero
-    allocate(uyp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
-    uyp2=zero
-    allocate(uzp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
-    uzp2=zero
-    allocate(dipp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
-    dipp2=zero
+    allocate(uyp2, uzp2, dipp2, source=duxdxp2)
     allocate(upi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
     upi2=zero
-    allocate(duydypi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
-    duydypi2=zero
+    allocate(duydypi2, source=upi2)
 
     !Z PENCILS
     call alloc_z(ux3)
     ux3=zero
-    call alloc_z(uy3)
-    uy3=zero
-    call alloc_z(uz3)
-    uz3=zero
-    call alloc_z(ta3)
-    ta3=zero
-    call alloc_z(tb3)
-    tb3=zero
-    call alloc_z(tc3)
-    tc3=zero
-    call alloc_z(td3)
-    td3=zero
-    call alloc_z(te3)
-    te3=zero
-    call alloc_z(tf3)
-    tf3=zero
-    call alloc_z(tg3)
-    tg3=zero
-    call alloc_z(th3)
-    th3=zero
-    call alloc_z(ti3)
-    ti3=zero
-    call alloc_z(di3)
-    di3=zero
-    allocate(pgz3(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),zsize(3)))
-    pgz3=zero
+    allocate(uy3, uz3, ta3, tb3, tc3, td3, te3, tf3, tg3, th3, ti3, di3, source=ux3)
     allocate(ppi3(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),zsize(3)))
     ppi3=zero
-    allocate(dip3(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),zsize(3)))
-    dip3=zero
+    allocate(pgz3, dip3, source=ppi3)
 
     allocate(duxydxyp3(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),zsize(3)))
     duxydxyp3=zero
-    allocate(uzp3(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),zsize(3)))
-    uzp3=zero
-    allocate(dipp3(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),zsize(3)))
-    dipp3=zero
-
+    allocate(uzp3, dipp3, source=duxydxyp3)
 
     allocate(pp3(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress))
     pp3=zero
 
     call alloc_z(dv3, ph1, .true.)
     dv3=zero
-    call alloc_z(po3, ph1, .true.)
-    po3=zero
+    allocate(po3, source=dv3)
 
 
     !module derivative
     allocate(sx(xsize(2),xsize(3)))
     sx=zero
-    allocate(vx(xsize(2),xsize(3)))
-    vx=zero
+    allocate(vx, source=sx)
 
     allocate(sy(ysize(1),ysize(3)))
     sy=zero
-    allocate(vy(ysize(1),ysize(3)))
-    vy=zero
+    allocate(vy, source=sy)
 
     allocate(sz(zsize(1),zsize(2)))
     sz=zero
-    allocate(vz(zsize(1),zsize(2)))
-    vz=zero
+    allocate(vz, source=sz)
 
     !module waves
     allocate(zkz(nz/2+1))
     zkz=zero
-    allocate(zk2(nz/2+1))
-    zk2=zero
-    allocate(ezs(nz/2+1))
-    ezs=zero
+    allocate(zk2, ezs, source=zkz)
 
     allocate(yky(ny))
     yky=zero
-    allocate(yk2(ny))
-    yk2=zero
-    allocate(eys(ny))
-    eys=zero
+    allocate(yk2, eys, source=yky)
 
     allocate(xkx(nx))
     xkx=zero
-    allocate(xk2(nx))
-    xk2=zero
-    allocate(exs(nx))
-    exs=zero
+    allocate(xk2, exs, source=xkx)
 
     !module mesh
     allocate(ppy(ny))
     ppy=zero
-    allocate(pp2y(ny))
-    pp2y=zero
-    allocate(pp4y(ny))
-    pp4y=zero
-
-    allocate(ppyi(ny))
-    ppyi=zero
-    allocate(pp2yi(ny))
-    pp2yi=zero
-    allocate(pp4yi(ny))
-    pp4yi=zero
+    allocate(pp2y, pp4y, ppyi, pp2yi, pp4yi, source=ppy)
 
     allocate(xp(nx))
     xp=zero
-    allocate(xpi(nx))
-    xpi=zero
+    allocate(xpi, source=xp)
 
-    allocate(yp(ny))
-    yp=zero
-    allocate(ypi(ny))
-    ypi=zero
-    allocate(del(ny))
-    del=zero
+    allocate(yp, ypi, del, source=ppy)
 
     allocate(zp(nz))
     zp=zero
-    allocate(zpi(nz))
-    zpi=zero
+    allocate(zpi, source=zp)
 
     allocate(yeta(ny))
     yeta=zero
-    allocate(yetai(ny))
-    yetai=zero
+    allocate(yetai, source=yeta)
 
     ! x-position
     do i=1,nx
@@ -368,10 +232,7 @@ contains
     endif
     allocate(dux1(xsize(1),xsize(2),xsize(3),ntime))
     dux1=zero
-    allocate(duy1(xsize(1),xsize(2),xsize(3),ntime))
-    duy1=zero
-    allocate(duz1(xsize(1),xsize(2),xsize(3),ntime))
-    duz1=zero
+    allocate(duy1, duz1, source=dux1)
 
     call alloc_z(divu3, opt_global=.true.) !global indices
     divu3=zero

@@ -91,123 +91,69 @@ contains
 
       allocate (ffy(ny))
       ffy = zero
-      allocate (sfy(ny))
-      sfy = zero
-      allocate (fsy(ny))
-      fsy = zero
-      allocate (fwy(ny))
-      fwy = zero
-      allocate (ssy(ny))
-      ssy = zero
-      allocate (swy(ny))
-      swy = zero
+      allocate (sfy, source=ffy)
+      allocate (fsy, source=ffy)
+      allocate (fwy, source=ffy)
+      allocate (ssy, source=ffy)
+      allocate (swy, source=ffy)
 
-      allocate (ffyp(ny))
-      ffyp = zero
-      allocate (sfyp(ny))
-      sfyp = zero
-      allocate (fsyp(ny))
-      fsyp = zero
-      allocate (fwyp(ny))
-      fwyp = zero
-      allocate (ssyp(ny))
-      ssyp = zero
-      allocate (swyp(ny))
-      swyp = zero
+      allocate (ffyp, source=ffy)
+      allocate (sfyp, source=ffy)
+      allocate (fsyp, source=ffy)
+      allocate (fwyp, source=ffy)
+      allocate (ssyp, source=ffy)
+      allocate (swyp, source=ffy)
 
-      allocate (ffyS(ny))
-      ffyS = zero
-      allocate (sfyS(ny))
-      sfyS = zero
-      allocate (fsyS(ny))
-      fsyS = zero
-      allocate (fwyS(ny))
-      fwyS = zero
-      allocate (ssyS(ny))
-      ssyS = zero
-      allocate (swyS(ny))
-      swyS = zero
+      allocate (ffyS, source=ffy)
+      allocate (sfyS, source=ffy)
+      allocate (fsyS, source=ffy)
+      allocate (fwyS, source=ffy)
+      allocate (ssyS, source=ffy)
+      allocate (swyS, source=ffy)
 
-      allocate (ffypS(ny))
-      ffypS = zero
-      allocate (sfypS(ny))
-      sfypS = zero
-      allocate (fsypS(ny))
-      fsypS = zero
-      allocate (fwypS(ny))
-      fwypS = zero
-      allocate (ssypS(ny))
-      ssypS = zero
-      allocate (swypS(ny))
-      swypS = zero
+      allocate (ffypS, source=ffy)
+      allocate (sfypS, source=ffy)
+      allocate (fsypS, source=ffy)
+      allocate (fwypS, source=ffy)
+      allocate (ssypS, source=ffy)
+      allocate (swypS, source=ffy)
 
       allocate (cfy6(nym))
       cfy6 = zero
-      allocate (ccy6(nym))
-      ccy6 = zero
-      allocate (cby6(nym))
-      cby6 = zero
-      allocate (cfyp6(nym))
-      cfyp6 = zero
-      allocate (csyp6(nym))
-      csyp6 = zero
-      allocate (cwyp6(nym))
-      cwyp6 = zero
-      allocate (csy6(nym))
-      csy6 = zero
+      allocate (ccy6, source=cfy6)
+      allocate (cby6, source=cfy6)
+      allocate (cfyp6, source=cfy6)
+      allocate (csyp6, source=cfy6)
+      allocate (cwyp6, source=cfy6)
+      allocate (csy6, source=cfy6)
 
-      allocate (cwy6(nym))
-      cwy6 = zero
-      allocate (cify6(nym))
-      cify6 = zero
-      allocate (cicy6(nym))
-      cicy6 = zero
-      allocate (ciby6(nym))
-      ciby6 = zero
-      allocate (cifyp6(nym))
-      cifyp6 = zero
-      allocate (cisyp6(nym))
-      cisyp6 = zero
-      allocate (ciwyp6(nym))
-      ciwyp6 = zero
-      allocate (cisy6(nym))
-      cisy6 = zero
-      allocate (ciwy6(nym))
-      ciwy6 = zero
+      allocate (cwy6, source=cfy6)
+      allocate (cify6, source=cfy6)
+      allocate (cicy6, source=cfy6)
+      allocate (ciby6, source=cfy6)
+      allocate (cifyp6, source=cfy6)
+      allocate (cisyp6, source=cfy6)
+      allocate (ciwyp6, source=cfy6)
+      allocate (cisy6, source=cfy6)
+      allocate (ciwy6, source=cfy6)
 
-      allocate (cfi6y(ny))
-      cfi6y = zero
-      allocate (cci6y(ny))
-      cci6y = zero
-      allocate (cbi6y(ny))
-      cbi6y = zero
-      allocate (cfip6y(ny))
-      cfip6y = zero
-      allocate (csip6y(ny))
-      csip6y = zero
-      allocate (cwip6y(ny))
-      cwip6y = zero
-      allocate (csi6y(ny))
-      csi6y = zero
-      allocate (cwi6y(ny))
-      cwi6y = zero
-      allocate (cifi6y(ny))
-      cifi6y = zero
-      allocate (cici6y(ny))
-      cici6y = zero
+      allocate (cfi6y, source=ffy)
+      allocate (cci6y, source=ffy)
+      allocate (cbi6y, source=ffy)
+      allocate (cfip6y, source=ffy)
+      allocate (csip6y, source=ffy)
+      allocate (cwip6y, source=ffy)
+      allocate (csi6y, source=ffy)
+      allocate (cwi6y, source=ffy)
+      allocate (cifi6y, source=ffy)
+      allocate (cici6y, source=ffy)
 
-      allocate (cibi6y(ny))
-      cibi6y = zero
-      allocate (cifip6y(ny))
-      cifip6y = zero
-      allocate (cisip6y(ny))
-      cisip6y = zero
-      allocate (ciwip6y(ny))
-      ciwip6y = zero
-      allocate (cisi6y(ny))
-      cisi6y = zero
-      allocate (ciwi6y(ny))
-      ciwi6y = zero
+      allocate (cibi6y, source=ffy)
+      allocate (cifip6y, source=ffy)
+      allocate (cisip6y, source=ffy)
+      allocate (ciwip6y, source=ffy)
+      allocate (cisi6y, source=ffy)
+      allocate (ciwi6y, source=ffy)
 
    end subroutine x3d_operator_y_data_init
 

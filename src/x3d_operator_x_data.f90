@@ -91,123 +91,69 @@ contains
 
       allocate (ffx(nx))
       ffx = zero
-      allocate (sfx(nx))
-      sfx = zero
-      allocate (fsx(nx))
-      fsx = zero
-      allocate (fwx(nx))
-      fwx = zero
-      allocate (ssx(nx))
-      ssx = zero
-      allocate (swx(nx))
-      swx = zero
+      allocate (sfx, source=ffx)
+      allocate (fsx, source=ffx)
+      allocate (fwx, source=ffx)
+      allocate (ssx, source=ffx)
+      allocate (swx, source=ffx)
 
-      allocate (ffxp(nx))
-      ffxp = zero
-      allocate (sfxp(nx))
-      sfxp = zero
-      allocate (fsxp(nx))
-      fsxp = zero
-      allocate (fwxp(nx))
-      fwxp = zero
-      allocate (ssxp(nx))
-      ssxp = zero
-      allocate (swxp(nx))
-      swxp = zero
+      allocate (ffxp, source=ffx)
+      allocate (sfxp, source=ffx)
+      allocate (fsxp, source=ffx)
+      allocate (fwxp, source=ffx)
+      allocate (ssxp, source=ffx)
+      allocate (swxp, source=ffx)
 
-      allocate (ffxS(nx))
-      ffxS = zero
-      allocate (sfxS(nx))
-      sfxS = zero
-      allocate (fsxS(nx))
-      fsxS = zero
-      allocate (fwxS(nx))
-      fwxS = zero
-      allocate (ssxS(nx))
-      ssxS = zero
-      allocate (swxS(nx))
-      swxS = zero
+      allocate (ffxS, source=ffx)
+      allocate (sfxS, source=ffx)
+      allocate (fsxS, source=ffx)
+      allocate (fwxS, source=ffx)
+      allocate (ssxS, source=ffx)
+      allocate (swxS, source=ffx)
 
-      allocate (ffxpS(nx))
-      ffxpS = zero
-      allocate (sfxpS(nx))
-      sfxpS = zero
-      allocate (fsxpS(nx))
-      fsxpS = zero
-      allocate (fwxpS(nx))
-      fwxpS = zero
-      allocate (ssxpS(nx))
-      ssxpS = zero
-      allocate (swxpS(nx))
-      swxpS = zero
+      allocate (ffxpS, source=ffx)
+      allocate (sfxpS, source=ffx)
+      allocate (fsxpS, source=ffx)
+      allocate (fwxpS, source=ffx)
+      allocate (ssxpS, source=ffx)
+      allocate (swxpS, source=ffx)
 
       allocate (cfx6(nxm))
       cfx6 = zero
-      allocate (ccx6(nxm))
-      ccx6 = zero
-      allocate (cbx6(nxm))
-      cbx6 = zero
-      allocate (cfxp6(nxm))
-      cfxp6 = zero
-      allocate (ciwxp6(nxm))
-      ciwxp6 = zero
-      allocate (csxp6(nxm))
-      csxp6 = zero
-      allocate (cwxp6(nxm))
-      cwxp6 = zero
-      allocate (csx6(nxm))
-      csx6 = zero
-      allocate (cwx6(nxm))
-      cwx6 = zero
-      allocate (cifx6(nxm))
-      cifx6 = zero
-      allocate (cicx6(nxm))
-      cicx6 = zero
-      allocate (cisx6(nxm))
-      cisx6 = zero
+      allocate (ccx6, source=cfx6)
+      allocate (cbx6, source=cfx6)
+      allocate (cfxp6, source=cfx6)
+      allocate (ciwxp6, source=cfx6)
+      allocate (csxp6, source=cfx6)
+      allocate (cwxp6, source=cfx6)
+      allocate (csx6, source=cfx6)
+      allocate (cwx6, source=cfx6)
+      allocate (cifx6, source=cfx6)
+      allocate (cicx6, source=cfx6)
+      allocate (cisx6, source=cfx6)
 
-      allocate (cibx6(nxm))
-      cibx6 = zero
-      allocate (cifxp6(nxm))
-      cifxp6 = zero
-      allocate (cisxp6(nxm))
-      cisxp6 = zero
-      allocate (ciwx6(nxm))
-      ciwx6 = zero
+      allocate (cibx6, source=cfx6)
+      allocate (cifxp6, source=cfx6)
+      allocate (cisxp6, source=cfx6)
+      allocate (ciwx6, source=cfx6)
 
-      allocate (cfi6(nx))
-      cfi6 = zero
-      allocate (cci6(nx))
-      cci6 = zero
-      allocate (cbi6(nx))
-      cbi6 = zero
-      allocate (cfip6(nx))
-      cfip6 = zero
-      allocate (csip6(nx))
-      csip6 = zero
-      allocate (cwip6(nx))
-      cwip6 = zero
-      allocate (csi6(nx))
-      csi6 = zero
-      allocate (cwi6(nx))
-      cwi6 = zero
-      allocate (cifi6(nx))
-      cifi6 = zero
-      allocate (cici6(nx))
-      cici6 = zero
-      allocate (cibi6(nx))
-      cibi6 = zero
-      allocate (cifip6(nx))
-      cifip6 = zero
+      allocate (cfi6, source=ffx)
+      allocate (cci6, source=ffx)
+      allocate (cbi6, source=ffx)
+      allocate (cfip6, source=ffx)
+      allocate (csip6, source=ffx)
+      allocate (cwip6, source=ffx)
+      allocate (csi6, source=ffx)
+      allocate (cwi6, source=ffx)
+      allocate (cifi6, source=ffx)
+      allocate (cici6, source=ffx)
+      allocate (cibi6, source=ffx)
+      allocate (cifip6, source=ffx)
 
-      allocate (cisip6(nx))
-      cisip6 = zero
-      allocate (ciwip6(nx))
-      ciwip6 = zero
-      allocate (cisi6(nx))
-      cisi6 = zero
-      allocate (ciwi6(nx))
-      ciwi6 = zero
+      allocate (cisip6, source=ffx)
+      allocate (ciwip6, source=ffx)
+      allocate (cisi6, source=ffx)
+      allocate (ciwi6, source=ffx)
 
    end subroutine x3d_operator_x_data_init
 

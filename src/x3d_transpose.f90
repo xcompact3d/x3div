@@ -88,6 +88,7 @@ contains
   subroutine x3d_transpose_x_to_y_real(data_in, data_out, decomp)
 
     use decomp_2d, only : transpose_x_to_y
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -99,7 +100,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_row == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2), i=1:decomp%xsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -112,6 +113,7 @@ contains
   subroutine x3d_transpose_x_to_y_cplx(data_in, data_out, decomp)
 
     use decomp_2d, only : transpose_x_to_y
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -123,7 +125,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_row == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2), i=1:decomp%xsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -143,6 +145,7 @@ contains
   subroutine x3d_transpose_y_to_z_real(data_in, data_out, decomp)
 
     use decomp_2d, only : transpose_y_to_z
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -154,7 +157,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_col == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -167,6 +170,7 @@ contains
   subroutine x3d_transpose_y_to_z_cplx(data_in, data_out, decomp)
 
     use decomp_2d, only : transpose_y_to_z
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -178,7 +182,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_col == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -198,6 +202,7 @@ contains
   subroutine x3d_transpose_z_to_y_real(data_in, data_out, decomp)
 
     use decomp_2d, only : transpose_z_to_y
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -209,7 +214,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_col == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%zsz(3), j=1:decomp%zsz(2), i=1:decomp%zsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -222,6 +227,7 @@ contains
   subroutine x3d_transpose_z_to_y_cplx(data_in, data_out, decomp)
 
     use decomp_2d, only : transpose_z_to_y
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -233,7 +239,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_col == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%zsz(3), j=1:decomp%zsz(2), i=1:decomp%zsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -253,6 +259,7 @@ contains
   subroutine x3d_transpose_y_to_x_real(data_in, data_out, decomp)
     
     use decomp_2d, only : transpose_y_to_x
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -264,7 +271,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_row == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
@@ -277,6 +284,7 @@ contains
   subroutine x3d_transpose_y_to_x_cplx(data_in, data_out, decomp)
     
     use decomp_2d, only : transpose_y_to_x
+    use decomp_2d, only : nproc
 
     implicit none
 
@@ -288,7 +296,7 @@ contains
     !! Local
     integer :: i, j, k
 
-    if (p_row == 1) then
+    if (nproc == 1) then
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo

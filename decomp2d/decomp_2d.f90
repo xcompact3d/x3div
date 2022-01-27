@@ -318,7 +318,8 @@ contains
     
     implicit none
 
-    integer, intent(IN) :: nx,ny,nz,p_row,p_col
+    integer, intent(IN) :: nx,ny,nz
+    integer, intent(INOUT) :: p_row,p_col
     logical, dimension(3), intent(IN), optional :: periodic_bc
 
     integer :: errorcode, ierror, row, col
@@ -344,6 +345,8 @@ contains
     if (p_row==0 .and. p_col==0) then
        ! determine the best 2D processor grid
        call best_2d_grid(nproc, row, col)
+       p_row = row
+       p_col = col
     else
        if (nproc /= p_row*p_col) then
           errorcode = 1

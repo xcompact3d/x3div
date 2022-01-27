@@ -64,6 +64,7 @@ subroutine transpose_z_to_y_real(src, dst, opt_decomp)
 #ifdef SHM
   work2_p = decomp%ROW_INFO%RCV_P
   call MPI_BARRIER(decomp%ROW_INFO%CORE_COMM, ierror)
+  if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
 #endif
 
 #ifdef SHM
@@ -71,6 +72,7 @@ subroutine transpose_z_to_y_real(src, dst, opt_decomp)
      call MPI_ALLTOALLV(work1, decomp%z2cnts_s, decomp%z2disp_s, &
           real_type, work2, decomp%y2cnts_s, decomp%y2disp_s, &
           real_type, decomp%ROW_INFO%SMP_COMM, ierror)
+     if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
   end if
 #else
 #ifdef EVEN
@@ -78,21 +80,25 @@ subroutine transpose_z_to_y_real(src, dst, opt_decomp)
      call MPI_ALLTOALL(src, decomp%z2count, &
           real_type, work2_r, decomp%y2count, &
           real_type, DECOMP_2D_COMM_ROW, ierror)
+     if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALL")
   else
      call MPI_ALLTOALL(work1_r, decomp%z2count, &
           real_type, work2_r, decomp%y2count, &
           real_type, DECOMP_2D_COMM_ROW, ierror)
+     if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALL")
   end if
 #else
   call MPI_ALLTOALLV(src, decomp%z2cnts, decomp%z2disp, &
        real_type, work2_r, decomp%y2cnts, decomp%y2disp, &
        real_type, DECOMP_2D_COMM_ROW, ierror)
+  if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
 #endif
 #endif
 
   ! rearrange receive buffer
 #ifdef SHM
   call MPI_BARRIER(decomp%ROW_INFO%CORE_COMM, ierror)
+  if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
   call mem_merge_zy_real(work2, d1, d2, d3, dst, dims(2), &
        decomp%y2dist, decomp)
 #else
@@ -227,6 +233,7 @@ subroutine transpose_z_to_y_complex(src, dst, opt_decomp)
 #ifdef SHM
   work2_p = decomp%ROW_INFO%RCV_P_c
   call MPI_BARRIER(decomp%ROW_INFO%CORE_COMM, ierror)
+  if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
 #endif
 
 #ifdef SHM
@@ -234,6 +241,7 @@ subroutine transpose_z_to_y_complex(src, dst, opt_decomp)
      call MPI_ALLTOALLV(work1, decomp%z2cnts_s, decomp%z2disp_s, &
           complex_type, work2, decomp%y2cnts_s, decomp%y2disp_s, &
           complex_type, decomp%ROW_INFO%SMP_COMM, ierror)
+     if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
   end if
 #else
 #ifdef EVEN
@@ -241,21 +249,25 @@ subroutine transpose_z_to_y_complex(src, dst, opt_decomp)
      call MPI_ALLTOALL(src, decomp%z2count, &
           complex_type, work2_c, decomp%y2count, &
           complex_type, DECOMP_2D_COMM_ROW, ierror)
+     if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALL")
   else
      call MPI_ALLTOALL(work1_c, decomp%z2count, &
           complex_type, work2_c, decomp%y2count, &
           complex_type, DECOMP_2D_COMM_ROW, ierror)
+     if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALL")
   end if
 #else
   call MPI_ALLTOALLV(src, decomp%z2cnts, decomp%z2disp, &
        complex_type, work2_c, decomp%y2cnts, decomp%y2disp, &
        complex_type, DECOMP_2D_COMM_ROW, ierror)
+  if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
 #endif
 #endif
 
   ! rearrange receive buffer
 #ifdef SHM
   call MPI_BARRIER(decomp%ROW_INFO%CORE_COMM, ierror)
+  if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
   call mem_merge_zy_complex(work2, d1, d2, d3, dst, dims(2), &
        decomp%y2dist, decomp)
 #else
@@ -340,6 +352,7 @@ end subroutine transpose_z_to_y_complex_wait
 
 ! pack/unpack ALLTOALL(V) buffers
 
+#if defined(SHM) || defined(EVEN)
 subroutine mem_split_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
 
   implicit none
@@ -351,7 +364,7 @@ subroutine mem_split_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2,pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then 
@@ -363,29 +376,26 @@ subroutine mem_split_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%z2disp_o(m) + 1
+     pos0 = decomp%z2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%z2count + 1
+     pos0 = m * decomp%z2count + 1
 #else
-     pos = decomp%z2disp(m) + 1
+     pos0 = decomp%z2disp(m) + 1
 #endif
 #endif
 
-     do k=i1,i2
-        do j=1,n2
-           do i=1,n1
-              out(pos) = in(i,j,k)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=i1:i2, j=1:n2, i=1:n1)
+        pos = pos0 + i-1 + (j-1)*n1 + (k-i1)*n2*n1
+        out(pos) = in(i,j,k)
      end do
   end do
 
   return
 end subroutine mem_split_zy_real
+#endif
 
-
+#if defined(SHM) || defined(EVEN)
 subroutine mem_split_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
 
   implicit none
@@ -397,7 +407,7 @@ subroutine mem_split_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2,pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then 
@@ -409,28 +419,24 @@ subroutine mem_split_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%z2disp_o(m) + 1
+     pos0 = decomp%z2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%z2count + 1
+     pos0 = m * decomp%z2count + 1
 #else
-     pos = decomp%z2disp(m) + 1
+     pos0 = decomp%z2disp(m) + 1
 #endif
 #endif
 
-     do k=i1,i2
-        do j=1,n2
-           do i=1,n1
-              out(pos) = in(i,j,k)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=i1:i2, j=1:n2, i=1:n1)
+        pos = pos0 + i-1 + (j-1)*n1 + (k-i1)*n2*n1
+        out(pos) = in(i,j,k)
      end do
   end do
 
   return
 end subroutine mem_split_zy_complex
-
+#endif
 
 subroutine mem_merge_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
 
@@ -443,7 +449,7 @@ subroutine mem_merge_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2, pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then
@@ -455,22 +461,18 @@ subroutine mem_merge_zy_real(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%y2disp_o(m) + 1
+     pos0 = decomp%y2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%y2count + 1
+     pos0 = m * decomp%y2count + 1
 #else
-     pos = decomp%y2disp(m) + 1
+     pos0 = decomp%y2disp(m) + 1
 #endif
 #endif
 
-     do k=1,n3
-        do j=i1,i2
-           do i=1,n1
-              out(i,j,k) = in(pos)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+        pos = pos0 + i-1 + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
+        out(i,j,k) = in(pos)
      end do
   end do
 
@@ -489,7 +491,7 @@ subroutine mem_merge_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
   integer, dimension(0:iproc-1), intent(IN) :: dist
   TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-  integer :: i,j,k, m,i1,i2, pos
+  integer :: i,j,k,m,i1,i2,pos,pos0
 
   do m=0,iproc-1
      if (m==0) then
@@ -501,22 +503,18 @@ subroutine mem_merge_zy_complex(in,n1,n2,n3,out,iproc,dist,decomp)
      end if
 
 #ifdef SHM
-     pos = decomp%y2disp_o(m) + 1
+     pos0 = decomp%y2disp_o(m) + 1
 #else
 #ifdef EVEN
-     pos = m * decomp%y2count + 1
+     pos0 = m * decomp%y2count + 1
 #else
-     pos = decomp%y2disp(m) + 1
+     pos0 = decomp%y2disp(m) + 1
 #endif
 #endif
 
-     do k=1,n3
-        do j=i1,i2
-           do i=1,n1
-              out(i,j,k) = in(pos)
-              pos = pos + 1
-           end do
-        end do
+     do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+        pos = pos0 + i-1 + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
+        out(i,j,k) = in(pos)
      end do
   end do
 

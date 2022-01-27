@@ -48,7 +48,7 @@ contains
   subroutine error_L1_L2_Linf_xsize(err, l1, l2, linf)
 
     USE variables   , only : nx, ny, nz
-    use x3dprecision, only : mytype
+    use decomp_2d, only : mytype
     use decomp_2d   , only : xsize
 
     implicit none
@@ -65,10 +65,9 @@ contains
   subroutine error_L1_L2_Linf_generic(err, l1, l2, linf, n1, n2, n3, ntot)
 
     ! Compute L1, L2 and Linf norm of given 3D array
-    USE param       , only : zero
-    use x3dprecision, only : mytype, real_type
+    USE param, only : zero
+    use decomp_2d, only : mytype, real_type, decomp_2d_abort
     USE MPI
-    use decomp_2d   , only : decomp_2d_abort
     
     implicit none
       
@@ -97,12 +96,12 @@ contains
     l1l2 = (/l1, l2/)
     code = 0
     call MPI_ALLREDUCE(MPI_IN_PLACE,l1l2,2,real_type,MPI_SUM,MPI_COMM_WORLD,code)
-    !if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
+    if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
     l1 = l1l2(1) / ntot
     l2 = sqrt(l1l2(2) / ntot)
     ! Parallel, MPI_MAX
     call MPI_ALLREDUCE(MPI_IN_PLACE,linf,1,real_type,MPI_MAX,MPI_COMM_WORLD,code)
-    !if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
+    if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
 
   end subroutine error_L1_L2_Linf_generic
 end module tools

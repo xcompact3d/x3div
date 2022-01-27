@@ -56,6 +56,7 @@ decomp%y1dist, decomp)
 #ifdef SHM
 work2_p = decomp%COL_INFO%RCV_P
 call MPI_BARRIER(decomp%COL_INFO%CORE_COMM, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
 #endif
 
 ! transpose using MPI_ALLTOALL(V)
@@ -64,22 +65,26 @@ if (decomp%COL_INFO%CORE_ME==1) THEN
 call MPI_ALLTOALLV(work1, decomp%y1cnts_s, decomp%y1disp_s, &
 real_type, work2, decomp%x1cnts_s, decomp%x1disp_s, &
 real_type, decomp%COL_INFO%SMP_COMM, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
 end if
 #else
 #ifdef EVEN
 call MPI_ALLTOALL(work1_r, decomp%y1count, &
 real_type, work2_r, decomp%x1count, &
 real_type, DECOMP_2D_COMM_COL, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALL")
 #else
 call MPI_ALLTOALLV(work1_r, decomp%y1cnts, decomp%y1disp, &
 real_type, work2_r, decomp%x1cnts, decomp%x1disp, &
 real_type, DECOMP_2D_COMM_COL, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
 #endif
 #endif
 
 ! rearrange receive buffer
 #ifdef SHM
 call MPI_BARRIER(decomp%COL_INFO%CORE_COMM, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
 call mem_merge_yx_real(work2, d1, d2, d3, dst, dims(1), &
 decomp%x1dist, decomp)
 #else
@@ -214,6 +219,7 @@ decomp%y1dist, decomp)
 #ifdef SHM
 work2_p = decomp%COL_INFO%RCV_P_c
 call MPI_BARRIER(decomp%COL_INFO%CORE_COMM, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
 #endif
 
 ! transpose using MPI_ALLTOALL(V)
@@ -222,22 +228,26 @@ if (decomp%COL_INFO%CORE_ME==1) THEN
 call MPI_ALLTOALLV(work1, decomp%y1cnts_s, decomp%y1disp_s, &
 complex_type, work2, decomp%x1cnts_s, decomp%x1disp_s, &
 complex_type, decomp%COL_INFO%SMP_COMM, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
 end if
 #else
 #ifdef EVEN
 call MPI_ALLTOALL(work1_c, decomp%y1count, &
 complex_type, work2_c, decomp%x1count, &
 complex_type, DECOMP_2D_COMM_COL, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALL")
 #else
 call MPI_ALLTOALLV(work1_c, decomp%y1cnts, decomp%y1disp, &
 complex_type, work2_c, decomp%x1cnts, decomp%x1disp, &
 complex_type, DECOMP_2D_COMM_COL, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLTOALLV")
 #endif
 #endif
 
 ! rearrange receive buffer
 #ifdef SHM
 call MPI_BARRIER(decomp%COL_INFO%CORE_COMM, ierror)
+if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BARRIER")
 call mem_merge_yx_complex(work2, d1, d2, d3, dst, dims(1), &
 decomp%x1dist, decomp)
 #else
@@ -340,7 +350,7 @@ integer, intent(IN) :: iproc
 integer, dimension(0:iproc-1), intent(IN) :: dist
 TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-integer :: i,j,k, m,i1,i2,pos
+integer :: i,j,k,m,i1,i2,pos,pos0
 
 do m=0,iproc-1
 if (m==0) then 
@@ -352,23 +362,19 @@ i2 = i1+dist(m)-1
 end if
 
 #ifdef SHM
-pos = decomp%y1disp_o(m) + 1
+pos0 = decomp%y1disp_o(m) + 1
 #else
 #ifdef EVEN
-pos = m * decomp%y1count + 1
+pos0 = m * decomp%y1count + 1
 #else
-pos = decomp%y1disp(m) + 1
+pos0 = decomp%y1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=i1,i2
-do i=1,n1
-out(pos) = in(i,j,k)
-pos = pos + 1
-end do
-end do
-end do
+   do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+      pos = pos0 + i-1 + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
+      out(pos) = in(i,j,k)
+   end do
 end do
 
 return
@@ -386,7 +392,7 @@ integer, intent(IN) :: iproc
 integer, dimension(0:iproc-1), intent(IN) :: dist
 TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-integer :: i,j,k, m,i1,i2,pos
+integer :: i,j,k,m,i1,i2,pos,pos0
 
 do m=0,iproc-1
 if (m==0) then 
@@ -398,23 +404,19 @@ i2 = i1+dist(m)-1
 end if
 
 #ifdef SHM
-pos = decomp%y1disp_o(m) + 1
+pos0 = decomp%y1disp_o(m) + 1
 #else
 #ifdef EVEN
-pos = m * decomp%y1count + 1
+pos0 = m * decomp%y1count + 1
 #else
-pos = decomp%y1disp(m) + 1
+pos0 = decomp%y1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=i1,i2
-do i=1,n1
-out(pos) = in(i,j,k)
-pos = pos + 1
-end do
-end do
-end do
+   do concurrent (k=1:n3, j=i1:i2, i=1:n1)
+      pos = pos0 + i-1 + (j-i1)*n1 + (k-1)*(i2-i1+1)*n1
+      out(pos) = in(i,j,k)
+   end do
 end do
 
 return
@@ -432,7 +434,7 @@ integer, intent(IN) :: iproc
 integer, dimension(0:iproc-1), intent(IN) :: dist
 TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-integer :: i,j,k, m,i1,i2, pos
+integer :: i,j,k,m,i1,i2,pos,pos0
 
 do m=0,iproc-1
 if (m==0) then
@@ -444,23 +446,19 @@ i2 = i1+dist(m)-1
 end if
 
 #ifdef SHM
-pos = decomp%x1disp_o(m) + 1
+pos0 = decomp%x1disp_o(m) + 1
 #else
 #ifdef EVEN
-pos = m * decomp%x1count + 1
+pos0 = m * decomp%x1count + 1
 #else
-pos = decomp%x1disp(m) + 1
+pos0 = decomp%x1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=1,n2
-do i=i1,i2
-out(i,j,k) = in(pos)
-pos = pos + 1
-end do
-end do
-end do
+   do concurrent (k=1:n3, j=1:n2, i=i1:i2)
+      pos = pos0 + i-i1 + (j-1)*(i2-i1+1) + (k-1)*n2*(i2-i1+1)
+      out(i,j,k) = in(pos)
+   end do
 end do
 
 return
@@ -478,7 +476,7 @@ integer, intent(IN) :: iproc
 integer, dimension(0:iproc-1), intent(IN) :: dist
 TYPE(DECOMP_INFO), intent(IN) :: decomp
 
-integer :: i,j,k, m,i1,i2, pos
+integer :: i,j,k,m,i1,i2,pos,pos0
 
 do m=0,iproc-1
 if (m==0) then
@@ -490,22 +488,18 @@ i2 = i1+dist(m)-1
 end if
 
 #ifdef SHM
-pos = decomp%x1disp_o(m) + 1
+pos0 = decomp%x1disp_o(m) + 1
 #else
 #ifdef EVEN
-pos = m * decomp%x1count + 1
+pos0 = m * decomp%x1count + 1
 #else
-pos = decomp%x1disp(m) + 1
+pos0 = decomp%x1disp(m) + 1
 #endif
 #endif
 
-do k=1,n3
-do j=1,n2
-do i=i1,i2
-out(i,j,k) = in(pos)
-pos = pos + 1
-end do
-end do
+do concurrent (k=1:n3, j=1:n2, i=i1:i2)
+   pos = pos0 + i-i1 + (j-1)*(i2-i1+1) + (k-1)*n2*(i2-i1+1)
+   out(i,j,k) = in(pos)
 end do
 end do
 

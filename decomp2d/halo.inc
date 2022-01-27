@@ -110,6 +110,5 @@
          neighbour(3,4), neighbour(3,3), ierror) ! north & south
     neighbour(3,5) = MPI_PROC_NULL               ! top
     neighbour(3,6) = MPI_PROC_NULL               ! bottom
-
     return
   end subroutine init_neighbour

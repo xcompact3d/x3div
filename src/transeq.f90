@@ -43,7 +43,7 @@ contains
   !############################################################################
   subroutine calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
 
-    use x3dprecision, only : mytype
+    use decomp_2d, only : mytype
     use decomp_2d, only : xsize, zsize
     use param, only : ntime
 
@@ -74,12 +74,11 @@ contains
 
     use param
     use variables
-    use x3dprecision, only : mytype
+    use x3d_operator_1d
+    use decomp_2d, only : mytype
+    use x3d_transpose
+    use x3d_derive
     use decomp_2d , only : xsize, ysize, zsize
-    use decomp_2d, only : transpose_x_to_y, &
-                          transpose_y_to_z, &
-                          transpose_z_to_y, &
-                          transpose_y_to_x
     use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,di1
     use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2,di2
     use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3,di3
@@ -99,85 +98,101 @@ contains
 
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
-    ta1(:,:,:) = ux1(:,:,:) * ux1(:,:,:)
-    tb1(:,:,:) = ux1(:,:,:) * uy1(:,:,:)
-    tc1(:,:,:) = ux1(:,:,:) * uz1(:,:,:)
+    
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
+      tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
+      tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
+    enddo
 
-    call derx (td1,ta1,di1,sx,ffxp,fsxp,fwxp,xsize(1),xsize(2),xsize(3),1)
-    call derx (te1,tb1,di1,sx,ffx,fsx,fwx,xsize(1),xsize(2),xsize(3),0)
-    call derx (tf1,tc1,di1,sx,ffx,fsx,fwx,xsize(1),xsize(2),xsize(3),0)
-    call derx (ta1,ux1,di1,sx,ffx,fsx,fwx,xsize(1),xsize(2),xsize(3),0)
-    call derx (tb1,uy1,di1,sx,ffxp,fsxp,fwxp,xsize(1),xsize(2),xsize(3),1)
-    call derx (tc1,uz1,di1,sx,ffxp,fsxp,fwxp,xsize(1),xsize(2),xsize(3),1)
+    call derx (td1,ta1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (te1,tb1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tf1,tc1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (ta1,ux1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tb1,uy1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (tc1,uz1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
-    tg1(:,:,:) = td1(:,:,:) + ux1(:,:,:) * ta1(:,:,:)
-    th1(:,:,:) = te1(:,:,:) + ux1(:,:,:) * tb1(:,:,:)
-    ti1(:,:,:) = tf1(:,:,:) + ux1(:,:,:) * tc1(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      tg1(i,j,k) = td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k)
+      th1(i,j,k) = te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k)
+      ti1(i,j,k) = tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k)
+    enddo
     ! TODO: save the x-convective terms already in dux1, duy1, duz1
 
     call test_du(ta1)
     
-    call transpose_x_to_y(ux1,ux2)
-    call transpose_x_to_y(uy1,uy2)
-    call transpose_x_to_y(uz1,uz2)
+    call x3d_transpose_x_to_y(ux1,ux2)
+    call x3d_transpose_x_to_y(uy1,uy2)
+    call x3d_transpose_x_to_y(uz1,uz2)
 
     !WORK Y-PENCILS
-    td2(:,:,:) = ux2(:,:,:) * uy2(:,:,:)
-    te2(:,:,:) = uy2(:,:,:) * uy2(:,:,:)
-    tf2(:,:,:) = uz2(:,:,:) * uy2(:,:,:)
+    
+    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+      td2(i,j,k) = ux2(i,j,k) * uy2(i,j,k)
+      te2(i,j,k) = uy2(i,j,k) * uy2(i,j,k)
+      tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
+    enddo
 
-    call dery (tg2,td2,di2,sy,ffy,fsy,fwy,ppy,ysize(1),ysize(2),ysize(3),0)
-    call dery (th2,te2,di2,sy,ffyp,fsyp,fwyp,ppy,ysize(1),ysize(2),ysize(3),1)
-    call dery (ti2,tf2,di2,sy,ffy,fsy,fwy,ppy,ysize(1),ysize(2),ysize(3),0)
-    call dery (td2,ux2,di2,sy,ffyp,fsyp,fwyp,ppy,ysize(1),ysize(2),ysize(3),1)
-    call dery (te2,uy2,di2,sy,ffy,fsy,fwy,ppy,ysize(1),ysize(2),ysize(3),0)
-    call dery (tf2,uz2,di2,sy,ffyp,fsyp,fwyp,ppy,ysize(1),ysize(2),ysize(3),1)
+    call dery (tg2,td2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (th2,te2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (ti2,tf2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (td2,ux2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (te2,uy2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tf2,uz2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
 
     ! Convective terms of y-pencil in tg2,th2,ti2
-    tg2(:,:,:) = tg2(:,:,:) + uy2(:,:,:) * td2(:,:,:)
-    th2(:,:,:) = th2(:,:,:) + uy2(:,:,:) * te2(:,:,:)
-    ti2(:,:,:) = ti2(:,:,:) + uy2(:,:,:) * tf2(:,:,:)
-
+    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+      tg2(i,j,k) = tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k)
+      th2(i,j,k) = th2(i,j,k) + uy2(i,j,k) * te2(i,j,k)
+      ti2(i,j,k) = ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k)
+    enddo
+    
     call test_dv(te2)
     
-    call transpose_y_to_z(ux2,ux3)
-    call transpose_y_to_z(uy2,uy3)
-    call transpose_y_to_z(uz2,uz3)
+    call x3d_transpose_y_to_z(ux2,ux3)
+    call x3d_transpose_y_to_z(uy2,uy3)
+    call x3d_transpose_y_to_z(uz2,uz3)
 
     !WORK Z-PENCILS
-    td3(:,:,:) = ux3(:,:,:) * uz3(:,:,:)
-    te3(:,:,:) = uy3(:,:,:) * uz3(:,:,:)
-    tf3(:,:,:) = uz3(:,:,:) * uz3(:,:,:)
+    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+      td3(i,j,k) = ux3(i,j,k) * uz3(i,j,k)
+      te3(i,j,k) = uy3(i,j,k) * uz3(i,j,k)
+      tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)
+    enddo
 
-    call derz (tg3,td3,di3,sz,ffz,fsz,fwz,zsize(1),zsize(2),zsize(3),0)
-    call derz (th3,te3,di3,sz,ffz,fsz,fwz,zsize(1),zsize(2),zsize(3),0)
-    call derz (ti3,tf3,di3,sz,ffzp,fszp,fwzp,zsize(1),zsize(2),zsize(3),1)
-    call derz (td3,ux3,di3,sz,ffzp,fszp,fwzp,zsize(1),zsize(2),zsize(3),1)
-    call derz (te3,uy3,di3,sz,ffzp,fszp,fwzp,zsize(1),zsize(2),zsize(3),1)
-    call derz (tf3,uz3,di3,sz,ffz,fsz,fwz,zsize(1),zsize(2),zsize(3),0)
+    call derz (tg3,td3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (th3,te3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (ti3,tf3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (td3,ux3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (te3,uy3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tf3,uz3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
-    ta3(:,:,:) = tg3(:,:,:) + uz3(:,:,:) * td3(:,:,:)
-    tb3(:,:,:) = th3(:,:,:) + uz3(:,:,:) * te3(:,:,:)
-    tc3(:,:,:) = ti3(:,:,:) + uz3(:,:,:) * tf3(:,:,:)
+    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+      ta3(i,j,k) = tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k)
+      tb3(i,j,k) = th3(i,j,k) + uz3(i,j,k) * te3(i,j,k)
+      tc3(i,j,k) = ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k)
+    enddo 
 
     call test_dw(tf3)
     
     !WORK Y-PENCILS
-    call transpose_z_to_y(ta3,td2)
-    call transpose_z_to_y(tb3,te2)
-    call transpose_z_to_y(tc3,tf2)
+    call x3d_transpose_z_to_y(ta3,td2)
+    call x3d_transpose_z_to_y(tb3,te2)
+    call x3d_transpose_z_to_y(tc3,tf2)
 
     !WORK X-PENCILS
-    call transpose_y_to_x(td2,ta1)
-    call transpose_y_to_x(te2,tb1)
-    call transpose_y_to_x(tf2,tc1) !diff+conv. terms
+    call x3d_transpose_y_to_x(td2,ta1)
+    call x3d_transpose_y_to_x(te2,tb1)
+    call x3d_transpose_y_to_x(tf2,tc1) !diff+conv. terms
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
-    dux1(:,:,:,1) = ta1(:,:,:)
-    duy1(:,:,:,1) = tb1(:,:,:)
-    duz1(:,:,:,1) = tc1(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      dux1(i,j,k,1) = ta1(i,j,k)
+      duy1(i,j,k,1) = tb1(i,j,k)
+      duz1(i,j,k,1) = tc1(i,j,k)
+    enddo
 
   end subroutine momentum_rhs_eq
   !############################################################################

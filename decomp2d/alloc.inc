@@ -56,7 +56,6 @@
     return
   end subroutine alloc_x_real
 
-
   ! X-pencil complex arrays
   subroutine alloc_x_complex(var, opt_decomp, opt_global)
 
@@ -99,7 +98,6 @@
 
     return
   end subroutine alloc_x_complex
-
 
   ! Y-pencil real arrays
   subroutine alloc_y_real(var, opt_decomp, opt_global)
@@ -144,7 +142,6 @@
     return
   end subroutine alloc_y_real
 
-
   ! Y-pencil complex arrays
   subroutine alloc_y_complex(var, opt_decomp, opt_global)
 
@@ -188,7 +185,6 @@
     return
   end subroutine alloc_y_complex
 
-
   ! Z-pencil real arrays
   subroutine alloc_z_real(var, opt_decomp, opt_global)
 
@@ -231,7 +227,6 @@
 
     return
   end subroutine alloc_z_real
-
 
   ! Z-pencil complex arrays
   subroutine alloc_z_complex(var, opt_decomp, opt_global)

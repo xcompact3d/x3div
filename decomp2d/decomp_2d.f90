@@ -15,29 +15,30 @@
 module decomp_2d
 
   use MPI
+  use, intrinsic :: iso_fortran_env, only : real32, real64
   
   implicit none
 
   private        ! Make everything private unless declared public
 
 #ifdef DOUBLE_PREC
-  integer, parameter, public :: mytype = KIND(0.0D0)
+  integer, parameter, public :: mytype = KIND(0._real64)
   integer, parameter, public :: real_type = MPI_DOUBLE_PRECISION
   integer, parameter, public :: real2_type = MPI_2DOUBLE_PRECISION
   integer, parameter, public :: complex_type = MPI_DOUBLE_COMPLEX
 #ifdef SAVE_SINGLE
-  integer, parameter, public :: mytype_single = KIND(0.0)
+  integer, parameter, public :: mytype_single = KIND(0._real32)
   integer, parameter, public :: real_type_single = MPI_REAL
 #else
-  integer, parameter, public :: mytype_single = KIND(0.0D0)
+  integer, parameter, public :: mytype_single = KIND(0._real64)
   integer, parameter, public :: real_type_single = MPI_DOUBLE_PRECISION
 #endif
 #else
-  integer, parameter, public :: mytype = KIND(0.0)
+  integer, parameter, public :: mytype = KIND(0._real32)
   integer, parameter, public :: real_type = MPI_REAL
   integer, parameter, public :: real2_type = MPI_2REAL
   integer, parameter, public :: complex_type = MPI_COMPLEX
-  integer, parameter, public :: mytype_single = KIND(0.0)
+  integer, parameter, public :: mytype_single = KIND(0._real32)
   integer, parameter, public :: real_type_single = MPI_REAL
 #endif
 
@@ -132,7 +133,7 @@ module decomp_2d
   END TYPE DECOMP_INFO
 
   ! main (default) decomposition information for global size nx*ny*nz
-  TYPE(DECOMP_INFO), save :: decomp_main
+  TYPE(DECOMP_INFO), save, public :: decomp_main
   TYPE(DECOMP_INFO), save, public :: phG,ph1,ph2,ph3,ph4
 
   ! staring/ending index and size of data held by current processor
@@ -173,7 +174,7 @@ module decomp_2d
        init_coarser_mesh_statP,fine_to_coarseP,&
        alloc_x, alloc_y, alloc_z, &
        update_halo, decomp_2d_abort, &
-       get_decomp_info
+       decomp_2d_warning, get_decomp_info
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! These are routines to perform global data transpositions
@@ -275,6 +276,16 @@ module decomp_2d
      module procedure alloc_z_complex
   end interface alloc_z
 
+  interface decomp_2d_abort
+     module procedure decomp_2d_abort_basic
+     module procedure decomp_2d_abort_file_line
+  end interface decomp_2d_abort
+
+  interface decomp_2d_warning
+     module procedure decomp_2d_warning_basic
+     module procedure decomp_2d_warning_file_line
+  end interface decomp_2d_warning
+
 contains
 
 #ifdef SHM_DEBUG
@@ -336,7 +347,7 @@ contains
     else
        if (nproc /= p_row*p_col) then
           errorcode = 1
-          call decomp_2d_abort(errorcode, &
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
                'Invalid 2D processor grid - nproc /= p_row*p_col')
        else
           row = p_row
@@ -357,22 +368,28 @@ contains
     call MPI_CART_CREATE(MPI_COMM_WORLD,2,dims,periodic, &
          .false., &  ! do not reorder rank
          DECOMP_2D_COMM_CART_X, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_CREATE")
     periodic(1) = periodic_x
     periodic(2) = periodic_z
     call MPI_CART_CREATE(MPI_COMM_WORLD,2,dims,periodic, &
          .false., DECOMP_2D_COMM_CART_Y, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_CREATE")
     periodic(1) = periodic_x
     periodic(2) = periodic_y
     call MPI_CART_CREATE(MPI_COMM_WORLD,2,dims,periodic, &
          .false., DECOMP_2D_COMM_CART_Z, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_CREATE")
 
     call MPI_CART_COORDS(DECOMP_2D_COMM_CART_X,nrank,2,coord,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_COORDS")
 
     ! derive communicators defining sub-groups for ALLTOALL(V)
     call MPI_CART_SUB(DECOMP_2D_COMM_CART_X,(/.true.,.false./), &
          DECOMP_2D_COMM_COL,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_SUB")
     call MPI_CART_SUB(DECOMP_2D_COMM_CART_X,(/.false.,.true./), &
          DECOMP_2D_COMM_ROW,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_SUB")
 
     ! gather information for halo-cell support code
     call init_neighbour
@@ -452,6 +469,7 @@ contains
     ! do not use 'mytype' which is compiler dependent
     ! also possible to use inquire(iolength=...) 
     call MPI_TYPE_SIZE(real_type,mytype_bytes,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_TYPE_SIZE")
 
 #ifdef EVEN
     if (nrank==0) write(*,*) 'Padded ALLTOALL optimisation on'
@@ -513,7 +531,7 @@ contains
     ! verify the global size can actually be distributed as pencils
     if (nx_global<dims(1) .or. ny_global<dims(1) .or. ny_global<dims(2) .or. nz_global<dims(2)) then
        errorcode = 6
-       call decomp_2d_abort(errorcode, &
+       call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
             'Invalid 2D processor grid. ' // &
             'Make sure that min(nx,ny) >= p_row and ' // &
             'min(ny,nz) >= p_col')
@@ -572,12 +590,27 @@ contains
        if (allocated(work1_c)) deallocate(work1_c)
        if (allocated(work2_c)) deallocate(work2_c)
        allocate(work1_r(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
        allocate(work2_r(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
        allocate(work1_c(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
        allocate(work2_c(buf_size), STAT=status)
        if (status /= 0) then
           errorcode = 2
-          call decomp_2d_abort(errorcode, &
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
                'Out of memory when allocating 2DECOMP workspace')
        end if
     end if
@@ -595,17 +628,32 @@ contains
 
     TYPE(DECOMP_INFO), intent(INOUT) :: decomp
 
-    deallocate(decomp%x1dist,decomp%y1dist,decomp%y2dist,decomp%z2dist)
-    deallocate(decomp%x1cnts,decomp%y1cnts,decomp%y2cnts,decomp%z2cnts)
-    deallocate(decomp%x1disp,decomp%y1disp,decomp%y2disp,decomp%z2disp)
+    if (allocated(decomp%x1dist)) deallocate(decomp%x1dist)
+    if (allocated(decomp%y1dist)) deallocate(decomp%y1dist)
+    if (allocated(decomp%y2dist)) deallocate(decomp%y2dist)
+    if (allocated(decomp%z2dist)) deallocate(decomp%z2dist)
+    if (allocated(decomp%x1cnts)) deallocate(decomp%x1cnts)
+    if (allocated(decomp%y1cnts)) deallocate(decomp%y1cnts)
+    if (allocated(decomp%y2cnts)) deallocate(decomp%y2cnts)
+    if (allocated(decomp%z2cnts)) deallocate(decomp%z2cnts)
+    if (allocated(decomp%x1disp)) deallocate(decomp%x1disp)
+    if (allocated(decomp%y1disp)) deallocate(decomp%y1disp)
+    if (allocated(decomp%y2disp)) deallocate(decomp%y2disp)
+    if (allocated(decomp%z2disp)) deallocate(decomp%z2disp)
 
 #ifdef SHM
-    deallocate(decomp%x1disp_o,decomp%y1disp_o,decomp%y2disp_o, &
-         decomp%z2disp_o)
-    deallocate(decomp%x1cnts_s,decomp%y1cnts_s,decomp%y2cnts_s, &
-         decomp%z2cnts_s)
-    deallocate(decomp%x1disp_s,decomp%y1disp_s,decomp%y2disp_s, &
-         decomp%z2disp_s)
+    if (allocated(decomp%x1disp_o)) deallocate(decomp%x1disp_o)
+    if (allocated(decomp%y1disp_o)) deallocate(decomp%y1disp_o)
+    if (allocated(decomp%y2disp_o)) deallocate(decomp%y2disp_o)
+    if (allocated(decomp%z2disp_o)) deallocate(decomp%z2disp_o)
+    if (allocated(decomp%x1cnts_s)) deallocate(decomp%x1cnts_s)
+    if (allocated(decomp%y1cnts_s)) deallocate(decomp%y1cnts_s)
+    if (allocated(decomp%y2cnts_s)) deallocate(decomp%y2cnts_s)
+    if (allocated(decomp%z2cnts_s)) deallocate(decomp%z2cnts_s)
+    if (allocated(decomp%x1disp_s)) deallocate(decomp%x1disp_s)
+    if (allocated(decomp%y1disp_s)) deallocate(decomp%y1disp_s)
+    if (allocated(decomp%y2disp_s)) deallocate(decomp%y2disp_s)
+    if (allocated(decomp%z2disp_s)) deallocate(decomp%z2disp_s)
 #endif
 
     return
@@ -1208,11 +1256,10 @@ contains
     
     character(len=100) :: tmp_char
     if (nrank==0) then
-     open(101,file='temp.dat', form='unformatted')
-         write(101) decomp%x1dist,decomp%y1dist,decomp%y2dist,decomp%z2dist, &
-              decomp%xsz,decomp%ysz,decomp%zsz
-     close(101)
-     call system("rm temp.dat")
+       open(newunit=i, file='temp.dat', form='unformatted')
+       write(i) decomp%x1dist,decomp%y1dist,decomp%y2dist,decomp%z2dist, &
+                decomp%xsz,decomp%ysz,decomp%zsz
+       close(i, status='delete')
     endif
 
     ! MPI_ALLTOALLV buffer information
@@ -1308,7 +1355,9 @@ contains
 
     C%MPI_COMM = MPI_COMM
     CALL MPI_COMM_SIZE(MPI_COMM,C%NCPU,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_COMM_SIZE")
     CALL MPI_COMM_RANK(MPI_COMM,C%NODE_ME,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_CART_RANK")
     C%SMP_COMM  = MPI_COMM_NULL
     C%CORE_COMM = MPI_COMM_NULL
     C%SMP_ME= 0
@@ -1332,7 +1381,9 @@ contains
     COLOR = MYCORE
     IF (COLOR.GT.0) COLOR = MPI_UNDEFINED
     CALL MPI_Comm_split(C%MPI_COMM, COLOR, MYSMP, C%SMP_COMM, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_COMM_SPLIT")
     CALL MPI_Comm_split(C%MPI_COMM, MYSMP, MYCORE, C%CORE_COMM, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_COMM_SPLIT")
     ! - allocate work space
     ALLOCATE(KTBL(C%MAXCORE,C%NSMP),NARY(C%NCPU,C%NCORE))
     ALLOCATE(KTBLALL(C%MAXCORE,C%NSMP))
@@ -1341,6 +1392,7 @@ contains
     KTBL(C%CORE_ME,C%SMP_ME) = C%NODE_ME + 1
     CALL MPI_ALLREDUCE(KTBL,KTBLALL,C%NSMP*C%MAXCORE,MPI_INTEGER, &
          MPI_SUM,MPI_COMM,ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLREDUCE")
     KTBL=KTBLALL
     !  IF (SUM(KTBL) /= C%NCPU*(C%NCPU+1)/2) &
     !       CALL MPI_ABORT(...
@@ -1385,16 +1437,21 @@ contains
     ! for others extra_comm = MPI_COMM_NULL
     if (extra_comm /= MPI_COMM_NULL) then
        call MPI_COMM_SIZE(extra_comm,  nnodes, ierror)
+       if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_COMM_SIZE")
        call MPI_COMM_RANK(extra_comm, my_node, ierror)
+       if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_COMM_RANK")
     end if
 
     ! other ranks share the same information as their leaders
     call MPI_BCAST( nnodes, 1, MPI_INTEGER, 0, intra_comm, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BCAST")
     call MPI_BCAST(my_node, 1, MPI_INTEGER, 0, intra_comm, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_BCAST")
 
     ! maxcor
     call MPI_ALLREDUCE(ncores, maxcor, 1, MPI_INTEGER, MPI_MAX, &
          MPI_COMM_WORLD, ierror)
+    if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLREDUCE")
 
     call FIPC_finalize(ierror)
 
@@ -1426,6 +1483,7 @@ contains
             stat=status)
        CALL MPI_Allgather(decomp%x1cnts, C%NCPU, MPI_INTEGER, &
             NARY, C%NCPU, MPI_INTEGER, C%CORE_COMM, ierror)
+       if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLGATHER")
        PTR = 0
        DO i=1,C%NSMP
           decomp%x1disp_s(i) = PTR
@@ -1450,6 +1508,7 @@ contains
             stat=status)
        CALL MPI_Allgather(decomp%y2cnts, C%NCPU, MPI_INTEGER, &
             NARY, C%NCPU, MPI_INTEGER, C%CORE_COMM, ierror)
+       if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLGATHER")
        PTR = 0
        DO i=1,C%NSMP
           decomp%y2disp_s(i) = PTR
@@ -1477,6 +1536,7 @@ contains
             stat=status)
        CALL MPI_Allgather(decomp%y1cnts, C%NCPU, MPI_INTEGER, &
             NARY, C%NCPU, MPI_INTEGER, C%CORE_COMM, ierror)
+       if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLGATHER")
        PTR = 0
        DO i=1,C%NSMP
           decomp%y1disp_s(i) = PTR
@@ -1501,6 +1561,7 @@ contains
             stat=status)
        CALL MPI_Allgather(decomp%z2cnts, C%NCPU, MPI_INTEGER, &
             NARY, C%NCPU, MPI_INTEGER, C%CORE_COMM, ierror)
+       if (ierror /= 0) call decomp_2d_abort(__FILE__, __LINE__, ierror, "MPI_ALLGATHER")
        PTR = 0
        DO i=1,C%NSMP
           decomp%z2disp_s(i) = PTR
@@ -1589,13 +1650,14 @@ contains
   ! Auto-tuning algorithm to select the best 2D processor grid
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine best_2d_grid(iproc, best_p_row, best_p_col)
+
     implicit none
 
     integer, intent(IN) :: iproc
     integer, intent(OUT) :: best_p_row, best_p_col
 
     integer, allocatable, dimension(:) :: factors
-    integer :: nfact, i, row, col, i_best
+    integer :: nfact, i, col, i_best
 
     if (nrank==0) write(*,*) 'In auto-tuning mode......'
 
@@ -1630,7 +1692,9 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Error handling
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine decomp_2d_abort(errorcode, msg)
+  subroutine decomp_2d_abort_basic(errorcode, msg)
+
+    use iso_fortran_env, only : error_unit
 
     implicit none
 
@@ -1642,12 +1706,81 @@ contains
     if (nrank==0) then
        write(*,*) '2DECOMP&FFT ERROR - errorcode: ', errorcode
        write(*,*) 'ERROR MESSAGE: ' // msg
+       write(error_unit,*) '2DECOMP&FFT ERROR - errorcode: ', errorcode
+       write(error_unit,*) 'ERROR MESSAGE: ' // msg
     end if
     call MPI_ABORT(MPI_COMM_WORLD,errorcode,ierror)
 
-    return
-  end subroutine decomp_2d_abort
+  end subroutine decomp_2d_abort_basic
 
+  subroutine decomp_2d_abort_file_line(file, line, errorcode, msg)
+
+    use iso_fortran_env, only : error_unit
+
+    implicit none
+
+    integer, intent(IN) :: errorcode, line
+    character(len=*), intent(IN) :: msg, file
+
+    integer :: ierror
+
+    if (nrank==0) then
+       write(*,*) '2DECOMP&FFT / X3D ERROR'
+       write(*,*) '  errorcode:     ', errorcode
+       write(*,*) '  error in file  ' // file
+       write(*,*) '           line  ', line
+       write(*,*) '  error message: ' // msg
+       write(error_unit,*) '2DECOMP&FFT / X3D ERROR'
+       write(error_unit,*) '  errorcode:     ', errorcode
+       write(error_unit,*) '  error in file  ' // file
+       write(error_unit,*) '           line  ', line
+       write(error_unit,*) '  error message: ' // msg
+    end if
+    call MPI_ABORT(MPI_COMM_WORLD,errorcode,ierror)
+
+  end subroutine decomp_2d_abort_file_line
+
+  subroutine decomp_2d_warning_basic(errorcode, msg)
+
+    use iso_fortran_env, only : error_unit
+
+    implicit none
+
+    integer, intent(IN) :: errorcode
+    character(len=*), intent(IN) :: msg
+
+    if (nrank==0) then
+       write(*,*) '2DECOMP&FFT WARNING - errorcode: ', errorcode
+       write(*,*) 'ERROR MESSAGE: ' // msg
+       write(error_unit,*) '2DECOMP&FFT WARNING - errorcode: ', errorcode
+       write(error_unit,*) 'ERROR MESSAGE: ' // msg
+    end if
+
+  end subroutine decomp_2d_warning_basic
+
+  subroutine decomp_2d_warning_file_line(file, line, errorcode, msg)
+
+    use iso_fortran_env, only : error_unit
+
+    implicit none
+
+    integer, intent(IN) :: errorcode, line
+    character(len=*), intent(IN) :: msg, file
+
+    if (nrank==0) then
+       write(*,*) '2DECOMP&FFT / X3D WARNING'
+       write(*,*) '  errorcode:     ', errorcode
+       write(*,*) '  error in file  ' // file
+       write(*,*) '           line  ', line
+       write(*,*) '  error message: ' // msg
+       write(error_unit,*) '2DECOMP&FFT / X3D WARNING'
+       write(error_unit,*) '  errorcode:     ', errorcode
+       write(error_unit,*) '  error in file  ' // file
+       write(error_unit,*) '           line  ', line
+       write(error_unit,*) '  error message: ' // msg
+    end if
+
+  end subroutine decomp_2d_warning_file_line
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Utility routines to help allocate 3D arrays

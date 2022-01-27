@@ -82,8 +82,6 @@
        call decomp_2d_abort(10, &
             'Invalid data passed to update_halo')
     end if
-
-
     allocate(out(xs:xe, ys:ye, zs:ze))
 !    out = -1.0_mytype ! fill the halo for debugging
 
@@ -338,7 +336,6 @@
           end do
        end if
 #endif
-
        ! *** east/west ***
        tag_w = coord(1)
        if (coord(1)==dims(1)-1 .AND. periodic_x) then

@@ -48,11 +48,12 @@ contains
   !############################################################################
   SUBROUTINE solve_poisson(pp3, px1, py1, pz1, ux1, uy1, uz1)
 
-    use x3dprecision, only : mytype
+    use decomp_2d, only : mytype
     USE decomp_2d, ONLY : xsize, zsize, ph1
     USE decomp_2d_poisson, ONLY : poisson
     USE var, ONLY : nzmsize
     USE param, ONLY : npress
+    use nvtx
 
     implicit none
 
@@ -68,9 +69,17 @@ contains
 
     nlock = 1 !! Corresponds to computing div(u*)
 
+    call nvtxStartRange("divergence")
     CALL divergence(pp3(:,:,:,1),ux1,uy1,uz1,nlock)
+    call nvtxEndRange
+    !
+    call nvtxStartRange("poisson")
     CALL poisson(pp3(:,:,:,1))
+    call nvtxEndRange
+    !
+    call nvtxStartRange("gradp")
     CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
+    call nvtxEndRange
 
   END SUBROUTINE solve_poisson
   !############################################################################
@@ -83,19 +92,23 @@ contains
   !############################################################################
   subroutine cor_vel (ux,uy,uz,px,py,pz)
 
-    use x3dprecision, only : mytype
+    use decomp_2d, only : mytype
     use decomp_2d, only : xsize
     USE variables
     USE param
 
     implicit none
 
+    integer :: i,j,k
+
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux,uy,uz
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)),intent(in) :: px,py,pz
 
-    ux(:,:,:)=ux(:,:,:)-px(:,:,:)
-    uy(:,:,:)=uy(:,:,:)-py(:,:,:)
-    uz(:,:,:)=uz(:,:,:)-pz(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      ux(i,j,k)=ux(i,j,k)-px(i,j,k)
+      uy(i,j,k)=uy(i,j,k)-py(i,j,k)
+      uz(i,j,k)=uz(i,j,k)-pz(i,j,k)
+    enddo
 
     return
   end subroutine cor_vel
@@ -108,7 +121,9 @@ contains
   !############################################################################
   subroutine divergence (pp3,ux1,uy1,uz1,nlock)
 
-    use x3dprecision, only : mytype, real_type
+    use x3d_operator_1d
+    use x3d_staggered
+    use decomp_2d, only : mytype, real_type, decomp_2d_warning
     use param
     use decomp_2d, only : nrank, ph1, ph3, ph4, nproc
     use decomp_2d, only : xsize, ysize, zsize
@@ -122,6 +137,7 @@ contains
          duxdxp2, uyp2, uzp2, duydypi2, upi2, ta2, dipp2, &
          duxydxyp3, uzp3, po3, dipp3, nxmsize, nymsize, nzmsize
     USE MPI
+    use nvtx
 
     implicit none
 
@@ -137,62 +153,71 @@ contains
 
     nvect3=(ph1%zen(1)-ph1%zst(1)+1)*(ph1%zen(2)-ph1%zst(2)+1)*nzmsize
 
-    ta1(:,:,:) = ux1(:,:,:)
-    tb1(:,:,:) = uy1(:,:,:)
-    tc1(:,:,:) = uz1(:,:,:)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))    
+       ta1(i,j,k) = ux1(i,j,k)
+       tb1(i,j,k) = uy1(i,j,k)
+       tc1(i,j,k) = uz1(i,j,k)
+   enddo
 
     !WORK X-PENCILS
 
-    call derxvp(pp1,ta1,di1,sx,cfx6,csx6,cwx6,xsize(1),nxmsize,xsize(2),xsize(3),0)
+    
+    call derxvp(pp1,ta1,di1,sx,x3d_op_derxvp,xsize(1),nxmsize,xsize(2),xsize(3))
 
-    call interxvp(pgy1,tb1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
-    call interxvp(pgz1,tc1,di1,sx,cifxp6,cisxp6,ciwxp6,xsize(1),nxmsize,xsize(2),xsize(3),1)
+    call interxvp(pgy1,tb1,di1,sx,x3d_op_intxvp,xsize(1),nxmsize,xsize(2),xsize(3))
+    call interxvp(pgz1,tc1,di1,sx,x3d_op_intxvp,xsize(1),nxmsize,xsize(2),xsize(3))
 
+    call nvtxStartRange("Transpose xty pp1")
     call transpose_x_to_y(pp1,duxdxp2,ph4)!->NXM NY NZ
+    call nvtxEndRange
+    call nvtxStartRange("Transpose xty pgy")
     call transpose_x_to_y(pgy1,uyp2,ph4)
+    call nvtxEndRange
+    call nvtxStartRange("Transpose xty pgz")
     call transpose_x_to_y(pgz1,uzp2,ph4)
+    call nvtxEndRange
 
     !WORK Y-PENCILS
-    call interyvp(upi2,duxdxp2,dipp2,sy,cifyp6,cisyp6,ciwyp6,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),1)
-    call deryvp(duydypi2,uyp2,dipp2,sy,cfy6,csy6,cwy6,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),0)
+    call interyvp(upi2,duxdxp2,dipp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3))
+    call deryvp(duydypi2,uyp2,dipp2,sy,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3))
 
-    !! Compute sum dudx + dvdy
-    duydypi2(:,:,:) = duydypi2(:,:,:) + upi2(:,:,:)
+    !! Compute sum dudx + dvdy !ph1%yst(1):ph1%yen(1),nymsize,ysize(3)
+    do concurrent (k=1:ysize(3), j=1:nymsize, i=ph1%yst(1):ph1%yen(1))
+      duydypi2(i,j,k) = duydypi2(i,j,k) + upi2(i,j,k)
+    enddo
 
-    call interyvp(upi2,uzp2,dipp2,sy,cifyp6,cisyp6,ciwyp6,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3),1)
+    call interyvp(upi2,uzp2,dipp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3))
 
+    call nvtxStartRange("Transpose ytz duy")
     call transpose_y_to_z(duydypi2,duxydxyp3,ph3)!->NXM NYM NZ
+    call nvtxEndRange
     call transpose_y_to_z(upi2,uzp3,ph3)
 
     !WORK Z-PENCILS
-    call interzvp(pp3,duxydxyp3,dipp3,sz,cifzp6,ciszp6,ciwzp6,(ph1%zen(1)-ph1%zst(1)+1),&
-         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize,1)
-    call derzvp(po3,uzp3,dipp3,sz,cfz6,csz6,cwz6,(ph1%zen(1)-ph1%zst(1)+1),&
-         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize,0)
+    call interzvp(pp3,duxydxyp3,dipp3,sz,x3d_op_intzvp,(ph1%zen(1)-ph1%zst(1)+1),&
+         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize)
+    call derzvp(po3,uzp3,dipp3,sz,x3d_op_derzvp,(ph1%zen(1)-ph1%zst(1)+1),&
+         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize)
 
     !! Compute sum dudx + dvdy + dwdz
-    pp3(:,:,:) = pp3(:,:,:) + po3(:,:,:)
+    do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
+       pp3(i,j,k) = pp3(i,j,k) + po3(i,j,k)
+    enddo
 
     if (nlock==2) then
-       pp3(:,:,:)=pp3(:,:,:)-pp3(ph1%zst(1),ph1%zst(2),nzmsize)
+       do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
+          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1%zst(1),ph1%zst(2),nzmsize)
+       enddo
     endif
 
-    tmax=-1609._mytype
-    tmoy=zero
-    do k=1,nzmsize
-       do j=ph1%zst(2),ph1%zen(2)
-          do i=ph1%zst(1),ph1%zen(1)
-             if (pp3(i,j,k).gt.tmax) tmax=pp3(i,j,k)
-             tmoy=tmoy+abs(pp3(i,j,k))
-          enddo
-       enddo
-    enddo
-    tmoy=tmoy/nvect3
-
+    tmax = maxval(abs(pp3))
+    tmoy = sum(abs(pp3)) / nvect3
 
     if (test_mode) then
        call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
        call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
        if ((nrank==0).and.(nlock.gt.0)) then
           if (nlock==2) then
              print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
@@ -219,13 +244,11 @@ contains
   !############################################################################
   subroutine gradp(px1,py1,pz1,pp3)
 
-    use x3dprecision, only: mytype 
+    use x3d_operator_1d
+    use x3d_staggered
+    use x3d_transpose
     USE param
-    USE decomp_2d, only: xsize, ysize, zsize, ph2, ph3
-    use decomp_2d, only : transpose_x_to_y, &
-                          transpose_y_to_z, &
-                          transpose_z_to_y, &
-                          transpose_y_to_x
+    USE decomp_2d, only: mytype, xsize, ysize, zsize, ph2, ph3
     use decomp_2d, only: xstart, xend, ystart, yend, zstart, zend
     USE variables
     USE var, only: pp1,pgy1,pgz1,di1,pp2,ppi2,pgy2,pgz2,pgzi2,dip2,&
@@ -239,91 +262,76 @@ contains
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1,py1,pz1
 
     !WORK Z-PENCILS
-    call interzpv(ppi3,pp3,dip3,sz,cifip6z,cisip6z,ciwip6z,cifz6,cisz6,ciwz6,&
-         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3),1)
-    call derzpv(pgz3,pp3,dip3,sz,cfip6z,csip6z,cwip6z,cfz6,csz6,cwz6,&
-         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3),1)
+    call interzpv(ppi3,pp3,dip3,sz,x3d_op_intzpv,&
+         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3))
+    call derzpv(pgz3,pp3,dip3,sz,x3d_op_derzpv,&
+         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3))
 
     !WORK Y-PENCILS
-    call transpose_z_to_y(pgz3,pgz2,ph3) !nxm nym nz
-    call transpose_z_to_y(ppi3,pp2,ph3)
+    call x3d_transpose_z_to_y(pgz3,pgz2,ph3) !nxm nym nz
+    call x3d_transpose_z_to_y(ppi3,pp2,ph3)
 
-    call interypv(ppi2,pp2,dip2,sy,cifip6y,cisip6y,ciwip6y,cify6,cisy6,ciwy6,&
-         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3),1)
-    call derypv(pgy2,pp2,dip2,sy,cfip6y,csip6y,cwip6y,cfy6,csy6,cwy6,ppy,&
-         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3),1)
-    call interypv(pgzi2,pgz2,dip2,sy,cifip6y,cisip6y,ciwip6y,cify6,cisy6,ciwy6,&
-         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3),1)
+    call interypv(ppi2,pp2,dip2,sy,x3d_op_intypv,&
+         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
+    call derypv(pgy2,pp2,dip2,sy,x3d_op_derypv,ppy,&
+         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
+    call interypv(pgzi2,pgz2,dip2,sy,x3d_op_intypv,&
+         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
 
     !WORK X-PENCILS
 
-    call transpose_y_to_x(ppi2,pp1,ph2) !nxm ny nz
-    call transpose_y_to_x(pgy2,pgy1,ph2)
-    call transpose_y_to_x(pgzi2,pgz1,ph2)
+    call x3d_transpose_y_to_x(ppi2,pp1,ph2) !nxm ny nz
+    call x3d_transpose_y_to_x(pgy2,pgy1,ph2)
+    call x3d_transpose_y_to_x(pgzi2,pgz1,ph2)
 
-    call derxpv(px1,pp1,di1,sx,cfip6,csip6,cwip6,cfx6,csx6,cwx6,&
-         nxmsize,xsize(1),xsize(2),xsize(3),1)
-    call interxpv(py1,pgy1,di1,sx,cifip6,cisip6,ciwip6,cifx6,cisx6,ciwx6,&
-         nxmsize,xsize(1),xsize(2),xsize(3),1)
-    call interxpv(pz1,pgz1,di1,sx,cifip6,cisip6,ciwip6,cifx6,cisx6,ciwx6,&
-         nxmsize,xsize(1),xsize(2),xsize(3),1)
+    call derxpv(px1,pp1,di1,sx,x3d_op_derxpv,nxmsize,xsize(1),xsize(2),xsize(3))
+    call interxpv(py1,pgy1,di1,sx,x3d_op_intxpv,nxmsize,xsize(1),xsize(2),xsize(3))
+    call interxpv(pz1,pgz1,di1,sx,x3d_op_intxpv,nxmsize,xsize(1),xsize(2),xsize(3))
 
     !we are in X pencils:
     if (nclx1.eq.2) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             dpdyx1(j,k)=py1(1,j,k)/gdt(itr)
-             dpdzx1(j,k)=pz1(1,j,k)/gdt(itr)
-          enddo
+       do concurrent (k=1:xsize(3),j=1:xsize(2))
+          dpdyx1(j,k)=py1(1,j,k)/gdt(itr)
+          dpdzx1(j,k)=pz1(1,j,k)/gdt(itr)
        enddo
     endif
     if (nclxn.eq.2) then
-       do k=1,xsize(3)
-          do j=1,xsize(2)
-             dpdyxn(j,k)=py1(nx,j,k)/gdt(itr)
-             dpdzxn(j,k)=pz1(nx,j,k)/gdt(itr)
-          enddo
+       do concurrent (k=1:xsize(3),j=1:xsize(2))
+          dpdyxn(j,k)=py1(nx,j,k)/gdt(itr)
+          dpdzxn(j,k)=pz1(nx,j,k)/gdt(itr)
        enddo
     endif
 
     if (ncly1.eq.2) then
        if (xstart(2)==1) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                dpdxy1(i,k)=px1(i,1,k)/gdt(itr)
-                dpdzy1(i,k)=pz1(i,1,k)/gdt(itr)
-             enddo
+          do concurrent (k=1:xsize(3),i=1:xsize(1))
+             dpdxy1(i,k)=px1(i,1,k)/gdt(itr)
+             dpdzy1(i,k)=pz1(i,1,k)/gdt(itr)
           enddo
        endif
     endif
     if (nclyn.eq.2) then
        if (xend(2)==ny) then
-          do k=1,xsize(3)
-             do i=1,xsize(1)
-                dpdxyn(i,k)=px1(i,xsize(2),k)/gdt(itr)
-                dpdzyn(i,k)=pz1(i,xsize(2),k)/gdt(itr)
-             enddo
+          do concurrent (k=1:xsize(3),i=1:xsize(1))
+             dpdxyn(i,k)=px1(i,xsize(2),k)/gdt(itr)
+             dpdzyn(i,k)=pz1(i,xsize(2),k)/gdt(itr)
           enddo
        endif
     endif
 
     if (nclz1.eq.2) then
        if (xstart(3)==1) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                dpdxz1(i,j)=py1(i,j,1)/gdt(itr)
-                dpdyz1(i,j)=pz1(i,j,1)/gdt(itr)
-             enddo
+          do concurrent (j=1:xsize(2),i=1:xsize(1))
+             dpdxz1(i,j)=py1(i,j,1)/gdt(itr)
+             dpdyz1(i,j)=pz1(i,j,1)/gdt(itr)
           enddo
        endif
     endif
     if (nclzn.eq.2) then
        if (xend(3)==nz) then
-          do j=1,xsize(2)
-             do i=1,xsize(1)
-                dpdxzn(i,j)=py1(i,j,xsize(3))/gdt(itr)
-                dpdyzn(i,j)=pz1(i,j,xsize(3))/gdt(itr)
-             enddo
+          do concurrent (j=1:xsize(2),i=1:xsize(1))
+             dpdxzn(i,j)=py1(i,j,xsize(3))/gdt(itr)
+             dpdyzn(i,j)=pz1(i,j,xsize(3))/gdt(itr)
           enddo
        endif
     endif

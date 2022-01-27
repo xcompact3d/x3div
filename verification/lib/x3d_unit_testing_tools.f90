@@ -29,7 +29,7 @@ contains
       alltime(:) = 0.d0
       alltime(nrank+1) = time
       call MPI_ALLREDUCE(MPI_IN_PLACE,alltime,nproc,real_type,MPI_SUM,MPI_COMM_WORLD,code)
-      if (code /= 0) call decomp_2d_abort(code, "MPI_ALLREDUCE")
+      if (code /= 0) call decomp_2d_abort(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
 
       if (nrank == 0) then
          write(*,*) trim(filename)//" : ", l1, l2, linf, alltime

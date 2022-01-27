@@ -32,17 +32,14 @@
 
 module decomp_2d_poisson
 
-  use x3dprecision, only : mytype
+  use decomp_2d, only : mytype
   use decomp_2d, only : DECOMP_INFO
   use decomp_2d, only : decomp_info_init, &
-                        decomp_info_finalize, &
-                        transpose_x_to_y, &                       
-                        transpose_y_to_z, &                       
-                        transpose_z_to_y, &                       
-                        transpose_y_to_x                       
+                        decomp_info_finalize
   use decomp_2d_fft, only : decomp_2d_fft_init, &
                             decomp_2d_fft_3d,   &
                             decomp_2d_fft_finalize 
+  use x3d_transpose
   use param
   use variables
 
@@ -148,7 +145,7 @@ contains
     if (bcy==1) ny=ny-1
     if (bcz==1) nz=nz-1
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init start'
 #endif
 
@@ -157,14 +154,14 @@ contains
     allocate(az(nz),bz(nz))
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init'
 #endif
 
     call decomp_info_init(nx, ny, nz, ph)
     call decomp_info_init(nx, ny, nz/2+1, sp)
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init ok'
 #endif
 
@@ -244,13 +241,13 @@ contains
        allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))      
     end if
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init before waves'
 #endif
 
     call waves()
 
-#ifdef DEBG 
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init end'
 #endif
 
@@ -342,41 +339,36 @@ contains
     cw1 = cw1 / real(nx, kind=mytype) /real(ny, kind=mytype) &
          / real(nz, kind=mytype)
 
-    do k = sp%xst(3),sp%xen(3)
-       do j = sp%xst(2),sp%xen(2)
-          do i = sp%xst(1),sp%xen(1)
-
-             ! post-processing in spectral space
-
+    do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
              ! POST PROCESSING IN Z
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bz(k) + tmp2 * az(k), &
-                             tmp2 * bz(k) - tmp1 * az(k))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bz(k) + tmp2 * az(k), &
+                             tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
 
              ! POST PROCESSING IN Y
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
              if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! POST PROCESSING IN X
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bx(i) + tmp2 * ax(i), &
-                             tmp2 * bx(i) - tmp1 * ax(i))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                             tmp2 * bx(i) - tmp1 * ax(i), kind=mytype)
              if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! Solve Poisson
-             tmp1 = rl(kxyz(i,j,k))
-             tmp2 = iy(kxyz(i,j,k))
+             tmp1 = real(kxyz(i,j,k), kind=mytype)
+             tmp2 = aimag(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
              if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
                 cw1(i,j,k) = zero
              else
-                cw1(i,j,k) = cx(rl(cw1(i,j,k)) / (-tmp1), &
-                                iy(cw1(i,j,k)) / (-tmp2))
+                cw1(i,j,k) = cmplx(real(cw1(i,j,k),kind=mytype) / (-tmp1), &
+                                  aimag(cw1(i,j,k)) / (-tmp2), kind=mytype)
              end if
 
              !Print result in spectal space after Poisson
@@ -387,27 +379,27 @@ contains
              ! post-processing backward
 
              ! POST PROCESSING IN Z
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bz(k) - tmp2 * az(k), &
-                            -tmp2 * bz(k) - tmp1 * az(k))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bz(k) - tmp2 * az(k), &
+                            -tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
 
              ! POST PROCESSING IN Y
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
              if (j > (ny/2 + 1)) cw1(i,j,k) = -cw1(i,j,k)
 
              ! POST PROCESSING IN X
-             tmp1 = rl(cw1(i,j,k))
-             tmp2 = iy(cw1(i,j,k))
-             cw1(i,j,k) = cx(tmp1 * bx(i) + tmp2 * ax(i), &
-                            -tmp2 * bx(i) + tmp1 * ax(i))
+             tmp1 = real(cw1(i,j,k), kind=mytype)
+             tmp2 = aimag(cw1(i,j,k))
+             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                            -tmp2 * bx(i) + tmp1 * ax(i), kind=mytype)
              if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
+       ! post-processing in spectral space
 
-          end do
-       end do
+
     end do
 
     ! compute c2r transform
@@ -445,8 +437,8 @@ contains
     nz = nz_global
 
     ! rhs is in Z-pencil but requires global operations in X
-    call transpose_z_to_y(rhs,rw2,ph)
-    call transpose_y_to_x(rw2,rw1,ph)
+    call x3d_transpose_z_to_y(rhs,rw2,ph)
+    call x3d_transpose_y_to_x(rw2,rw1,ph)
     do k=ph%xst(3),ph%xen(3)
        do j=ph%xst(2),ph%xen(2)
           do i=1,nx/2
@@ -458,8 +450,8 @@ contains
        enddo
     end do
 
-    call transpose_x_to_y(rw1b,rw2,ph)
-    call transpose_y_to_z(rw2,rhs,ph)
+    call x3d_transpose_x_to_y(rw1b,rw2,ph)
+    call x3d_transpose_y_to_z(rw2,rhs,ph)
 
     if (.not. fft_initialised) then
        call decomp_2d_fft_init(PHYSICAL_IN_Z,nx,ny,nz)
@@ -653,8 +645,8 @@ contains
     call decomp_2d_fft_3d(cw1,rhs)
 
     ! rhs is in Z-pencil but requires global operations in X
-    call transpose_z_to_y(rhs,rw2,ph)
-    call transpose_y_to_x(rw2,rw1,ph)
+    call x3d_transpose_z_to_y(rhs,rw2,ph)
+    call x3d_transpose_y_to_x(rw2,rw1,ph)
     do k = ph%xst(3), ph%xen(3)
        do j = ph%xst(2), ph%xen(2)
           do i = 1, nx/2
@@ -665,8 +657,8 @@ contains
           enddo
        enddo
     end do
-    call transpose_x_to_y(rw1b,rw2,ph)
-    call transpose_y_to_z(rw2,rhs,ph)
+    call x3d_transpose_x_to_y(rw1b,rw2,ph)
+    call x3d_transpose_y_to_z(rw2,rhs,ph)
 
     !  call decomp_2d_fft_finalize
 

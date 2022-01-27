@@ -12,7 +12,7 @@ DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 
 LCL = local# local,lad,sdu,archer
 IVER = 17# 15,16,17,18
-CMP = gcc# intel,gcc,nvhpc
+CMP = nvhpc# intel,gcc,nvhpc
 FFT = generic# generic,fftw3,mkl
 
 #######CMP settings###########
@@ -25,7 +25,8 @@ else ifeq ($(CMP),gcc)
 FC = mpif90
 #FC = mpif90-mpich-mp
 #FFLAGS = -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -x f95-cpp-input
-FFLAGS = -cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch
+FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu 
+#-cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch
 #-ffpe-trap=invalid,zero
 else ifeq ($(CMP),nagfor)
 FC = mpinagfor
@@ -35,7 +36,8 @@ FC = ftn
 FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
-FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3
+FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -stdpar=gpu -gpu=cc80,managed -O3
+#FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
 endif
 
 
@@ -48,8 +50,7 @@ SRCDECOMP = $(DECOMPDIR)/decomp_2d.f90 $(DECOMPDIR)/glassman.f90 $(DECOMPDIR)/ff
 OBJDECOMP = $(SRCDECOMP:%.f90=%.o)
 #SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/parameters.f90 #$(SRCDIR)/*.f90
 OBJ = $(SRC:%.f90=%.o)
-SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/x3d_tools.f90 $(SRCDIR)/xcompact3d.f90
-
+SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/x3d_transpose.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/x3d_operator_1d.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/x3d_derive.f90 $(SRCDIR)/x3d_staggered.f90 $(SRCDIR)/x3d_filters.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/x3d_tools.f90 $(SRCDIR)/xcompact3d.f90
 
 #######FFT settings##########
 ifeq ($(FFT),fftw3)
@@ -66,7 +67,7 @@ else ifeq ($(FFT),fftw3_f03)
   LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
 else ifeq ($(FFT),generic)
   INC=
-  LIBFFT=
+  LIBFFT=-lnvhpcwrapnvtx
 else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
@@ -75,7 +76,7 @@ endif
 
 #######OPTIONS settings###########
 OPT = -I$(SRCDIR) -I$(DECOMPDIR) $(FFLAGS)
-LINKOPT = $(FFLAGS)
+LINKOPT = $(FFLAGS) -lnvhpcwrapnvtx
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 

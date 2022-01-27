@@ -37,7 +37,7 @@ module x3d_operator_1d
   
   implicit none
 
-  type :: x3doperator1d
+  type, public :: x3doperator1d
     ! Size
     integer :: n
     ! Odd or even
@@ -52,25 +52,25 @@ module x3d_operator_1d
   end type x3doperator1d
 
   ! First derivative on the velocity grid
-  type(x3doperator1d), public :: x3d_op_derx, x3d_op_derxp
-  type(x3doperator1d), public :: x3d_op_dery, x3d_op_deryp
-  type(x3doperator1d), public :: x3d_op_derz, x3d_op_derzp
+  type(x3doperator1d), save, public :: x3d_op_derx, x3d_op_derxp
+  type(x3doperator1d), save, public :: x3d_op_dery, x3d_op_deryp
+  type(x3doperator1d), save, public :: x3d_op_derz, x3d_op_derzp
 
   ! First derivative from velocity grid => pressure grid
-  type(x3doperator1d), public :: x3d_op_derxvp, x3d_op_deryvp, x3d_op_derzvp
+  type(x3doperator1d), save, public :: x3d_op_derxvp, x3d_op_deryvp, x3d_op_derzvp
 
   ! First derivative from pressure grid => velocity grid
-  type(x3doperator1d), public :: x3d_op_derxpv, x3d_op_derypv, x3d_op_derzpv
+  type(x3doperator1d), save, public :: x3d_op_derxpv, x3d_op_derypv, x3d_op_derzpv
 
   ! Interpolation from velocity grid => pressure grid
-  type(x3doperator1d), public :: x3d_op_intxvp, x3d_op_intyvp, x3d_op_intzvp
+  type(x3doperator1d), save, public :: x3d_op_intxvp, x3d_op_intyvp, x3d_op_intzvp
 
   ! Interpolation from pressure grid => velocity grid
-  type(x3doperator1d), public :: x3d_op_intxpv, x3d_op_intypv, x3d_op_intzpv
+  type(x3doperator1d), save, public :: x3d_op_intxpv, x3d_op_intypv, x3d_op_intzpv
 
   private        ! Make everything private unless declared public
 
-  public :: x3d_operator_1d_init, x3d_operator_1d_finalize, x3doperator1d
+  public :: x3d_operator_1d_init, x3d_operator_1d_finalize
 
 
 contains

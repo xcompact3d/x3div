@@ -211,7 +211,7 @@ contains
        allocate(cw2(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
             sp%yst(3):sp%yen(3)))
        cw2 = zero
-       allocate(cw22, cw2b, cw2c, kxyz, source=cw2
+       allocate(cw22, cw2b, cw2c, kxyz, source=cw2)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
        a = zero
        allocate(a2, source=a)

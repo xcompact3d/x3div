@@ -33,7 +33,7 @@
 
 module x3d_operator_1d
 
-  use decomp_2d, only: mytype, nrank
+  use decomp_2d, only: mytype
 
   implicit none
 
@@ -88,9 +88,9 @@ contains
 
     use variables
     use param, only : nclx, ncly, nclz
-    use derivX, only : alfaix, alcaix6, ailcaix6
-    use derivY, only : alfajy, alcaiy6, ailcaiy6
-    use derivZ, only : alfakz, alcaiz6, ailcaiz6
+    use x3d_operator_x_data
+    use x3d_operator_y_data
+    use x3d_operator_z_data
 
     implicit none
 

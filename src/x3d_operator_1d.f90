@@ -39,14 +39,14 @@ module x3d_operator_1d
 
   type, public :: x3doperator1d
     ! Size
-    integer :: n
+    integer :: n = 0
     ! Odd or even
     integer :: npaire
     ! Extra-diag coefficient
     real(mytype) :: alfa
     ! Arrays needed by the Thomas solver
     ! See subroutine prepare(b,c,f,s,w,n) in schemes.f90
-    real(mytype), dimension(:), pointer :: f, s, w
+    real(mytype), dimension(:), pointer :: f=>null(), s=>null(), w=>null()
     ! Array needed by the optimized Thomas solver
     real(mytype), dimension(:), allocatable :: periodic
 

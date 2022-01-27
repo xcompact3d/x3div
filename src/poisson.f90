@@ -150,8 +150,14 @@ contains
 #endif
 
     allocate(ax(nx),bx(nx))
+    ax = zero
+    bx = zero
     allocate(ay(ny),by(ny))
+    ay = zero
+    by = zero
     allocate(az(nz),bz(nz))
+    az = zero
+    bz = zero
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
 #ifdef DEBUG 
@@ -169,76 +175,75 @@ contains
     if (bcx==0 .and. bcy==0 .and. bcz==0) then
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
-       allocate(kxyz(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       cw1 = zero
+       allocate(kxyz, source=cw1)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),ny,sp%yst(3):sp%yen(3),5))
+       a3 = zero
     else if (bcx==1 .and. bcy==0 .and. bcz==0) then
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
-       allocate(cw1b(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       cw1 = zero
+       allocate(cw1b, source=cw1)
        allocate(rw1(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
             ph%xst(3):ph%xen(3)))
-       allocate(rw1b(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
-            ph%xst(3):ph%xen(3)))
+       rw1 = zero
+       allocate(rw1b, source=rW&)
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
-       allocate(kxyz(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       rw2 = zero
+       allocate(kxyz, source=cw1)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),ny,sp%yst(3):sp%yen(3),5))
+       a3 = zero
     else if (bcx==0 .and. bcy==1 .and. bcz==0) then
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
-       allocate(rw2b(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
-            ph%yst(3):ph%yen(3)))
+       rw2 = zero
+       allocate(rw2b, source=rw2)
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
+       cw1 = zero
        allocate(cw2(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
             sp%yst(3):sp%yen(3)))
-       allocate(cw22(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2b(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2c(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(kxyz(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
+       cw2 = zero
+       allocate(cw22, cw2b, cw2c, kxyz, source=cw2
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),ny,sp%yst(3):sp%yen(3),5))
+       a3 = zero
     else if (bcx==1 .and. bcy==1) then
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
-       allocate(cw1b(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       cw1 = zero
+       allocate(cw1b, source=cw1)
        allocate(cw2(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
             sp%yst(3):sp%yen(3)))
-       allocate(cw22(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2b(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2c(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
+       cw2 = zero
+       allocate(cw22, cw2b, cw2c, source=cw2)
        allocate(rw1(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
             ph%xst(3):ph%xen(3)))
-       allocate(rw1b(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
-            ph%xst(3):ph%xen(3)))
+       rw1 = zero
+       allocate(rw1b, source=rw1)
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
-       allocate(rw2b(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
-            ph%yst(3):ph%yen(3)))
+       rw2 = zero
+       allocate(rw2b, source=rw2)
        if (bcz==1) then  
           allocate(rw3(ph%zsz(1),ph%zsz(2),ph%zsz(3)))
+          rw3 = zero
        end if
-       allocate(kxyz(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))    
+       allocate(kxyz, source=cw1)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))      
+       a3 = zero
     end if
 
 #ifdef DEBUG 

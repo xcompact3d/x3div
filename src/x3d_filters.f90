@@ -70,9 +70,9 @@ module x3d_filters
      END SUBROUTINE FILTER_Z
   END INTERFACE
 
-  PROCEDURE (FILTER_X), TARGET :: filx_00, filx_11, filx_12, filx_21, filx_22
-  PROCEDURE (FILTER_Y), TARGET :: fily_00, fily_11, fily_12, fily_21, fily_22
-  PROCEDURE (FILTER_Z), TARGET :: filz_00, filz_11, filz_12, filz_21, filz_22
+  PROCEDURE (FILTER_X) :: filx_00, filx_11, filx_12, filx_21, filx_22
+  PROCEDURE (FILTER_Y) :: fily_00, fily_11, fily_12, fily_21, fily_22
+  PROCEDURE (FILTER_Z) :: filz_00, filz_11, filz_12, filz_21, filz_22
   PROCEDURE (FILTER_X), POINTER :: filx=>null(), filxS=>null()
   PROCEDURE (FILTER_Y), POINTER :: fily=>null(), filyS=>null()
   PROCEDURE (FILTER_Z), POINTER :: filz=>null(), filzS=>null()

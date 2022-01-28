@@ -971,6 +971,13 @@ subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
   ! Local variables
   integer :: i, j, k
 
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
+
   if (nclz) then
      ! nzm = nz
 
@@ -1082,6 +1089,13 @@ subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = uz(i,j,k)
+     enddo
+     return
+  endif
 
   if (nclz) then
      ! nzm = nz
@@ -1224,6 +1238,13 @@ subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
   ! Local variables
   integer :: i, j, k
 
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
+
   if (nclz) then
      ! nzm = nz
 
@@ -1312,6 +1333,13 @@ subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = uz(i,j,k)
+     enddo
+     return
+  endif
 
   if (nclz) then
      ! nzm = nz

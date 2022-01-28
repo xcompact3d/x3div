@@ -71,6 +71,11 @@ subroutine parameter()
   endif
 
   call parameter_defaults()
+
+  if (nz==1) then
+     nclz1 = 0
+     nclzn = 0
+  endif
   
   !! Set Scalar BCs same as fluid (may be overridden) [DEFAULT]
   nclxS1 = nclx1; nclxSn = nclxn

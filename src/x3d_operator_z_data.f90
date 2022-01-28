@@ -89,6 +89,8 @@ contains
 
       implicit none
 
+      if (nz==1) return
+
       allocate (ffz(nz))
       ffz = zero
       allocate (sfz, source=ffz)
@@ -162,7 +164,11 @@ contains
    !
    subroutine x3d_operator_z_data_finalize()
 
+      use variables, only : nz
+
       implicit none
+
+      if (nz==1) return
 
       deallocate (ffz)
       deallocate (sfz)

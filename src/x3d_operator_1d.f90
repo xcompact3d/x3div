@@ -206,6 +206,9 @@ contains
     ! Local variable
     integer :: i
 
+    ! Nothing to do when n=1 (nz=1 for instance)
+    if (n==1) return
+
     x3dop%n = n
     x3dop%npaire = paire
     x3dop%f => f

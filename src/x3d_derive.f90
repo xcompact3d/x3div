@@ -567,6 +567,13 @@ subroutine derz_00(tz,uz,rz,sz,x3dop,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
+
   ! Compute r.h.s.
   do concurrent (j=1:ny, i=1:nx)
      tz(i,j,1) = afkz*(uz(i,j,2)-uz(i,j,nz  )) &
@@ -624,6 +631,13 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
 
   ! Compute r.h.s.
   if (ncl1==1) then

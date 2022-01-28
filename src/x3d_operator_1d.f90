@@ -33,8 +33,8 @@
 
 module x3d_operator_1d
 
-  use decomp_2d, only : mytype
-  
+  use decomp_2d, only: mytype
+
   implicit none
 
   type, public :: x3doperator1d
@@ -74,13 +74,12 @@ module x3d_operator_1d
   ! Interpolation from pressure grid => velocity grid
   type(x3doperator1d), save, public :: x3d_op_intxpv, x3d_op_intypv, x3d_op_intzpv
 
-  private        ! Make everything private unless declared public
-
+  ! Make everything private unless declared public
+  private
   public :: x3d_operator_1d_init, x3d_operator_1d_finalize
 
 
 contains
-
 
   !
   ! Associate pointers and pre-compute some arrays for periodic cases
@@ -89,9 +88,9 @@ contains
 
     use variables
     use param, only : nclx, ncly, nclz
-    use derivX, only : alfaix, alcaix6, ailcaix6
-    use derivY, only : alfajy, alcaiy6, ailcaiy6
-    use derivZ, only : alfakz, alcaiz6, ailcaiz6
+    use x3d_operator_x_data
+    use x3d_operator_y_data
+    use x3d_operator_z_data
 
     implicit none
 
@@ -193,7 +192,7 @@ contains
   subroutine init(x3dop, f, s, w, n, ncl, alfa, paire)
 
     use param, only : zero, one
-    use thomas, only : thomas_optim, thomas1d
+    use thomas, only : thomas1d
 
     implicit none
 
@@ -207,13 +206,16 @@ contains
     ! Local variable
     integer :: i
 
+    ! Nothing to do when n=1 (nz=1 for instance)
+    if (n==1) return
+
     x3dop%n = n
     x3dop%npaire = paire
     x3dop%f => f
     x3dop%s => s
     x3dop%w => w
     x3dop%alfa = alfa
-    if (thomas_optim.and.ncl) then
+    if (ncl) then
       allocate(x3dop%periodic(n))
       x3dop%periodic = (/-one, (zero, i=2, n-1), alfa/)
       call thomas1d(x3dop%periodic, f, s, w, n)

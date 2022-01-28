@@ -39,15 +39,18 @@ module x3d_staggered
   
   implicit none
 
-  public          ! Make everything public unless declared private
+  ! Make everything public unless declared private
+  public
+
 
 contains
+
 
 !********************************************************************
 !
 subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -79,13 +82,6 @@ subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
                      + bcix6*(ux(1 ,j,k)-ux(nx-2,j,k))
         tx(nx  ,j,k) = acix6*(ux(1,j,k)-ux(nx  ,j,k)) &
                      + bcix6*(ux(2,j,k)-ux(nx-1,j,k))
-        if (.not. thomas_optim) then
-           rx(1,j,k) = -one
-           do concurrent (i=2:nx-1)
-              rx(i,j,k) = zero
-           enddo
-           rx(nx,j,k) = x3dop%alfa ! alcaix6
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -135,7 +131,7 @@ end subroutine derxvp
 !
 subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -189,13 +185,6 @@ subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
                      + bicix6*(ux(2,j,k)+ux(nx-1,j,k)) &
                      + cicix6*(ux(3,j,k)+ux(nx-2,j,k)) &
                      + dicix6*(ux(4,j,k)+ux(nx-3,j,k))
-        if (.not. thomas_optim) then
-           rx(1,j,k) = -one
-           do concurrent (i=2:nx-1)
-              rx(i,j,k) = zero
-           enddo
-           rx(nx,j,k) = x3dop%alfa ! ailcaix6
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -251,7 +240,7 @@ end subroutine interxvp
 !
 subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -282,13 +271,6 @@ subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
                      + bcix6*(ux(nx ,j,k)-ux(nx-3,j,k))
         tx(nx  ,j,k) = acix6*(ux(nx,j,k)-ux(nx-1,j,k)) &
                      + bcix6*(ux(1,j,k)-ux(nx-2,j,k))
-        if (.not. thomas_optim) then
-           rx(1,j,k) = -one
-           do concurrent (i=2:nx-1)
-              rx(i,j,k) = zero
-           enddo
-           rx(nx,j,k) = x3dop%alfa ! alcaix6
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -324,7 +306,7 @@ end subroutine derxpv
 !
 subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -377,13 +359,6 @@ subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
                      + bicix6*(ux(1,j,k)+ux(nx-2,j,k)) &
                      + cicix6*(ux(2,j,k)+ux(nx-3,j,k)) &
                      + dicix6*(ux(3,j,k)+ux(nx-4,j,k))
-        if (.not. thomas_optim) then
-           rx(1,j,k) = -one
-           do concurrent (i=2:nx-1)
-              rx(i,j,k) = zero
-           enddo
-           rx(nx,j,k) = x3dop%alfa ! ailcaix6
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -447,7 +422,7 @@ end subroutine interxpv
 !
 subroutine interyvp(ty,uy,ry,sy,x3dop,nx,ny,nym,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -515,17 +490,6 @@ subroutine interyvp(ty,uy,ry,sy,x3dop,nx,ny,nym,nz)
                         + ciciy6*(uy(i,3,k)+uy(i,ny-2,k)) &
                         + diciy6*(uy(i,4,k)+uy(i,ny-3,k))
         enddo
-        if (.not. thomas_optim) then
-           do concurrent (i=1:nx)
-              ry(i,1,k) = -one
-           enddo
-           do concurrent (j=2:ny-1, i=1:nx)
-              ry(i,j,k) = zero
-           enddo
-           do concurrent (i=1:nx)
-              ry(i,ny,k) = x3dop%alfa ! ailcaiy6
-           enddo
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -593,7 +557,7 @@ end subroutine interyvp
 !
 subroutine deryvp(ty,uy,ry,sy,x3dop,ppyi,nx,ny,nym,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -634,17 +598,6 @@ subroutine deryvp(ty,uy,ry,sy,x3dop,ppyi,nx,ny,nym,nz)
            ty(i,ny  ,k) = aciy6*(uy(i,1,k)-uy(i,ny,k)) &
                         + bciy6*(uy(i,2,k)-uy(i,ny-1,k))
         enddo
-        if (.not. thomas_optim) then
-           do concurrent (i=1:nx)
-              ry(i,1,k) = -one
-           enddo
-           do concurrent (j=2:ny-1, i=1:nx)
-              ry(i,j,k) = zero
-           enddo
-           do concurrent (i=1:nx)
-              ry(i,ny,k) = x3dop%alfa ! alcaiy6
-           enddo
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -696,7 +649,7 @@ end subroutine deryvp
 !
 subroutine interypv(ty,uy,ry,sy,x3dop,nx,nym,ny,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -763,17 +716,6 @@ subroutine interypv(ty,uy,ry,sy,x3dop,nx,nym,ny,nz)
                         + ciciy6*(uy(i,2,k)+uy(i,ny-3,k)) &
                         + diciy6*(uy(i,3,k)+uy(i,ny-4,k))
         enddo
-        if (.not. thomas_optim) then
-           do concurrent (i=1:nx)
-              ry(i,1,k) = -one
-           enddo
-           do concurrent (j=2:ny-1, i=1:nx)
-              ry(i,j,k) = zero
-           enddo
-           do concurrent (i=1:nx)
-              ry(i,ny,k) = x3dop%alfa ! ailcaiy6
-           enddo
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -853,7 +795,7 @@ end subroutine interypv
 !
 subroutine derypv(ty,uy,ry,sy,x3dop,ppy,nx,nym,ny,nz)
 
-  USE derivY
+  USE x3d_operator_y_data
 
   implicit none
 
@@ -893,17 +835,6 @@ subroutine derypv(ty,uy,ry,sy,x3dop,ppy,nx,nym,ny,nz)
            ty(i,ny,k) = aciy6*(uy(i,ny,k)-uy(i,ny-1,k)) &
                       + bciy6*(uy(i,1,k)-uy(i,ny-2,k))
         enddo
-        if (.not. thomas_optim) then
-           do concurrent (i=1:nx)
-              ry(i,1,k) = -one
-           enddo
-           do concurrent (j=2:ny-1, i=1:nx)
-              ry(i,j,k) = zero
-           enddo
-           do concurrent (i=1:nx)
-              ry(i,ny,k) = x3dop%alfa ! alcaiy6
-           enddo
-        endif
      enddo
 
      ! Solve tri-diagonal system
@@ -953,7 +884,7 @@ end subroutine derypv
 !
 subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -967,6 +898,13 @@ subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
 
   if (nclz) then
      ! nzm = nz
@@ -992,17 +930,6 @@ subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
         tz(i,j,nz  ) = aciz6*(uz(i,j,1)-uz(i,j,nz)) &
                      + bciz6*(uz(i,j,2)-uz(i,j,nz-1))
      enddo
-     if (.not. thomas_optim) then
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,1) = -one
-        enddo
-        do concurrent (k=2:nz-1, j=1:ny, i=1:nx)
-           rz(i,j,k) = zero
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,nz) = x3dop%alfa ! alcaiz6
-        enddo
-     endif
 
      ! Solve tri-diagonal system
      call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -1065,7 +992,7 @@ end subroutine derzvp
 !
 subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -1079,6 +1006,13 @@ subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = uz(i,j,k)
+     enddo
+     return
+  endif
 
   if (nclz) then
      ! nzm = nz
@@ -1132,17 +1066,6 @@ subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
                      + ciciz6*(uz(i,j,3)+uz(i,j,nz-2)) &
                      + diciz6*(uz(i,j,4)+uz(i,j,nz-3))
      enddo
-     if (.not. thomas_optim) then
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,1) = -one
-        enddo
-        do concurrent (k=2:nz-1, j=1:ny, i=1:nx)
-           rz(i,j,k) = zero
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,nz) = x3dop%alfa ! ailcaiz6
-        enddo
-     endif
 
      ! Solve tri-diagonal system
      call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -1207,7 +1130,7 @@ end subroutine interzvp
 !
 subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -1220,6 +1143,13 @@ subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
 
   if (nclz) then
      ! nzm = nz
@@ -1245,17 +1175,6 @@ subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
         tz(i,j,nz) = aciz6*(uz(i,j,nz)-uz(i,j,nz-1)) &
                    + bciz6*(uz(i,j,1)-uz(i,j,nz-2))
      enddo
-     if (.not. thomas_optim) then
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,1) = -one
-        enddo
-        do concurrent (k=2:nz-1, j=1:ny, i=1:nx)
-           rz(i,j,k) = zero
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,nz) = x3dop%alfa ! alcaiz6
-        enddo
-     endif
 
      ! Solve tri-diagonal system
      call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -1296,7 +1215,7 @@ end subroutine derzpv
 !
 subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
-  USE derivZ
+  USE x3d_operator_z_data
 
   implicit none
 
@@ -1309,6 +1228,13 @@ subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = uz(i,j,k)
+     enddo
+     return
+  endif
 
   if (nclz) then
      ! nzm = nz
@@ -1362,17 +1288,6 @@ subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
                      + ciciz6*(uz(i,j,2)+uz(i,j,nz-3)) &
                      + diciz6*(uz(i,j,3)+uz(i,j,nz-4))
      enddo
-     if (.not. thomas_optim) then
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,1) = -one
-        enddo
-        do concurrent (k=2:nz-1, j=1:ny, i=1:nx)
-           rz(i,j,k) = zero
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           rz(i,j,nz) = x3dop%alfa ! ailcaiz6
-        enddo
-     endif
 
      ! Solve tri-diagonal system
      call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)

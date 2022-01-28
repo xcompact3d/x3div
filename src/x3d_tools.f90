@@ -107,8 +107,11 @@ subroutine init_xcompact3d(ndt_max)
   use decomp_2d, only : init_coarser_mesh_statS, &
                         init_coarser_mesh_statV, &
                         init_coarser_mesh_statP
-  use decomp_2d, only : ph1, ph2, ph3, ph4, phG
+  use decomp_2d, only : ph1, ph2, ph3, phG
   USE decomp_2d_poisson, ONLY : decomp_2d_poisson_init
+  use x3d_operator_x_data, only : x3d_operator_x_data_init
+  use x3d_operator_y_data, only : x3d_operator_y_data_init
+  use x3d_operator_z_data, only : x3d_operator_z_data_init
   use x3d_operator_1d, only : x3d_operator_1d_init
   use x3d_derive, only : x3d_derive_init
   use case
@@ -187,14 +190,14 @@ subroutine init_xcompact3d(ndt_max)
   call init_coarser_mesh_statP(nprobe,nprobe,nprobe,.true.) !start from 1 == true
   !div: nx ny nz --> nxm ny nz --> nxm nym nz --> nxm nym nzm
   call decomp_info_init(nxm, nym, nzm, ph1)
-  call decomp_info_init(nxm, ny, nz, ph4)
   !gradp: nxm nym nzm -> nxm nym nz --> nxm ny nz --> nx ny nz
   call decomp_info_init(nxm, ny, nz, ph2)
   call decomp_info_init(nxm, nym, nz, ph3)
 
-  call init_variables()
-
-  call schemes()
+  call var_init()
+  call x3d_operator_x_data_init()
+  call x3d_operator_y_data_init()
+  call x3d_operator_z_data_init()
   call x3d_operator_1d_init()
   call x3d_derive_init()
 
@@ -224,17 +227,33 @@ end subroutine
 subroutine finalise_xcompact3d(flag)
 
   use MPI
-  use decomp_2d, only : decomp_2d_finalize
+  use decomp_2d, only : decomp_2d_finalize, decomp_info_finalize, &
+                        ph1, ph2, ph3, phG
+  use decomp_2d_poisson, only : decomp_2d_poisson_finalize
+  use x3d_operator_x_data, only : x3d_operator_x_data_finalize
+  use x3d_operator_y_data, only : x3d_operator_y_data_finalize
+  use x3d_operator_z_data, only : x3d_operator_z_data_finalize
   use x3d_operator_1d, only : x3d_operator_1d_finalize
   use x3d_derive, only : x3d_derive_finalize
+  use var, only : var_finalize
 
   implicit none
 
   logical, intent(in) :: flag
   integer :: ierr
 
+  call decomp_info_finalize(ph1)
+  call decomp_info_finalize(ph2)
+  call decomp_info_finalize(ph3)
+  call decomp_info_finalize(phG)
+  call decomp_2d_poisson_finalize()
+
   call x3d_derive_finalize()
   call x3d_operator_1d_finalize()
+  call x3d_operator_x_data_finalize()
+  call x3d_operator_y_data_finalize()
+  call x3d_operator_z_data_finalize()
+  call var_finalize()
 
   call decomp_2d_finalize()
   if (flag) then

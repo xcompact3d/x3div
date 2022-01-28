@@ -68,14 +68,13 @@ program xcompact3d
      call nvtxStartRange("transeq")
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
      call nvtxEndRange
-   
-     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
+     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
        ux1(i,j,k) = ux1(i,j,k) + dt * dux1(i,j,k,1)
        uy1(i,j,k) = uy1(i,j,k) + dt * duy1(i,j,k,1)
        uz1(i,j,k) = uz1(i,j,k) + dt * duz1(i,j,k,1)
      enddo
      
-     !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1)) 
+     !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
      !  divu3(:,:,:) = zero
      !enddo
      call nvtxStartRange("solve_poisson")

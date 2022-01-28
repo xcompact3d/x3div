@@ -51,7 +51,7 @@ contains
     use decomp_2d, only : mytype
     USE decomp_2d, ONLY : xsize, zsize, ph1
     USE decomp_2d_poisson, ONLY : poisson
-    USE var, ONLY : nzmsize
+    USE variables, ONLY : nzm
     USE param, ONLY : npress
     use nvtx
 
@@ -61,7 +61,7 @@ contains
     REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)), INTENT(IN) :: ux1, uy1, uz1
 
     !! Outputs
-    REAL(mytype), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzmsize, npress) :: pp3
+    REAL(mytype), DIMENSION(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress) :: pp3
     REAL(mytype), DIMENSION(xsize(1), xsize(2), xsize(3)) :: px1, py1, pz1
 
     !! Locals
@@ -125,7 +125,7 @@ contains
     use x3d_staggered
     use decomp_2d, only : mytype, real_type, decomp_2d_warning
     use param
-    use decomp_2d, only : nrank, ph1, ph3, ph4, nproc
+    use decomp_2d, only : nrank, ph1, ph2, ph3, nproc
     use decomp_2d, only : xsize, ysize, zsize
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d, only : transpose_x_to_y, &
@@ -135,7 +135,7 @@ contains
     USE variables
     USE var, ONLY: ta1, tb1, tc1, pp1, pgy1, pgz1, di1, &
          duxdxp2, uyp2, uzp2, duydypi2, upi2, ta2, dipp2, &
-         duxydxyp3, uzp3, po3, dipp3, nxmsize, nymsize, nzmsize
+         duxydxyp3, uzp3, po3, dipp3
     USE MPI
     use nvtx
 
@@ -145,13 +145,13 @@ contains
     !X PENCILS NX NY NZ  -->NXM NY NZ
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)),intent(in) :: ux1,uy1,uz1
     !Z PENCILS NXM NYM NZ  -->NXM NYM NZM
-    real(mytype),dimension(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),nzmsize) :: pp3
+    real(mytype),dimension(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),nzm) :: pp3
 
     integer :: nvect3,i,j,k,nlock
     integer :: code
     real(mytype) :: tmax,tmoy,tmax1,tmoy1
 
-    nvect3=(ph1%zen(1)-ph1%zst(1)+1)*(ph1%zen(2)-ph1%zst(2)+1)*nzmsize
+    nvect3=(ph1%zen(1)-ph1%zst(1)+1)*(ph1%zen(2)-ph1%zst(2)+1)*nzm
 
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))    
        ta1(i,j,k) = ux1(i,j,k)
@@ -162,31 +162,31 @@ contains
     !WORK X-PENCILS
 
     
-    call derxvp(pp1,ta1,di1,sx,x3d_op_derxvp,xsize(1),nxmsize,xsize(2),xsize(3))
+    call derxvp(pp1,ta1,di1,sx,x3d_op_derxvp,xsize(1),nxm,xsize(2),xsize(3))
 
-    call interxvp(pgy1,tb1,di1,sx,x3d_op_intxvp,xsize(1),nxmsize,xsize(2),xsize(3))
-    call interxvp(pgz1,tc1,di1,sx,x3d_op_intxvp,xsize(1),nxmsize,xsize(2),xsize(3))
+    call interxvp(pgy1,tb1,di1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call interxvp(pgz1,tc1,di1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
 
     call nvtxStartRange("Transpose xty pp1")
-    call transpose_x_to_y(pp1,duxdxp2,ph4)!->NXM NY NZ
+    call transpose_x_to_y(pp1,duxdxp2,ph2)!->NXM NY NZ
     call nvtxEndRange
     call nvtxStartRange("Transpose xty pgy")
-    call transpose_x_to_y(pgy1,uyp2,ph4)
+    call transpose_x_to_y(pgy1,uyp2,ph2)
     call nvtxEndRange
     call nvtxStartRange("Transpose xty pgz")
-    call transpose_x_to_y(pgz1,uzp2,ph4)
+    call transpose_x_to_y(pgz1,uzp2,ph2)
     call nvtxEndRange
 
     !WORK Y-PENCILS
-    call interyvp(upi2,duxdxp2,dipp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3))
-    call deryvp(duydypi2,uyp2,dipp2,sy,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3))
+    call interyvp(upi2,duxdxp2,dipp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call deryvp(duydypi2,uyp2,dipp2,sy,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
-    !! Compute sum dudx + dvdy !ph1%yst(1):ph1%yen(1),nymsize,ysize(3)
-    do concurrent (k=1:ysize(3), j=1:nymsize, i=ph1%yst(1):ph1%yen(1))
+    !! Compute sum dudx + dvdy !ph1%yst(1):ph1%yen(1),nym,ysize(3)
+    do concurrent (k=1:ysize(3), j=1:nym, i=ph1%yst(1):ph1%yen(1))
       duydypi2(i,j,k) = duydypi2(i,j,k) + upi2(i,j,k)
     enddo
 
-    call interyvp(upi2,uzp2,dipp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nymsize,ysize(3))
+    call interyvp(upi2,uzp2,dipp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
     call nvtxStartRange("Transpose ytz duy")
     call transpose_y_to_z(duydypi2,duxydxyp3,ph3)!->NXM NYM NZ
@@ -195,18 +195,18 @@ contains
 
     !WORK Z-PENCILS
     call interzvp(pp3,duxydxyp3,dipp3,sz,x3d_op_intzvp,(ph1%zen(1)-ph1%zst(1)+1),&
-         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize)
+         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzm)
     call derzvp(po3,uzp3,dipp3,sz,x3d_op_derzvp,(ph1%zen(1)-ph1%zst(1)+1),&
-         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzmsize)
+         (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzm)
 
     !! Compute sum dudx + dvdy + dwdz
-    do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
+    do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
        pp3(i,j,k) = pp3(i,j,k) + po3(i,j,k)
     enddo
 
     if (nlock==2) then
-       do concurrent (k=1:nzmsize, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
-          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1%zst(1),ph1%zst(2),nzmsize)
+       do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
+          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1%zst(1),ph1%zst(2),nzm)
        enddo
     endif
 
@@ -252,31 +252,31 @@ contains
     use decomp_2d, only: xstart, xend, ystart, yend, zstart, zend
     USE variables
     USE var, only: pp1,pgy1,pgz1,di1,pp2,ppi2,pgy2,pgz2,pgzi2,dip2,&
-         pgz3,ppi3,dip3,nxmsize,nymsize,nzmsize
+         pgz3,ppi3,dip3
 
     implicit none
 
     integer :: i,j,k
 
-    real(mytype),dimension(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),nzmsize) :: pp3
+    real(mytype),dimension(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),nzm) :: pp3
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1,py1,pz1
 
     !WORK Z-PENCILS
     call interzpv(ppi3,pp3,dip3,sz,x3d_op_intzpv,&
-         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3))
+         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzm,zsize(3))
     call derzpv(pgz3,pp3,dip3,sz,x3d_op_derzpv,&
-         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzmsize,zsize(3))
+         (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzm,zsize(3))
 
     !WORK Y-PENCILS
     call x3d_transpose_z_to_y(pgz3,pgz2,ph3) !nxm nym nz
     call x3d_transpose_z_to_y(ppi3,pp2,ph3)
 
     call interypv(ppi2,pp2,dip2,sy,x3d_op_intypv,&
-         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
+         (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
     call derypv(pgy2,pp2,dip2,sy,x3d_op_derypv,ppy,&
-         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
+         (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
     call interypv(pgzi2,pgz2,dip2,sy,x3d_op_intypv,&
-         (ph3%yen(1)-ph3%yst(1)+1),nymsize,ysize(2),ysize(3))
+         (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
 
     !WORK X-PENCILS
 
@@ -284,9 +284,9 @@ contains
     call x3d_transpose_y_to_x(pgy2,pgy1,ph2)
     call x3d_transpose_y_to_x(pgzi2,pgz1,ph2)
 
-    call derxpv(px1,pp1,di1,sx,x3d_op_derxpv,nxmsize,xsize(1),xsize(2),xsize(3))
-    call interxpv(py1,pgy1,di1,sx,x3d_op_intxpv,nxmsize,xsize(1),xsize(2),xsize(3))
-    call interxpv(pz1,pgz1,di1,sx,x3d_op_intxpv,nxmsize,xsize(1),xsize(2),xsize(3))
+    call derxpv(px1,pp1,di1,sx,x3d_op_derxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call interxpv(py1,pgy1,di1,sx,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call interxpv(pz1,pgz1,di1,sx,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
 
     !we are in X pencils:
     if (nclx1.eq.2) then

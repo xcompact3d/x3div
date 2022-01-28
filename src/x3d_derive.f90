@@ -40,7 +40,8 @@ module x3d_derive
   
   implicit none
 
-  public          ! Make everything public unless declared private
+  ! Make everything public unless declared private
+  public
 
   ABSTRACT INTERFACE
      SUBROUTINE DERIVATIVE_X(t,u,r,s,x3dop,nx,ny,nz)
@@ -82,10 +83,12 @@ module x3d_derive
      END SUBROUTINE DERIVATIVE_Z
   END INTERFACE
 
-  PROCEDURE (DERIVATIVE_X), POINTER :: derx,derxx,derxS,derxxS
-  PROCEDURE (DERIVATIVE_Y), POINTER :: dery,deryS
-  PROCEDURE (DERIVATIVE_YY), POINTER :: deryy,deryyS
-  PROCEDURE (DERIVATIVE_Z), POINTER :: derz,derzz,derzS,derzzS
+  PROCEDURE (DERIVATIVE_X), POINTER :: derx=>null(), derxx=>null(), &
+                                       derxS=>null(), derxxS=>null()
+  PROCEDURE (DERIVATIVE_Y), POINTER :: dery=>null(), deryS=>null()
+  PROCEDURE (DERIVATIVE_YY), POINTER :: deryy=>null(), deryyS=>null()
+  PROCEDURE (DERIVATIVE_Z), POINTER :: derz=>null(), derzz=>null(), &
+                                       derzS=>null(), derzzS=>null()
 
 contains
 
@@ -139,7 +142,7 @@ contains
 
 subroutine derx_00(tx,ux,rx,sx,x3dop,nx,ny,nz)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -168,15 +171,6 @@ subroutine derx_00(tx,ux,rx,sx,x3dop,nx,ny,nz)
      tx(nx,j,k) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
                 + bfix*(ux(2,j,k)-ux(nx-2,j,k))
   enddo
-  if (.not. thomas_optim) then
-     do concurrent (k=1:nz, j=1:ny)
-        rx(1,j,k) = -one
-        do concurrent (i=2:nx-1)
-           rx(i,j,k) = zero
-        enddo
-        rx(nx,j,k) = alfaix
-     enddo
-  endif
 
   ! Solve tri-diagonal system
   call xthomas(tx, rx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -185,9 +179,9 @@ end subroutine derx_00
 
 !********************************************************************
 !
-subroutine derx_ij(tx,ux,sx,ffx,fsx,fwx,nx,ny,nz,npaire,ncl1,ncln)
+subroutine derx_ij(tx,ux,sx,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
-  use derivX
+  use x3d_operator_x_data
 
   implicit none
 
@@ -196,7 +190,7 @@ subroutine derx_ij(tx,ux,sx,ffx,fsx,fwx,nx,ny,nz,npaire,ncl1,ncln)
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
   real(mytype), intent(out), dimension(ny,nz):: sx
-  real(mytype), intent(in), dimension(nx):: ffx, fsx, fwx
+  real(mytype), intent(in), dimension(nx):: ff, fs, fw
 
   ! Local variables
   integer :: i, j, k
@@ -241,7 +235,7 @@ subroutine derx_ij(tx,ux,sx,ffx,fsx,fwx,nx,ny,nz,npaire,ncl1,ncln)
   enddo
 
   ! Solve tri-diagonal system
-  call xthomas(tx, ffx, fsx, fwx, nx, ny, nz)
+  call xthomas(tx, ff, fs, fw, nx, ny, nz)
 
 end subroutine derx_ij
 
@@ -315,7 +309,7 @@ subroutine dery_00(ty,uy,ry,sy,x3dop,ppy,nx,ny,nz)
   !
   !********************************************************************
 
-  use derivY
+  use x3d_operator_y_data
 
   implicit none
 
@@ -354,19 +348,6 @@ subroutine dery_00(ty,uy,ry,sy,x3dop,ppy,nx,ny,nz)
                    + bfjy*(uy(i,2,k)-uy(i,ny-2,k))
      enddo
   enddo
-  if (.not. thomas_optim) then
-     do concurrent (k=1:nz)
-        do concurrent (i=1:nx)
-           ry(i,1,k) = -one
-        enddo
-        do concurrent (j=2:ny-1, i=1:nx)
-           ry(i,j,k) = zero
-        enddo
-        do concurrent (i=1:nx)
-           ry(i,ny,k) = x3dop%alfa ! alfajy
-        enddo
-     enddo
-  endif
 
   ! Solve tri-diagonal system
   call ythomas(ty, ry, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -382,9 +363,9 @@ end subroutine dery_00
 
 !********************************************************************
 !
-subroutine dery_ij(ty,uy,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire,ncl1,ncln)
+subroutine dery_ij(ty,uy,sy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
 
-  use derivY
+  use x3d_operator_y_data
 
   implicit none
 
@@ -393,7 +374,7 @@ subroutine dery_ij(ty,uy,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire,ncl1,ncln)
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
   real(mytype), intent(out), dimension(nx,nz)  :: sy
-  real(mytype), intent(in), dimension(ny) :: ffy,fsy,fwy,ppy
+  real(mytype), intent(in), dimension(ny) :: ff,fs,fw,ppy
 
   ! Local variables
   integer :: i, j, k
@@ -462,7 +443,7 @@ subroutine dery_ij(ty,uy,sy,ffy,fsy,fwy,ppy,nx,ny,nz,npaire,ncl1,ncln)
   enddo
 
   ! Solve tri-diagonal system
-  call ythomas(ty, ffy, fsy, fwy, nx, ny, nz)
+  call ythomas(ty, ff, fs, fw, nx, ny, nz)
 
   ! Apply stretching if needed
   if (istret /= 0) then
@@ -549,7 +530,7 @@ end subroutine dery_22
 !
 subroutine derz_00(tz,uz,rz,sz,x3dop,nx,ny,nz)
 
-  use derivZ
+  use x3d_operator_z_data
   use nvtx
 
   implicit none
@@ -563,6 +544,13 @@ subroutine derz_00(tz,uz,rz,sz,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
 
   ! Compute r.h.s.
   do concurrent (j=1:ny, i=1:nx)
@@ -585,17 +573,6 @@ subroutine derz_00(tz,uz,rz,sz,x3dop,nx,ny,nz)
      tz(i,j,nz) = afkz*(uz(i,j,1)-uz(i,j,nz-1)) &
                 + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
   enddo
-  if (.not. thomas_optim) then
-     do concurrent (j=1:ny, i=1:nx)
-        rz(i,j,1) = -one
-     enddo
-     do concurrent (k=2:nz-1, j=1:ny, i=1:nx)
-        rz(i,j,k) = zero
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        rz(i,j,nz) = x3dop%alfa ! alfakz
-     enddo
-  endif
 
   ! Solve tri-diagonal system
   call nvtxStartRange("zthomas")
@@ -606,9 +583,9 @@ end subroutine derz_00
 
 !********************************************************************
 !
-subroutine derz_ij(tz,uz,sz,ffz,fsz,fwz,nx,ny,nz,npaire,ncl1,ncln)
+subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
-  use derivZ
+  use x3d_operator_z_data
 
   implicit none
 
@@ -617,10 +594,17 @@ subroutine derz_ij(tz,uz,sz,ffz,fsz,fwz,nx,ny,nz,npaire,ncl1,ncln)
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
   real(mytype), intent(out), dimension(nx,ny) :: sz
-  real(mytype), intent(in), dimension(nz) :: ffz,fsz,fwz
+  real(mytype), intent(in), dimension(nz) :: ff,fs,fw
 
   ! Local variables
   integer :: i, j, k
+
+  if (nz==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tz(i,j,k) = zero
+     enddo
+     return
+  endif
 
   ! Compute r.h.s.
   if (ncl1==1) then
@@ -685,7 +669,7 @@ subroutine derz_ij(tz,uz,sz,ffz,fsz,fwz,nx,ny,nz,npaire,ncl1,ncln)
   endif
 
   ! Solve tri-diagonal system
-  call zthomas(tz, ffz, fsz, fwz, nx, ny, nz)
+  call zthomas(tz, ff, fs, fw, nx, ny, nz)
 
 end subroutine derz_ij
 

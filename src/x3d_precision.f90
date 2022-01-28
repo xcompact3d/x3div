@@ -48,7 +48,8 @@ module x3dprecision
   real(mytype),parameter, public :: twopi=2._real32*acos(-1._real32)
 #endif
 
-  private        ! Make everything private unless declared public
+  ! Make everything private unless declared public
+  private
 
   public ::  sin_prec,  cos_prec,  tan_prec, &
             asin_prec, acos_prec, atan_prec, &

@@ -44,29 +44,6 @@ SRC = $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/poisson.f90 $
 OBJ = $(SRC:%.f90=%.o)
 SRC = $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/xcompact3d.f90
 
-
-#######FFT settings##########
-ifeq ($(FFT),fftw3)
-  #FFTW3_PATH=/usr
-  #FFTW3_PATH=/usr/lib64
-  FFTW3_PATH=/usr/local/Cellar/fftw/3.3.7_1
-  INC=-I$(FFTW3_PATH)/include
-  LIBFFT=-L$(FFTW3_PATH) -lfftw3 -lfftw3f
-else ifeq ($(FFT),fftw3_f03)
-  FFTW3_PATH=/usr                                #ubuntu # apt install libfftw3-dev
-  #FFTW3_PATH=/usr/lib64                         #fedora # dnf install fftw fftw-devel
-  #FFTW3_PATH=/usr/local/Cellar/fftw/3.3.7_1     #macOS  # brew install fftw
-  INC=-I$(FFTW3_PATH)/include
-  LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
-else ifeq ($(FFT),generic)
-  INC=
-  LIBFFT=
-else ifeq ($(FFT),mkl)
-  # SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
-  LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-	INC=-I$(MKLROOT)/include
-endif
-
 #######OPTIONS settings###########
 OPT = -I$(SRCDIR) -I$(DECOMP_INCDIR) $(FFLAGS)
 LINKOPT = $(FFLAGS)
@@ -77,11 +54,12 @@ DECOMP_LIB = 2decomp_fft
 DECOMP_LIBDIR = $(DECOMPDIR)/lib
 DECOMP_INCDIR = $(DECOMPDIR)/include
 DECOMP.A = $(DECOMP_LIBDIR)/lib$(DECOMP_LIB).a
+include $(DECOMPDIR)/src/Makefile.inc
 
 all: xcompact3d
 
 xcompact3d : $(DECOMP.A) $(OBJ)
-	$(FC) -o $@ $(LINKOPT) $(OBJ) -L$(DECOMP_LIBDIR) -l$(DECOMP_LIB) #$(LIBFFT)
+	$(FC) -o $@ $(LINKOPT) $(OBJ) -L$(DECOMP_LIBDIR) -l$(DECOMP_LIB) $(LIBFFT)
 
 $(DECOMP.A):
 	make -C $(DECOMPDIR) F90=$(FC) OPTIONS="$(FFLAGS) $(DEFS) $(DEFS2)" lib

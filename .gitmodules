@@ -1,0 +1,3 @@
+[submodule "decomp2d"]
+	path = decomp2d
+	url = git@github.com:xcompact3d/2decomp_fft.git

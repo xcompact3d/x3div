@@ -36,7 +36,7 @@ endif
 
 
 MODDIR = ./mod
-DECOMPDIR = ./decomp2d
+DECOMPDIR = ./decomp2d/src
 SRCDIR = ./src
 
 ### List of files for the main code

@@ -45,7 +45,7 @@ subroutine parameter()
   use x3dprecision, only : pi
   use param
   use variables
-  use decomp_2d, only : nrank
+  use decomp_2d, only : nrank, nproc
 
   implicit none
 
@@ -75,6 +75,8 @@ subroutine parameter()
   if (nz==1) then
      nclz1 = 0
      nclzn = 0
+     p_row = nproc
+     p_col = 1
   endif
   
   !! Set Scalar BCs same as fluid (may be overridden) [DEFAULT]

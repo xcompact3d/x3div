@@ -52,3 +52,14 @@ After which you can continue to build as normal (running ``make`` will first cal
 and then link the resulting library into x3div).
 To ensure you receive the latest changes to 2decomp&fft run ``git submodule update --remote`` periodically, note that you
 can also work within the ``decomp2d/`` directory as though it were a standalone git project.
+
+Note that variables are passed down by ``make``, therefore if you have installed ``ffte`` at
+``${FFTE_DIR}`` then you can build against this by running
+
+``
+make FFT=ffte FFTE_PATH=${FFTE_DIR}
+``
+
+where ``FFTE_PATH`` is used by 2decomp&fft to link the appropriate library - see
+``decomp2d/src/Makefile.inc`` for different FFT library options.
+By default ``FFT=generic`` and no external libraries are required.

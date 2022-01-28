@@ -14,7 +14,7 @@ set(X3DFILES
             thomas.f90
 	    tools.f90
             transeq.f90
-            variables.f90
+            var.f90
 	    x3d_derive.f90
 	    x3d_filters.f90
 	    x3d_operator_1d.f90

@@ -37,6 +37,11 @@ module var
   USE param
   USE complex_geometry
 
+  implicit none
+
+  ! Grids
+  type(decomp_info) :: ph1, ph2, ph3, ph4, phG
+  
   ! define all major arrays here
   real(mytype), save, allocatable, dimension(:,:,:) :: ux1, ux2, ux3, po3, dv3
   real(mytype), save, allocatable, dimension(:,:,:,:) :: pp3
@@ -51,26 +56,6 @@ module var
   real(mytype), save, allocatable, dimension(:,:,:,:) :: dux1,duy1,duz1  ! Output of convdiff
   real(mytype), save, allocatable, dimension(:,:,:,:,:) :: dphi1
   real(mytype), save, allocatable, dimension(:,:,:) :: mu1,mu2,mu3
-
-  !arrays for post processing
-  real(mytype), save, allocatable, dimension(:,:,:) :: f1,fm1
-  real(mytype), save, allocatable, dimension(:,:,:) :: uxm1, uym1, phim1, prem1, dissm1
-  real(mytype), save, allocatable, dimension(:,:,:) :: uxm2, uym2, phim2, prem2, dissm2
-
-  !arrays for statistic collection
-  real(mytype), save, allocatable, dimension(:,:,:) :: umean,vmean,wmean,pmean,uumean,vvmean,wwmean,uvmean,uwmean,vwmean,tmean
-  real(mytype), save, allocatable, dimension(:,:,:,:) :: phimean,phiphimean,uphimean,vphimean,wphimean
-  real(mytype), save, allocatable, dimension(:,:,:) :: tik1,tik2,tak1,tak2
-  real(mytype), save, allocatable, dimension(:,:,:) :: u1sum_tik,u1sum_tak
-  real(mytype), save, allocatable, dimension(:,:,:) :: u1sum,v1sum,w1sum,u2sum,v2sum,w2sum
-  real(mytype), save, allocatable, dimension(:,:,:) :: u3sum,v3sum,w3sum,u4sum,v4sum,w4sum
-  real(mytype), save, allocatable, dimension(:,:,:) :: uvsum,uwsum,vwsum,disssum,presum,tsum
-
-  !arrays for extra statistics collection
-  real(mytype), save, allocatable, dimension(:,:,:) :: dudxsum,utmapsum
-
-  !arrays for visualization
-  real(mytype), save, allocatable, dimension(:,:,:) :: uvisu
 
   ! define all work arrays here
   real(mytype), save, allocatable, dimension(:,:,:) :: ta1,tb1,tc1,td1,&
@@ -108,6 +93,8 @@ contains
 
     TYPE(DECOMP_INFO), save :: ph! decomposition object
 
+    integer :: i, j, k
+
 #ifdef DEBG
     if (nrank .eq. 0) print *,'# init_variables start'
 #endif
@@ -133,7 +120,15 @@ contains
     !xsize(i), ysize(i), zsize(i), i=1,2,3 - sizes of the sub-domains held by the current process. The first letter refers to the pencil orientation and the three 1D array elements contain the sub-domain sizes in X, Y and Z directions, respectively. In a 2D pencil decomposition, there is always one dimension which completely resides in local memory. So by definition xsize(1)==nx_global, ysize(2)==ny_global and zsize(3)==nz_global.
 
     !xstart(i), ystart(i), zstart(i), xend(i), yend(i), zend(i), i=1,2,3 - the starting and ending indices for each sub-domain, as in the global coordinate system. Obviously, it can be seen that xsize(i)=xend(i)-xstart(i)+1. It may be convenient for certain applications to use global coordinate (for example when extracting a 2D plane from a 3D domain, it is easier to know which process owns the plane if global index is used).
+    
+    !div: nx ny nz --> nxm ny nz --> nxm nym nz --> nxm nym nzm
+    call decomp_info_init(nxm, nym, nzm, ph1)
+    call decomp_info_init(nxm, ny, nz, ph4)
+    !gradp: nxm nym nzm -> nxm nym nz --> nxm ny nz --> nx ny nz
+    call decomp_info_init(nxm, ny, nz, ph2)
+    call decomp_info_init(nxm, nym, nz, ph3)
 
+    call decomp_info_init(nxm,nym,nzm,phG) ! XXX: Why does this exist?
 
     !X PENCILS
     call alloc_x(ux1, opt_global=.true.) !global indices
@@ -204,25 +199,6 @@ contains
     dpdyz1=zero
     dpdxzn=zero
     dpdyzn=zero
-
-    !arrays for visualization!pay attention to the size!
-    allocate(uvisu(xstV(1):xenV(1),xstV(2):xenV(2),xstV(3):xenV(3)))
-
-    !arrays statistics
-    allocate (umean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (vmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (wmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (pmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (uumean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (vvmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (wwmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (uvmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (uwmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (vwmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-    allocate (phimean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3),numscalar))
-    allocate (phiphimean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3),numscalar))
-    allocate (tmean(xstS(1):xenS(1),xstS(2):xenS(2),xstS(3):xenS(3)))
-
 
     !Y PENCILS
     call alloc_y(ux2);call alloc_y(uy2);call alloc_y(uz2)
@@ -521,4 +497,6 @@ contains
 #endif
     return
   end subroutine init_variables
+
+  
 end module var

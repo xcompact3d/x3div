@@ -31,6 +31,8 @@
 !################################################################################
 module navier
 
+  USE var, ONLY : ph1, ph2, ph3, ph4
+  
   implicit none
 
   private
@@ -48,7 +50,7 @@ contains
   !############################################################################
   SUBROUTINE solve_poisson(pp3, px1, py1, pz1, ux1, uy1, uz1)
 
-    USE decomp_2d, ONLY : mytype, xsize, zsize, ph1
+    USE decomp_2d, ONLY : mytype, xsize, zsize
     USE decomp_2d_poisson, ONLY : poisson
     USE var, ONLY : nzmsize
     USE var, ONLY : dv3

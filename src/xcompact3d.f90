@@ -174,22 +174,12 @@ subroutine init_xcompact3d(trun)
   call parameter()
 
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
-  call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
-  call init_coarser_mesh_statV(nvisu,nvisu,nvisu,.true.)    !start from 1 == true
-  call init_coarser_mesh_statP(nprobe,nprobe,nprobe,.true.) !start from 1 == true
-  !div: nx ny nz --> nxm ny nz --> nxm nym nz --> nxm nym nzm
-  call decomp_info_init(nxm, nym, nzm, ph1)
-  call decomp_info_init(nxm, ny, nz, ph4)
-  !gradp: nxm nym nzm -> nxm nym nz --> nxm ny nz --> nx ny nz
-  call decomp_info_init(nxm, ny, nz, ph2)
-  call decomp_info_init(nxm, nym, nz, ph3)
 
   call init_variables()
 
   call schemes()
 
   call decomp_2d_poisson_init()
-  call decomp_info_init(nxm,nym,nzm,phG)
 
   call init_flowfield()
 

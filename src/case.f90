@@ -36,6 +36,7 @@ module case
   use decomp_2d
   use variables
 
+  use var, only : ph1
   use var, only : nzmsize
 
   implicit none

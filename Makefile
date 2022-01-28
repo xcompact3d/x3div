@@ -36,12 +36,10 @@ endif
 
 
 MODDIR = ./mod
-DECOMPDIR = ./decomp2d/src
+DECOMPDIR = ./decomp2d
 SRCDIR = ./src
 
 ### List of files for the main code
-SRCDECOMP = $(DECOMPDIR)/decomp_2d.f90 $(DECOMPDIR)/glassman.f90 $(DECOMPDIR)/fft_$(FFT).f90 $(DECOMPDIR)/io.f90
-OBJDECOMP = $(SRCDECOMP:%.f90=%.o)
 SRC = $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/parameters.f90 #$(SRCDIR)/*.f90
 OBJ = $(SRC:%.f90=%.o)
 SRC = $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/xcompact3d.f90
@@ -64,27 +62,29 @@ else ifeq ($(FFT),generic)
   INC=
   LIBFFT=
 else ifeq ($(FFT),mkl)
-  SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
+  # SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 	INC=-I$(MKLROOT)/include
 endif
 
 #######OPTIONS settings###########
-OPT = -I$(SRCDIR) -I$(DECOMPDIR) $(FFLAGS)
+OPT = -I$(SRCDIR) -I$(DECOMP_INCDIR) $(FFLAGS)
 LINKOPT = $(FFLAGS)
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 
+DECOMP_LIB = 2decomp_fft
+DECOMP_LIBDIR = $(DECOMPDIR)/lib
+DECOMP_INCDIR = $(DECOMPDIR)/include
+DECOMP.A = $(DECOMP_LIBDIR)/lib$(DECOMP_LIB).a
+
 all: xcompact3d
 
-xcompact3d : $(OBJDECOMP) $(OBJ)
-	$(FC) -o $@ $(LINKOPT) $(OBJDECOMP) $(OBJ) $(LIBFFT)
+xcompact3d : $(DECOMP.A) $(OBJ)
+	$(FC) -o $@ $(LINKOPT) $(OBJ) -L$(DECOMP_LIBDIR) -l$(DECOMP_LIB) #$(LIBFFT)
 
-$(OBJDECOMP):$(DECOMPDIR)%.o : $(DECOMPDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
-	mv $(@F) ${DECOMPDIR}
-	#mv *.mod ${DECOMPDIR}
-
+$(DECOMP.A):
+	make -C $(DECOMPDIR) F90=$(FC) OPTIONS="$(FFLAGS) $(DEFS) $(DEFS2)" lib
 
 $(OBJ):$(SRCDIR)%.o : $(SRCDIR)%.f90
 	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
@@ -104,10 +104,13 @@ post:
 
 
 clean:
-	rm -f $(DECOMPDIR)/*.o $(DECOMPDIR)/*.mod
 	rm -f $(SRCDIR)/*.o $(SRCDIR)/*.mod
 	rm -f *.o *.mod xcompact3d post
 
+.PHONY: clean-decomp
+clean-decomp:
+	make -C $(DECOMPDIR) clean
+
 .PHONY: cleanall
-cleanall: clean
+cleanall: clean clean-decomp
 	rm -f *~ \#*\# out/* data/* stats/* planes/* *.xdmf *.log *.out nodefile core sauve*

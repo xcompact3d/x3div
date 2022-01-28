@@ -171,15 +171,6 @@ subroutine derx_00(tx,ux,rx,sx,x3dop,nx,ny,nz)
      tx(nx,j,k) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
                 + bfix*(ux(2,j,k)-ux(nx-2,j,k))
   enddo
-  if (.not. thomas_optim) then
-     do concurrent (k=1:nz, j=1:ny)
-        rx(1,j,k) = -one
-        do concurrent (i=2:nx-1)
-           rx(i,j,k) = zero
-        enddo
-        rx(nx,j,k) = alfaix
-     enddo
-  endif
 
   ! Solve tri-diagonal system
   call xthomas(tx, rx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -357,19 +348,6 @@ subroutine dery_00(ty,uy,ry,sy,x3dop,ppy,nx,ny,nz)
                    + bfjy*(uy(i,2,k)-uy(i,ny-2,k))
      enddo
   enddo
-  if (.not. thomas_optim) then
-     do concurrent (k=1:nz)
-        do concurrent (i=1:nx)
-           ry(i,1,k) = -one
-        enddo
-        do concurrent (j=2:ny-1, i=1:nx)
-           ry(i,j,k) = zero
-        enddo
-        do concurrent (i=1:nx)
-           ry(i,ny,k) = x3dop%alfa ! alfajy
-        enddo
-     enddo
-  endif
 
   ! Solve tri-diagonal system
   call ythomas(ty, ry, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -595,17 +573,6 @@ subroutine derz_00(tz,uz,rz,sz,x3dop,nx,ny,nz)
      tz(i,j,nz) = afkz*(uz(i,j,1)-uz(i,j,nz-1)) &
                 + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
   enddo
-  if (.not. thomas_optim) then
-     do concurrent (j=1:ny, i=1:nx)
-        rz(i,j,1) = -one
-     enddo
-     do concurrent (k=2:nz-1, j=1:ny, i=1:nx)
-        rz(i,j,k) = zero
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        rz(i,j,nz) = x3dop%alfa ! alfakz
-     enddo
-  endif
 
   ! Solve tri-diagonal system
   call nvtxStartRange("zthomas")

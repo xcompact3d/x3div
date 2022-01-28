@@ -192,7 +192,7 @@ contains
   subroutine init(x3dop, f, s, w, n, ncl, alfa, paire)
 
     use param, only : zero, one
-    use thomas, only : thomas_optim, thomas1d
+    use thomas, only : thomas1d
 
     implicit none
 
@@ -215,7 +215,7 @@ contains
     x3dop%s => s
     x3dop%w => w
     x3dop%alfa = alfa
-    if (thomas_optim.and.ncl) then
+    if (ncl) then
       allocate(x3dop%periodic(n))
       x3dop%periodic = (/-one, (zero, i=2, n-1), alfa/)
       call thomas1d(x3dop%periodic, f, s, w, n)

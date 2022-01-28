@@ -37,10 +37,8 @@ module thomas
 
   implicit none
 
-  logical, parameter :: thomas_optim = .true.
-
   private
-  public :: xthomas, ythomas, zthomas, thomas1d, thomas_optim
+  public :: xthomas, ythomas, zthomas, thomas1d
 
   interface xthomas
     module procedure xthomas_0
@@ -75,25 +73,13 @@ contains
 
     call xthomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is pre-determined
-    if (thomas_optim) then
-       do concurrent (k=1:nz, j=1:ny)
-          ss(j,k) = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
-                  / (one+perio(1)-alfa*perio(nx))
-          do concurrent (i=1:nx)
-             tt(i,j,k) = tt(i,j,k) - ss(j,k)*perio(i)
-          enddo
+    do concurrent (k=1:nz, j=1:ny)
+       ss(j,k) = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
+               / (one+perio(1)-alfa*perio(nx))
+       do concurrent (i=1:nx)
+          tt(i,j,k) = tt(i,j,k) - ss(j,k)*perio(i)
        enddo
-    ! Reference solver
-    else
-       call xthomas_12(rr, ff, fs, fw, nx, ny, nz)
-       do concurrent (k=1:nz, j=1:ny)
-          ss(j,k) = (    tt(1,j,k)-alfa*tt(nx,j,k)) &
-                  / (one+rr(1,j,k)-alfa*rr(nx,j,k))
-          do concurrent (i=1:nx)
-             tt(i,j,k) = tt(i,j,k) - ss(j,k)*rr(i,j,k)
-          enddo
-       enddo
-    endif
+    enddo
 
   end subroutine xthomas_0
 
@@ -135,29 +121,15 @@ contains
 
     call ythomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is pre-determined
-    if (thomas_optim) then
-       do concurrent (k=1:nz)
-          do concurrent (i=1:nx)
-             ss(i,k) = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
-                     / (one+perio(1)-alfa*perio(ny))
-          enddo
-          do concurrent (j=1:ny, i=1:nx)
-             tt(i,j,k) = tt(i,j,k) - ss(i,k)*perio(j)
-          enddo
+    do concurrent (k=1:nz)
+       do concurrent (i=1:nx)
+          ss(i,k) = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
+                  / (one+perio(1)-alfa*perio(ny))
        enddo
-    ! Reference solver
-    else
-       call ythomas_12(rr, ff, fs, fw, nx, ny, nz)
-       do concurrent (k=1:nz)
-          do concurrent (i=1:nx)
-             ss(i,k) = (    tt(i,1,k)-alfa*tt(i,ny,k)) &
-                     / (one+rr(i,1,k)-alfa*rr(i,ny,k))
-          enddo
-          do concurrent (j=1:ny, i=1:nx)
-             tt(i,j,k) = tt(i,j,k) - ss(i,k)*rr(i,j,k)
-          enddo
+       do concurrent (j=1:ny, i=1:nx)
+          tt(i,j,k) = tt(i,j,k) - ss(i,k)*perio(j)
        enddo
-    endif
+    enddo
 
   end subroutine ythomas_0
 
@@ -205,25 +177,13 @@ contains
 
     call zthomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is constant
-    if (thomas_optim) then
-       do concurrent (j=1:ny, i=1:nx)
-          ss(i,j) = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
-                  / (one+perio(1)-alfa*perio(nz))
-       enddo
-       do concurrent (k=1:nz, j=1:ny, i=1:nx)
-          tt(i,j,k) = tt(i,j,k) - ss(i,j)*perio(k)
-       enddo
-    ! Reference solver
-    else
-       call zthomas_12(rr, ff, fs, fw, nx, ny, nz)
-       do concurrent (j=1:ny, i=1:nx)
-          ss(i,j) = (    tt(i,j,1)-alfa*tt(i,j,nz)) &
-                  / (one+rr(i,j,1)-alfa*rr(i,j,nz))
-       enddo
-       do concurrent (k=1:nz, j=1:ny, i=1:nx)
-          tt(i,j,k) = tt(i,j,k) - ss(i,j)*rr(i,j,k)
-       enddo
-    endif
+    do concurrent (j=1:ny, i=1:nx)
+       ss(i,j) = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
+               / (one+perio(1)-alfa*perio(nz))
+    enddo
+    do concurrent (k=1:nz, j=1:ny, i=1:nx)
+       tt(i,j,k) = tt(i,j,k) - ss(i,j)*perio(k)
+    enddo
 
   end subroutine zthomas_0
 

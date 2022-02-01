@@ -48,7 +48,7 @@ contains
 
 !********************************************************************
 !
-subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
+subroutine derxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
 
   use x3d_operator_x_data
 
@@ -57,7 +57,6 @@ subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
   real(mytype), intent(out), dimension(nxm,ny,nz) :: tx
-  real(mytype), intent(out), dimension(nx,ny,nz) :: rx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
   real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
@@ -82,10 +81,10 @@ subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
                      + bcix6*(ux(1 ,j,k)-ux(nx-2,j,k))
         tx(nx  ,j,k) = acix6*(ux(1,j,k)-ux(nx  ,j,k)) &
                      + bcix6*(ux(2,j,k)-ux(nx-1,j,k))
-     enddo
 
-     ! Solve tri-diagonal system
-     call xthomas(tx, rx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+        ! Solve tri-diagonal system
+        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
+     enddo
 
   else
      ! nxm = nx-1
@@ -118,10 +117,10 @@ subroutine derxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
            tx(nxm,j,k) = acix6*(ux(nx,j,k)-ux(nxm,j,k)) &
                        + bcix6*(two*ux(nx,j,k)-ux(nxm,j,k)-ux(nxm-1,j,k))
         endif
-     enddo
 
-     ! Solve tri-diagonal system
-     call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nxm, ny, nz)
+        ! Solve tri-diagonal system
+        call xthomas(tx(1:nxm,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nxm, 1, 1)
+     enddo
 
   endif
 
@@ -129,7 +128,7 @@ end subroutine derxvp
 
 !********************************************************************
 !
-subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
+subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
 
   use x3d_operator_x_data
 
@@ -138,7 +137,6 @@ subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
   real(mytype), intent(out), dimension(nxm,ny,nz) :: tx
-  real(mytype), intent(out), dimension(nx,ny,nz) :: rx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
   real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
@@ -185,10 +183,10 @@ subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
                      + bicix6*(ux(2,j,k)+ux(nx-1,j,k)) &
                      + cicix6*(ux(3,j,k)+ux(nx-2,j,k)) &
                      + dicix6*(ux(4,j,k)+ux(nx-3,j,k))
-     enddo
 
-     ! Solve tri-diagonal system
-     call xthomas(tx, rx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+        ! Solve tri-diagonal system
+        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
+     enddo
 
   else
      ! nxm = nx-1
@@ -226,10 +224,10 @@ subroutine interxvp(tx,ux,rx,sx,x3dop,nx,nxm,ny,nz)
                          + bicix6*(ux(nxm,j,k)+ux(nxm-1,j,k)) &
                          + cicix6*(ux(nxm-1,j,k)+ux(nxm-2,j,k)) &
                          + dicix6*(ux(nxm-2,j,k)+ux(nxm-3,j,k))
-        enddo
 
-        ! Solve tri-diagonal system
-        call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nxm, ny, nz)
+           ! Solve tri-diagonal system
+           call xthomas(tx(1:nxm,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nxm, 1, 1)
+        enddo
 
      endif
   endif
@@ -238,7 +236,7 @@ end subroutine interxvp
 
 !********************************************************************
 !
-subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
+subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
 
   use x3d_operator_x_data
 
@@ -246,7 +244,7 @@ subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
 
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: tx, rx
+  real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nxm,ny,nz) :: ux
   real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
@@ -271,10 +269,10 @@ subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
                      + bcix6*(ux(nx ,j,k)-ux(nx-3,j,k))
         tx(nx  ,j,k) = acix6*(ux(nx,j,k)-ux(nx-1,j,k)) &
                      + bcix6*(ux(1,j,k)-ux(nx-2,j,k))
-     enddo
 
-     ! Solve tri-diagonal system
-     call xthomas(tx, rx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+        ! Solve tri-diagonal system
+        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
+     enddo
 
   else
      ! nxm = nx-1
@@ -292,10 +290,10 @@ subroutine derxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
            tx(nx-1,j,k) = acix6*(ux(nx-1,j,k)-ux(nx-2,j,k)) &
                         + bcix6*(ux(nx-1,j,k)-ux(nx-3,j,k))
            tx(nx,j,k) = zero
-        enddo
 
-        ! Solve tri-diagonal system
-        call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
+           ! Solve tri-diagonal system
+           call xthomas(tx(1:nx,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nx, 1, 1)
+        enddo
 
      endif
   endif
@@ -304,7 +302,7 @@ end subroutine derxpv
 
 !********************************************************************
 !
-subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
+subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
 
   use x3d_operator_x_data
 
@@ -312,7 +310,7 @@ subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
 
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: tx, rx
+  real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nxm,ny,nz) :: ux
   real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
@@ -359,10 +357,10 @@ subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
                      + bicix6*(ux(1,j,k)+ux(nx-2,j,k)) &
                      + cicix6*(ux(2,j,k)+ux(nx-3,j,k)) &
                      + dicix6*(ux(3,j,k)+ux(nx-4,j,k))
-     enddo
 
-     ! Solve tri-diagonal system
-     call xthomas(tx, rx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+        ! Solve tri-diagonal system
+        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
+     enddo
 
   else
      ! nxm = nx-1
@@ -408,10 +406,10 @@ subroutine interxpv(tx,ux,rx,sx,x3dop,nxm,nx,ny,nz)
                         + bicix6*(ux(nx-2,j,k)+ux(nx-2,j,k)) &
                         + cicix6*(ux(nx-3,j,k)+ux(nx-3,j,k)) &
                         + dicix6*(ux(nx-4,j,k)+ux(nx-4,j,k))
-        enddo
 
-        ! Solve tri-diagonal system
-        call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
+           ! Solve tri-diagonal system
+           call xthomas(tx(1:nx,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nx, 1, 1)
+        enddo
 
      endif
   endif
@@ -420,7 +418,7 @@ end subroutine interxpv
 
 !********************************************************************
 !
-subroutine interyvp(ty,uy,ry,sy,x3dop,nx,ny,nym,nz)
+subroutine interyvp(ty,uy,sy,x3dop,nx,ny,nym,nz)
 
   USE x3d_operator_y_data
 
@@ -429,7 +427,6 @@ subroutine interyvp(ty,uy,ry,sy,x3dop,nx,ny,nym,nz)
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
   real(mytype), intent(out), dimension(nx,nym,nz) :: ty
-  real(mytype), intent(out), dimension(nx,ny,nz) :: ry
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
   real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
@@ -493,7 +490,7 @@ subroutine interyvp(ty,uy,ry,sy,x3dop,nx,ny,nym,nz)
      enddo
 
      ! Solve tri-diagonal system
-     call ythomas(ty, ry, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nym = ny-1
@@ -555,7 +552,7 @@ end subroutine interyvp
 
 !********************************************************************
 !
-subroutine deryvp(ty,uy,ry,sy,x3dop,ppyi,nx,ny,nym,nz)
+subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
 
   USE x3d_operator_y_data
 
@@ -564,7 +561,6 @@ subroutine deryvp(ty,uy,ry,sy,x3dop,ppyi,nx,ny,nym,nz)
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
   real(mytype), intent(out), dimension(nx,nym,nz) :: ty
-  real(mytype), intent(out), dimension(nx,ny,nz) :: ry
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
   real(mytype), intent(out), dimension(nx,nz) :: sy
   real(mytype), intent(in), dimension(nym) :: ppyi
@@ -601,7 +597,7 @@ subroutine deryvp(ty,uy,ry,sy,x3dop,ppyi,nx,ny,nym,nz)
      enddo
 
      ! Solve tri-diagonal system
-     call ythomas(ty, ry, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nym = ny-1
@@ -647,7 +643,7 @@ end subroutine deryvp
 
 !********************************************************************
 !
-subroutine interypv(ty,uy,ry,sy,x3dop,nx,nym,ny,nz)
+subroutine interypv(ty,uy,sy,x3dop,nx,nym,ny,nz)
 
   USE x3d_operator_y_data
 
@@ -655,7 +651,7 @@ subroutine interypv(ty,uy,ry,sy,x3dop,nx,nym,ny,nz)
 
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: ty, ry
+  real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,nym,nz) :: uy
   real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
@@ -719,7 +715,7 @@ subroutine interypv(ty,uy,ry,sy,x3dop,nx,nym,ny,nz)
      enddo
 
      ! Solve tri-diagonal system
-     call ythomas(ty, ry, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nym = ny-1
@@ -793,7 +789,7 @@ end subroutine interypv
 
 !********************************************************************
 !
-subroutine derypv(ty,uy,ry,sy,x3dop,ppy,nx,nym,ny,nz)
+subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
 
   USE x3d_operator_y_data
 
@@ -801,7 +797,7 @@ subroutine derypv(ty,uy,ry,sy,x3dop,ppy,nx,nym,ny,nz)
 
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: ty, ry
+  real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,nym,nz) :: uy
   real(mytype), intent(out), dimension(nx,nz) :: sy
   real(mytype), intent(in), dimension(ny) :: ppy
@@ -838,7 +834,7 @@ subroutine derypv(ty,uy,ry,sy,x3dop,ppy,nx,nym,ny,nz)
      enddo
 
      ! Solve tri-diagonal system
-     call ythomas(ty, ry, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nym = ny-1
@@ -882,7 +878,7 @@ end subroutine derypv
 
 !********************************************************************
 !
-subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
+subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
 
   USE x3d_operator_z_data
 
@@ -891,7 +887,6 @@ subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
   ! Arguments
   integer, intent(in) :: nx, ny, nz, nzm
   real(mytype), intent(out), dimension(nx,ny,nzm) :: tz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: rz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
   real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
@@ -932,7 +927,7 @@ subroutine derzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
      enddo
 
      ! Solve tri-diagonal system
-     call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nzm = nz-1
@@ -990,7 +985,7 @@ end subroutine derzvp
 
 !********************************************************************
 !
-subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
+subroutine interzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
 
   USE x3d_operator_z_data
 
@@ -999,7 +994,6 @@ subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
   ! Arguments
   integer, intent(in) :: nx, ny, nz, nzm
   real(mytype), intent(out), dimension(nx,ny,nzm) :: tz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: rz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
   real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
@@ -1068,7 +1062,7 @@ subroutine interzvp(tz,uz,rz,sz,x3dop,nx,ny,nz,nzm)
      enddo
 
      ! Solve tri-diagonal system
-     call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nzm = nz-1
@@ -1128,7 +1122,7 @@ end subroutine interzvp
 
 !********************************************************************
 !
-subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
+subroutine derzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
 
   USE x3d_operator_z_data
 
@@ -1136,7 +1130,7 @@ subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Arguments
   integer, intent(in) :: nx, nzm, ny, nz
-  real(mytype), intent(out), dimension(nx,ny,nz) :: tz, rz
+  real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nzm) :: uz
   real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
@@ -1177,7 +1171,7 @@ subroutine derzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
      enddo
 
      ! Solve tri-diagonal system
-     call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nzm = nz-1
@@ -1213,7 +1207,7 @@ end subroutine derzpv
 
 !********************************************************************
 !
-subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
+subroutine interzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
 
   USE x3d_operator_z_data
 
@@ -1221,7 +1215,7 @@ subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, nzm
-  real(mytype), intent(out), dimension(nx,ny,nz) :: tz, rz
+  real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nzm) :: uz
   real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
@@ -1290,7 +1284,7 @@ subroutine interzpv(tz,uz,rz,sz,x3dop,nx,ny,nzm,nz)
      enddo
 
      ! Solve tri-diagonal system
-     call zthomas(tz, rz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nzm = nz-1

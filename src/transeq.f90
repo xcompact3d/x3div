@@ -79,9 +79,9 @@ contains
     use x3d_transpose
     use x3d_derive
     use decomp_2d , only : xsize, ysize, zsize
-    use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,di1
-    use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2,di2
-    use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3,di3
+    use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1
+    use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2
+    use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3
 
     use mom, only : test_du, test_dv, test_dw
     
@@ -105,12 +105,12 @@ contains
       tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
     enddo
 
-    call derx (td1,ta1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (te1,tb1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tf1,tc1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (ta1,ux1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tb1,uy1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (tc1,uz1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (td1,ta1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (te1,tb1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tf1,tc1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (ta1,ux1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tb1,uy1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (tc1,uz1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
@@ -134,12 +134,12 @@ contains
       tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
     enddo
 
-    call dery (tg2,td2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (th2,te2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (ti2,tf2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (td2,ux2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (te2,uy2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tf2,uz2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tg2,td2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (th2,te2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (ti2,tf2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (td2,ux2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (te2,uy2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tf2,uz2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
 
     ! Convective terms of y-pencil in tg2,th2,ti2
     do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
@@ -161,12 +161,12 @@ contains
       tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)
     enddo
 
-    call derz (tg3,td3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call derz (th3,te3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call derz (ti3,tf3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (td3,ux3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (te3,uy3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tf3,uz3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (tg3,td3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (th3,te3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (ti3,tf3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (td3,ux3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (te3,uy3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tf3,uz3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
     do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))

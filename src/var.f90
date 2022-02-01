@@ -48,14 +48,14 @@ module var
 
   ! define all work arrays here
   real(mytype), save, allocatable, dimension(:,:,:) :: ta1,tb1,tc1,td1,&
-       te1,tf1,tg1,th1,ti1,di1
+       te1,tf1,tg1,th1,ti1
   real(mytype), save, allocatable, dimension(:,:,:) :: pp1,pgy1,pgz1
   real(mytype), save, allocatable, dimension(:,:,:) :: ta2,tb2,tc2,td2,&
-       te2,tf2,tg2,th2,ti2,tj2,di2
-  real(mytype), save, allocatable, dimension(:,:,:) :: pp2,ppi2,pgy2,pgz2,pgzi2,dip2,dipp2,duxdxp2,uyp2,uzp2,upi2,duydypi2
+       te2,tf2,tg2,th2,ti2,tj2
+  real(mytype), save, allocatable, dimension(:,:,:) :: pp2,ppi2,pgy2,pgz2,pgzi2,duxdxp2,uyp2,uzp2,upi2,duydypi2
   real(mytype), save, allocatable, dimension(:,:,:) :: ta3,tb3,tc3,td3,&
-       te3,tf3,tg3,th3,ti3,di3
-  real(mytype), save, allocatable, dimension(:,:,:) :: pgz3,ppi3,dip3,dipp3,duxydxyp3,uzp3
+       te3,tf3,tg3,th3,ti3
+  real(mytype), save, allocatable, dimension(:,:,:) :: pgz3,ppi3,duxydxyp3,uzp3
 
 
 contains
@@ -95,7 +95,7 @@ contains
 
     call alloc_x(ta1)
     ta1 = zero
-    allocate(tb1, tc1, td1, te1, tf1, tg1, th1, ti1, di1, source=ta1)
+    allocate(tb1, tc1, td1, te1, tf1, tg1, th1, ti1, source=ta1)
 
     allocate(pp1(nxm,xsize(2),xsize(3)))
     pp1 = zero
@@ -116,16 +116,16 @@ contains
     !Y PENCILS
     call alloc_y(ux2)
     ux2=zero
-    allocate(uy2, uz2, ta2, tb2, tc2, td2, te2, tf2, tg2, th2, ti2, tj2, di2, source=ux2)
+    allocate(uy2, uz2, ta2, tb2, tc2, td2, te2, tf2, tg2, th2, ti2, tj2, source=ux2)
     allocate(pp2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
     pp2=zero
     allocate(pgz2, source=pp2)
     allocate(ppi2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
     ppi2=zero
-    allocate(dip2, pgy2, pgzi2, source=ppi2)
+    allocate(pgy2, pgzi2, source=ppi2)
     allocate(duxdxp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
     duxdxp2=zero
-    allocate(uyp2, uzp2, dipp2, source=duxdxp2)
+    allocate(uyp2, uzp2, source=duxdxp2)
     allocate(upi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
     upi2=zero
     allocate(duydypi2, source=upi2)
@@ -133,14 +133,14 @@ contains
     !Z PENCILS
     call alloc_z(ux3)
     ux3=zero
-    allocate(uy3, uz3, ta3, tb3, tc3, td3, te3, tf3, tg3, th3, ti3, di3, source=ux3)
+    allocate(uy3, uz3, ta3, tb3, tc3, td3, te3, tf3, tg3, th3, ti3, source=ux3)
     allocate(ppi3(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),zsize(3)))
     ppi3=zero
-    allocate(pgz3, dip3, source=ppi3)
+    allocate(pgz3, source=ppi3)
 
     allocate(duxydxyp3(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),zsize(3)))
     duxydxyp3=zero
-    allocate(uzp3, dipp3, source=duxydxyp3)
+    allocate(uzp3, source=duxydxyp3)
 
     allocate(pp3(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress))
     pp3=zero
@@ -269,7 +269,6 @@ contains
     deallocate(tg1)
     deallocate(th1)
     deallocate(ti1)
-    deallocate(di1)
 
     deallocate(pp1)
     deallocate(pgy1)
@@ -297,17 +296,14 @@ contains
     deallocate(th2)
     deallocate(ti2)
     deallocate(tj2)
-    deallocate(di2)
     deallocate(pgz2)
     deallocate(pp2)
-    deallocate(dip2)
     deallocate(ppi2)
     deallocate(pgy2)
     deallocate(pgzi2)
     deallocate(duxdxp2)
     deallocate(uyp2)
     deallocate(uzp2)
-    deallocate(dipp2)
     deallocate(upi2)
     deallocate(duydypi2)
 
@@ -324,14 +320,11 @@ contains
     deallocate(tg3)
     deallocate(th3)
     deallocate(ti3)
-    deallocate(di3)
     deallocate(pgz3)
     deallocate(ppi3)
-    deallocate(dip3)
 
     deallocate(duxydxyp3)
     deallocate(uzp3)
-    deallocate(dipp3)
 
     deallocate(pp3)
 

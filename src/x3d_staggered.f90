@@ -81,10 +81,10 @@ subroutine derxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
                      + bcix6*(ux(1 ,j,k)-ux(nx-2,j,k))
         tx(nx  ,j,k) = acix6*(ux(1,j,k)-ux(nx  ,j,k)) &
                      + bcix6*(ux(2,j,k)-ux(nx-1,j,k))
-
-        ! Solve tri-diagonal system
-        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
      enddo
+
+     ! Solve tri-diagonal system
+     call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nxm = nx-1
@@ -117,10 +117,10 @@ subroutine derxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
            tx(nxm,j,k) = acix6*(ux(nx,j,k)-ux(nxm,j,k)) &
                        + bcix6*(two*ux(nx,j,k)-ux(nxm,j,k)-ux(nxm-1,j,k))
         endif
-
-        ! Solve tri-diagonal system
-        call xthomas(tx(1:nxm,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nxm, 1, 1)
      enddo
+
+     ! Solve tri-diagonal system
+     call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nxm, ny, nz)
 
   endif
 
@@ -183,10 +183,10 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
                      + bicix6*(ux(2,j,k)+ux(nx-1,j,k)) &
                      + cicix6*(ux(3,j,k)+ux(nx-2,j,k)) &
                      + dicix6*(ux(4,j,k)+ux(nx-3,j,k))
-
-        ! Solve tri-diagonal system
-        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
      enddo
+
+     ! Solve tri-diagonal system
+     call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nxm = nx-1
@@ -224,10 +224,10 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
                          + bicix6*(ux(nxm,j,k)+ux(nxm-1,j,k)) &
                          + cicix6*(ux(nxm-1,j,k)+ux(nxm-2,j,k)) &
                          + dicix6*(ux(nxm-2,j,k)+ux(nxm-3,j,k))
-
-           ! Solve tri-diagonal system
-           call xthomas(tx(1:nxm,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nxm, 1, 1)
         enddo
+
+        ! Solve tri-diagonal system
+        call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nxm, ny, nz)
 
      endif
   endif
@@ -269,10 +269,10 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
                      + bcix6*(ux(nx ,j,k)-ux(nx-3,j,k))
         tx(nx  ,j,k) = acix6*(ux(nx,j,k)-ux(nx-1,j,k)) &
                      + bcix6*(ux(1,j,k)-ux(nx-2,j,k))
-
-        ! Solve tri-diagonal system
-        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
      enddo
+
+     ! Solve tri-diagonal system
+     call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nxm = nx-1
@@ -290,10 +290,10 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
            tx(nx-1,j,k) = acix6*(ux(nx-1,j,k)-ux(nx-2,j,k)) &
                         + bcix6*(ux(nx-1,j,k)-ux(nx-3,j,k))
            tx(nx,j,k) = zero
-
-           ! Solve tri-diagonal system
-           call xthomas(tx(1:nx,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nx, 1, 1)
         enddo
+
+        ! Solve tri-diagonal system
+        call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
 
      endif
   endif
@@ -357,10 +357,10 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
                      + bicix6*(ux(1,j,k)+ux(nx-2,j,k)) &
                      + cicix6*(ux(2,j,k)+ux(nx-3,j,k)) &
                      + dicix6*(ux(3,j,k)+ux(nx-4,j,k))
-
-        ! Solve tri-diagonal system
-        call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
      enddo
+
+     ! Solve tri-diagonal system
+     call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nxm = nx-1
@@ -406,10 +406,10 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
                         + bicix6*(ux(nx-2,j,k)+ux(nx-2,j,k)) &
                         + cicix6*(ux(nx-3,j,k)+ux(nx-3,j,k)) &
                         + dicix6*(ux(nx-4,j,k)+ux(nx-4,j,k))
-
-           ! Solve tri-diagonal system
-           call xthomas(tx(1:nx,j:j,k:k), x3dop%f, x3dop%s, x3dop%w, nx, 1, 1)
         enddo
+
+        ! Solve tri-diagonal system
+        call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
 
      endif
   endif

@@ -526,7 +526,6 @@ end subroutine dery_22
 subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
 
   use x3d_operator_z_data
-  use nvtx
 
   implicit none
 
@@ -570,9 +569,7 @@ subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call nvtxStartRange("zthomas")
   call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-  call nvtxEndRange
 
 end subroutine derz_00
 

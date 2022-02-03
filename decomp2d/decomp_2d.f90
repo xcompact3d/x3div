@@ -318,7 +318,8 @@ contains
     
     implicit none
 
-    integer, intent(IN) :: nx,ny,nz,p_row,p_col
+    integer, intent(IN) :: nx,ny,nz
+    integer, intent(INOUT) :: p_row,p_col
     logical, dimension(3), intent(IN), optional :: periodic_bc
 
     integer :: errorcode, ierror, row, col
@@ -344,6 +345,8 @@ contains
     if (p_row==0 .and. p_col==0) then
        ! determine the best 2D processor grid
        call best_2d_grid(nproc, row, col)
+       p_row = row
+       p_col = col
     else
        if (nproc /= p_row*p_col) then
           errorcode = 1
@@ -485,7 +488,19 @@ contains
   subroutine decomp_2d_finalize
     
     implicit none
-    
+ 
+    integer :: ierror
+
+    call MPI_COMM_FREE(DECOMP_2D_COMM_ROW, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_COL, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_CART_X, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_CART_Y, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
+    call MPI_COMM_FREE(DECOMP_2D_COMM_CART_Z, ierror)
+    if (ierror /= 0) call decomp_2d_warning(__FILE__, __LINE__, ierror, "MPI_COMM_FREE")
     call decomp_info_finalize(decomp_main)
 
     decomp_buf_size = 0

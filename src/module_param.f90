@@ -67,33 +67,14 @@ module variables
   integer,parameter :: prec = 8
 #endif
 #endif
+
   !module filter
   real(mytype),dimension(200) :: idata
-  real(mytype),allocatable,dimension(:) :: fiffx, fifcx, fifbx, fisfx, fiscx, fisbx,fifsx,fifwx,fissx,fiswx
-  real(mytype),allocatable,dimension(:) :: fiffxp,fifsxp,fifwxp,fisfxp,fissxp,fiswxp
-  real(mytype),allocatable,dimension(:) :: fiffy, fifcy, fifby, fisfy, fiscy, fisby,fifsy,fifwy,fissy,fiswy
-  real(mytype),allocatable,dimension(:) :: fiffyp,fifsyp,fifwyp,fisfyp,fissyp,fiswyp
-  real(mytype),allocatable,dimension(:) :: fiffz, fifcz, fifbz, fisfz, fiscz, fisbz,fifsz,fifwz,fissz,fiswz
-  real(mytype),allocatable,dimension(:) :: fiffzp,fifszp,fifwzp,fisfzp,fisszp,fiswzp
 
   real(mytype),allocatable,dimension(:,:) :: fisx,fivx
   real(mytype),allocatable,dimension(:,:) :: fisy,fivy
   real(mytype),allocatable,dimension(:,:) :: fisz,fivz
 
-  !module derivative
-  real(mytype),target,allocatable,dimension(:) :: ffx,sfx,fsx,fwx,ssx,swx
-  real(mytype),target,allocatable,dimension(:) :: ffxp,sfxp,fsxp,fwxp,ssxp,swxp
-  real(mytype),target,allocatable,dimension(:) :: ffy,sfy,fsy,fwy,ssy,swy
-  real(mytype),target,allocatable,dimension(:) :: ffyp,sfyp,fsyp,fwyp,ssyp,swyp
-  real(mytype),target,allocatable,dimension(:) :: ffz,sfz,fsz,fwz,ssz,swz
-  real(mytype),target,allocatable,dimension(:) :: ffzp,sfzp,fszp,fwzp,sszp,swzp
-
-  real(mytype),allocatable,dimension(:) :: ffxS,sfxS,fsxS,fwxS,ssxS,swxS
-  real(mytype),allocatable,dimension(:) :: ffxpS,sfxpS,fsxpS,fwxpS,ssxpS,swxpS
-  real(mytype),allocatable,dimension(:) :: ffyS,sfyS,fsyS,fwyS,ssyS,swyS
-  real(mytype),allocatable,dimension(:) :: ffypS,sfypS,fsypS,fwypS,ssypS,swypS
-  real(mytype),allocatable,dimension(:) :: ffzS,sfzS,fszS,fwzS,sszS,swzS
-  real(mytype),allocatable,dimension(:) :: ffzpS,sfzpS,fszpS,fwzpS,sszpS,swzpS
 
   real(mytype), save, allocatable, dimension(:,:) :: sx,vx
   real(mytype), save, allocatable, dimension(:,:) :: sy,vy
@@ -111,26 +92,6 @@ module variables
   real(mytype), save, allocatable, dimension(:,:) :: dpdyx1,dpdyxn,dpdzx1,dpdzxn
   real(mytype), save, allocatable, dimension(:,:) :: dpdxy1,dpdxyn,dpdzy1,dpdzyn
   real(mytype), save, allocatable, dimension(:,:) :: dpdxz1,dpdxzn,dpdyz1,dpdyzn
-
-  !module derpres
-  real(mytype),target,allocatable,dimension(:) :: cfx6,ccx6,cbx6,cfxp6,ciwxp6,csxp6,&
-       cwxp6,csx6,cwx6,cifx6,cicx6,cisx6
-  real(mytype),target,allocatable,dimension(:) :: cibx6,cifxp6,cisxp6,ciwx6
-  real(mytype),target,allocatable,dimension(:) :: cfi6,cci6,cbi6,cfip6,csip6,cwip6,csi6,&
-       cwi6,cifi6,cici6,cibi6,cifip6
-  real(mytype),target,allocatable,dimension(:) :: cisip6,ciwip6,cisi6,ciwi6
-  real(mytype),target,allocatable,dimension(:) :: cfy6,ccy6,cby6,cfyp6,csyp6,cwyp6,csy6
-  real(mytype),target,allocatable,dimension(:) :: cwy6,cify6,cicy6,ciby6,cifyp6,cisyp6,&
-       ciwyp6,cisy6,ciwy6
-  real(mytype),target,allocatable,dimension(:) :: cfi6y,cci6y,cbi6y,cfip6y,csip6y,cwip6y,&
-       csi6y,cwi6y,cifi6y,cici6y
-  real(mytype),target,allocatable,dimension(:) :: cibi6y,cifip6y,cisip6y,ciwip6y,cisi6y,ciwi6y
-  real(mytype),target,allocatable,dimension(:) :: cfz6,ccz6,cbz6,cfzp6,cszp6,cwzp6,csz6
-  real(mytype),target,allocatable,dimension(:) :: cwz6,cifz6,cicz6,cibz6,cifzp6,ciszp6,&
-       ciwzp6,cisz6,ciwz6
-  real(mytype),target,allocatable,dimension(:) :: cfi6z,cci6z,cbi6z,cfip6z,csip6z,cwip6z,&
-       csi6z,cwi6z,cifi6z,cici6z
-  real(mytype),target,allocatable,dimension(:) :: cibi6z,cifip6z,cisip6z,ciwip6z,cisi6z,ciwi6z
 
   !module waves
   complex(mytype),allocatable,dimension(:) :: zkz,zk2,ezs
@@ -220,118 +181,8 @@ module param
   real(mytype),parameter :: nine=9._mytype
   real(mytype),parameter :: ten=10._mytype
   
-  !
   complex(mytype),parameter :: cx_one_one=cmplx(one, one, kind=mytype)
-
-
-!#ifdef DOUBLE_PREC
-!  real(mytype),parameter :: pi=dacos(-one)
-!  real(mytype),parameter :: twopi=two*dacos(-one)
-!#else
-!  real(mytype),parameter :: pi=acos(-one)
-!  real(mytype),parameter :: twopi=two*acos(-one)
-!#endif
 
 end module param
 !############################################################################
-!############################################################################
-module derivX
 
-  use decomp_2d, only : mytype
-
-  real(mytype) :: alcaix6,acix6,bcix6
-  real(mytype) :: ailcaix6,aicix6,bicix6,cicix6,dicix6
-  real(mytype) :: alfa1x,af1x,bf1x,cf1x,df1x,alfa2x,af2x,alfanx,afnx,bfnx
-  real(mytype) :: cfnx,dfnx,alfamx,afmx,alfaix,afix,bfix,alsa1x,as1x,bs1x
-  real(mytype) :: cs1x,ds1x,alsa2x,as2x,alsanx,asnx,bsnx,csnx,dsnx,alsamx
-  real(mytype) :: asmx,alsa3x,as3x,bs3x,alsatx,astx,bstx
-
-  !O6SVV
-  real(mytype) :: alsa4x,as4x,bs4x,cs4x
-  real(mytype) :: alsattx,asttx,bsttx,csttx
-  real(mytype) :: alsaix,asix,bsix,csix,dsix
-  real(mytype) :: alsaixt,asixt,bsixt,csixt,dsixt
-
-end module derivX
-!############################################################################
-!############################################################################
-module derivY
-
-  use decomp_2d, only : mytype
-
-  real(mytype) :: alcaiy6,aciy6,bciy6
-  real(mytype) :: ailcaiy6,aiciy6,biciy6,ciciy6,diciy6
-  real(mytype) :: alfa1y,af1y,bf1y,cf1y,df1y,alfa2y,af2y,alfany,afny,bfny
-  real(mytype) :: cfny,dfny,alfamy,afmy,alfajy,afjy,bfjy,alsa1y,as1y,bs1y
-  real(mytype) :: cs1y,ds1y,alsa2y,as2y,alsany,asny,bsny,csny,dsny,alsamy
-  real(mytype) :: asmy,alsa3y,as3y,bs3y,alsaty,asty,bsty
-
-  !O6SVV
-  real(mytype) :: alsa4y,as4y,bs4y,cs4y
-  real(mytype) :: alsatty,astty,bstty,cstty
-  real(mytype) :: alsajy,asjy,bsjy,csjy,dsjy
-  real(mytype) :: alsajyt,asjyt,bsjyt,csjyt,dsjyt
-
-end module derivY
-!############################################################################
-!############################################################################
-module derivZ
-
-  use decomp_2d, only : mytype
-
-  real(mytype) :: alcaiz6,aciz6,bciz6
-  real(mytype) :: ailcaiz6,aiciz6,biciz6,ciciz6,diciz6
-  real(mytype) :: alfa1z,af1z,bf1z,cf1z,df1z,alfa2z,af2z,alfanz,afnz,bfnz
-  real(mytype) :: cfnz,dfnz,alfamz,afmz,alfakz,afkz,bfkz,alsa1z,as1z,bs1z
-  real(mytype) :: cs1z,ds1z,alsa2z,as2z,alsanz,asnz,bsnz,csnz,dsnz,alsamz
-  real(mytype) :: asmz,alsa3z,as3z,bs3z,alsatz,astz,bstz
-
-  !O6SVV
-  real(mytype) :: alsa4z,as4z,bs4z,cs4z
-  real(mytype) :: alsattz,asttz,bsttz,csttz
-  real(mytype) :: alsakz,askz,bskz,cskz,dskz
-  real(mytype) :: alsakzt,askzt,bskzt,cskzt,dskzt
-
-
-end module derivZ
-!############################################################################
-!############################################################################
-! Describes the parameters for the discrete filters in X-Pencil
-module parfiX
-  use decomp_2d, only : mytype
-  real(mytype) :: fial1x, fia1x, fib1x, fic1x, fid1x, fie1x, fif1x  ! Coefficients for filter at boundary point 1
-  real(mytype) :: fial2x, fia2x, fib2x, fic2x, fid2x, fie2x, fif2x  ! Coefficients for filter at boundary point 2
-  real(mytype) :: fial3x, fia3x, fib3x, fic3x, fid3x, fie3x, fif3x  ! Coefficients for filter at boundary point 3
-  real(mytype) :: fialix, fiaix, fibix, ficix, fidix                ! Coefficient for filter at interior points
-  real(mytype) :: fialnx, fianx, fibnx, ficnx, fidnx, fienx, fifnx  ! Coefficient for filter at boundary point n
-  real(mytype) :: fialmx, fiamx, fibmx, ficmx, fidmx, fiemx, fifmx  ! Coefficient for filter at boundary point m=n-1
-  real(mytype) :: fialpx, fiapx, fibpx, ficpx, fidpx, fiepx, fifpx  ! Coefficient for filter at boundary point p=n-2
-end module parfiX
-!############################################################################
-!############################################################################
-module parfiY
-
-  use decomp_2d, only : mytype
-  real(mytype) :: fial1y, fia1y, fib1y, fic1y, fid1y, fie1y, fif1y ! Coefficients for filter at boundary point 1
-  real(mytype) :: fial2y, fia2y, fib2y, fic2y, fid2y, fie2y, fif2y ! Coefficients for filter at boundary point 2
-  real(mytype) :: fial3y, fia3y, fib3y, fic3y, fid3y, fie3y, fif3y ! Coefficients for filter at boundary point 3
-  real(mytype) :: fialjy, fiajy, fibjy, ficjy, fidjy               ! Coefficient for filter at interior points
-  real(mytype) :: fialny, fiany, fibny, ficny, fidny, fieny, fifny ! Coefficient for filter at boundary point n
-  real(mytype) :: fialmy, fiamy, fibmy, ficmy, fidmy, fiemy, fifmy ! Coefficient for filter at boundary point m=n-1
-  real(mytype) :: fialpy, fiapy, fibpy, ficpy, fidpy, fiepy, fifpy ! Coefficient for filter at boundary point p=n-2
-end module parfiY
-!############################################################################
-!############################################################################
-module parfiZ
-
-  use decomp_2d, only : mytype
-  real(mytype) :: fial1z, fia1z, fib1z, fic1z, fid1z, fie1z, fif1z ! Coefficients for filter at boundary point 1
-  real(mytype) :: fial2z, fia2z, fib2z, fic2z, fid2z, fie2z, fif2z ! Coefficients for filter at boundary point 2
-  real(mytype) :: fial3z, fia3z, fib3z, fic3z, fid3z, fie3z, fif3z ! Coefficients for filter at boundary point 3
-  real(mytype) :: fialkz, fiakz, fibkz, fickz, fidkz               ! Coefficient for filter at interior points
-  real(mytype) :: fialnz, fianz, fibnz, ficnz, fidnz, fienz, fifnz ! Coefficient for filter at boundary point n
-  real(mytype) :: fialmz, fiamz, fibmz, ficmz, fidmz, fiemz, fifmz ! Coefficient for filter at boundary point m=n-1
-  real(mytype) :: fialpz, fiapz, fibpz, ficpz, fidpz, fiepz, fifpz ! Coefficient for filter at boundary point p=n-2
-end module parfiZ
-!############################################################################
-!############################################################################

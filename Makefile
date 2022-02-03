@@ -19,7 +19,7 @@ FFT = generic# generic,fftw3,mkl
 ifeq ($(CMP),intel)
 FC = mpiifort
 FFLAGS = -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
-FFLAGS += -fopenmp -I$(MPI_ROOT)/lib
+FFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
 FC = mpif90
 FFLAGS = -cpp -O3 -march=native

@@ -12,22 +12,18 @@ DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 
 LCL = local# local,lad,sdu,archer
 IVER = 17# 15,16,17,18
-CMP = gcc# intel,gcc,nvhpc
+CMP = nvhpc# intel,gcc,nvhpc
 FFT = generic# generic,fftw3,mkl
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
 FC = mpiifort
-#FFLAGS = -fpp -O3 -xHost -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
-FFLAGS = -fpp -O3 -xSSE4.2 -axAVX,CORE-AVX-I,CORE-AVX2 -ipo -fp-model fast=2 -mcmodel=large -safe-cray-ptr -I$(MPI_ROOT)/lib
-##debuggin test: -check all -check bounds -chintel eck uninit -gen-interfaces -warn interfaces
+FFLAGS = -fpp -O3 -mavx2 -mlzcnt -march=core-avx2 -mf16c
+FFLAGS += -fopenmp -I$(MPI_ROOT)/lib
 else ifeq ($(CMP),gcc)
 FC = mpif90
-#FC = mpif90-mpich-mp
-FFLAGS = -O3 -funroll-loops -floop-optimize -Warray-bounds -fcray-pointer -cpp
-#FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu 
-#-cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch
-#-ffpe-trap=invalid,zero
+FFLAGS = -cpp -O3 -march=native
+FFLAGS += -fopenmp -ftree-parallelize-loops=12
 else ifeq ($(CMP),nagfor)
 FC = mpinagfor
 FFLAGS = -fpp
@@ -36,7 +32,8 @@ FC = ftn
 FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
-FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -stdpar=gpu -gpu=cc80,managed -O3
+FFLAGS = -cpp -O3 -march=native
+FFLAGS += -Minfo=stdpar -stdpar=multicore -acc
 #FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
 endif
 

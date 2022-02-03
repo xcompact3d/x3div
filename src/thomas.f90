@@ -76,7 +76,7 @@ contains
     do concurrent (k=1:nz, j=1:ny)
        ss(j,k) = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
                / (one+perio(1)-alfa*perio(nx))
-       do concurrent (i=1:nx)
+       do i = 1, nx
           tt(i,j,k) = tt(i,j,k) - ss(j,k)*perio(i)
        enddo
     enddo
@@ -124,7 +124,7 @@ contains
     do concurrent (k=1:nz, i=1:nx)
        ss(i,k) = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
                / (one+perio(1)-alfa*perio(ny))
-       do concurrent (j=1:ny)
+       do j = 1, ny
           tt(i,j,k) = tt(i,j,k) - ss(i,k)*perio(j)
        enddo
     enddo
@@ -172,7 +172,7 @@ contains
     do concurrent (j=1:ny, i=1:nx)
        ss(i,j) = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
                / (one+perio(1)-alfa*perio(nz))
-       do concurrent (k=1:nz)
+       do k=1,nz
           tt(i,j,k) = tt(i,j,k) - ss(i,j)*perio(k)
        enddo
     enddo

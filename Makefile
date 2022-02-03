@@ -18,16 +18,12 @@ FFT = generic# generic,fftw3,mkl
 #######CMP settings###########
 ifeq ($(CMP),intel)
 FC = mpiifort
-#FFLAGS = -fpp -O3 -xHost -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
-FFLAGS = -fpp -O3 -xSSE4.2 -axAVX,CORE-AVX-I,CORE-AVX2 -ipo -fp-model fast=2 -mcmodel=large -safe-cray-ptr -I$(MPI_ROOT)/lib
-##debuggin test: -check all -check bounds -chintel eck uninit -gen-interfaces -warn interfaces
+FFLAGS = -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
+FFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
 FC = mpif90
-#FC = mpif90-mpich-mp
-#FFLAGS = -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -x f95-cpp-input
-FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu 
-#-cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none -fallow-argument-mismatch
-#-ffpe-trap=invalid,zero
+FFLAGS = -cpp -O3 -march=native
+FFLAGS += -fopenmp -ftree-parallelize-loops=12
 else ifeq ($(CMP),nagfor)
 FC = mpinagfor
 FFLAGS = -fpp
@@ -36,7 +32,8 @@ FC = ftn
 FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
-FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -stdpar=gpu -gpu=cc80,managed -O3
+FFLAGS = -cpp -O3 -march=native
+FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
 #FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
 endif
 
@@ -67,7 +64,7 @@ else ifeq ($(FFT),fftw3_f03)
   LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
 else ifeq ($(FFT),generic)
   INC=
-  LIBFFT=-lnvhpcwrapnvtx
+  LIBFFT=#-lnvhpcwrapnvtx
 else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
@@ -76,7 +73,7 @@ endif
 
 #######OPTIONS settings###########
 OPT = -I$(SRCDIR) -I$(DECOMPDIR) $(FFLAGS)
-LINKOPT = $(FFLAGS) -lnvhpcwrapnvtx
+LINKOPT = $(FFLAGS) #-lnvhpcwrapnvtx
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 

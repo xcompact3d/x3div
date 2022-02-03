@@ -40,7 +40,6 @@ program xcompact3d
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
   use mom,     only : test_du, test_dv, test_dw
-  use nvtx
 
   implicit none
 
@@ -65,9 +64,7 @@ program xcompact3d
 
      tstart = MPI_Wtime()
 
-     call nvtxStartRange("transeq")
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-     call nvtxEndRange
      do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
        ux1(i,j,k) = ux1(i,j,k) + dt * dux1(i,j,k,1)
        uy1(i,j,k) = uy1(i,j,k) + dt * duy1(i,j,k,1)
@@ -77,9 +74,7 @@ program xcompact3d
      !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
      !  divu3(:,:,:) = zero
      !enddo
-     call nvtxStartRange("solve_poisson")
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
-     call nvtxEndRange
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
 
      tend = MPI_Wtime()

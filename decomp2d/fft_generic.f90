@@ -73,21 +73,21 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
     TYPE(DECOMP_INFO), intent(IN) :: decomp
 
     integer :: i,j,k
 
-    do k=1,decomp%xsz(3)
-       do j=1,decomp%xsz(2)
-          do i=1,decomp%xsz(1)
-             buf(i) = inout(i,j,k)
-          end do
-          call spcfft(buf,decomp%xsz(1),isign,scratch)
-          do i=1,decomp%xsz(1)
-             inout(i,j,k) = buf(i)
-          end do
+    do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2))
+       do concurrent (i=1:decomp%xsz(1))
+          buf(i) = inout(i,j,k)
+       end do
+       call spcfft(buf,decomp%xsz(1),isign,scratch)
+       do concurrent (i=1:decomp%xsz(1))
+          inout(i,j,k) = buf(i)
        end do
     end do
 
@@ -100,21 +100,21 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
     TYPE(DECOMP_INFO), intent(IN) :: decomp
 
     integer :: i,j,k
 
-    do k=1,decomp%ysz(3)
-       do i=1,decomp%ysz(1)
-          do j=1,decomp%ysz(2)
-             buf(j) = inout(i,j,k)
-          end do
-          call spcfft(buf,decomp%ysz(2),isign,scratch)
-          do j=1,decomp%ysz(2)
-             inout(i,j,k) = buf(j)
-          end do
+    do concurrent (k=1:decomp%ysz(3), i=1:decomp%ysz(1))
+       do concurrent (j=1:decomp%ysz(2))
+          buf(j) = inout(i,j,k)
+       end do
+       call spcfft(buf,decomp%ysz(2),isign,scratch)
+       do concurrent (j=1:decomp%ysz(2))
+          inout(i,j,k) = buf(j)
        end do
     end do
 
@@ -127,21 +127,21 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
     TYPE(DECOMP_INFO), intent(IN) :: decomp
 
     integer :: i,j,k
 
-    do j=1,decomp%zsz(2)
-       do i=1,decomp%zsz(1)
-          do k=1,decomp%zsz(3)
-             buf(k) = inout(i,j,k)
-          end do
-          call spcfft(buf,decomp%zsz(3),isign,scratch)
-          do k=1,decomp%zsz(3)
-             inout(i,j,k) = buf(k)
-          end do
+    do concurrent (j=1:decomp%zsz(2), i=1:decomp%zsz(1))
+       do concurrent (k=1:decomp%zsz(3))
+          buf(k) = inout(i,j,k)
+       end do
+       call spcfft(buf,decomp%zsz(3),isign,scratch)
+       do concurrent (k=1:decomp%zsz(3))
+          inout(i,j,k) = buf(k)
        end do
     end do
 
@@ -154,6 +154,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     real(mytype), dimension(:,:,:), intent(IN)  ::  input
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
 
@@ -164,20 +166,18 @@ module decomp_2d_fft
     s3 = size(input,3)
     d1 = size(output,1)
 
-    do k=1,s3
-       do j=1,s2
-          ! Glassman's FFT is c2c only, 
-          ! needing some pre- and post-processing for r2c
-          ! pack real input in complex storage
-          do i=1,s1
-             buf(i) = cmplx(input(i,j,k),0._mytype, kind=mytype)
-          end do
-          call spcfft(buf,s1,-1,scratch)
-          ! note d1 ~ s1/2+1
-          ! simply drop the redundant part of the complex output
-          do i=1,d1
-             output(i,j,k) = buf(i)
-          end do
+    do concurrent (k=1:s3, j=1:s2)
+       ! Glassman's FFT is c2c only, 
+       ! needing some pre- and post-processing for r2c
+       ! pack real input in complex storage
+       do concurrent (i=1:s1)
+          buf(i) = cmplx(input(i,j,k),0._mytype, kind=mytype)
+       end do
+       call spcfft(buf,s1,-1,scratch)
+       ! note d1 ~ s1/2+1
+       ! simply drop the redundant part of the complex output
+       do concurrent (i=1:d1)
+          output(i,j,k) = buf(i)
        end do
     end do
 
@@ -190,6 +190,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     real(mytype), dimension(:,:,:), intent(IN)  ::  input
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
 
@@ -200,20 +202,18 @@ module decomp_2d_fft
     s3 = size(input,3)
     d3 = size(output,3)
 
-    do j=1,s2
-       do i=1,s1
-          ! Glassman's FFT is c2c only, 
-          ! needing some pre- and post-processing for r2c
-          ! pack real input in complex storage
-          do k=1,s3
-             buf(k) = cmplx(input(i,j,k),0._mytype, kind=mytype)
-          end do
-          call spcfft(buf,s3,-1,scratch)
-          ! note d3 ~ s3/2+1
-          ! simply drop the redundant part of the complex output
-          do k=1,d3
-             output(i,j,k) = buf(k)
-          end do
+    do concurrent (j=1:s2, i=1:s1)
+       ! Glassman's FFT is c2c only, 
+       ! needing some pre- and post-processing for r2c
+       ! pack real input in complex storage
+       do concurrent (k=1:s3)
+          buf(k) = cmplx(input(i,j,k),0._mytype, kind=mytype)
+       end do
+       call spcfft(buf,s3,-1,scratch)
+       ! note d3 ~ s3/2+1
+       ! simply drop the redundant part of the complex output
+       do concurrent (k=1:d3)
+          output(i,j,k) = buf(k)
        end do
     end do
 
@@ -226,6 +226,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
 
@@ -235,28 +237,26 @@ module decomp_2d_fft
     d2 = size(output,2)
     d3 = size(output,3)
 
-    do k=1,d3
-       do j=1,d2
-          ! Glassman's FFT is c2c only, 
-          ! needing some pre- and post-processing for c2r
-          do i=1,d1/2+1
-             buf(i) = input(i,j,k)
-          end do
-          ! expanding to a full-size complex array
-          ! For odd N, the storage is:
-          !  1, 2, ...... N/2+1   integer division rounded down
-          !     N, ...... N/2+2   => a(i) is conjugate of a(N+2-i)
-          ! For even N, the storage is:
-          !  1, 2, ...... N/2  , N/2+1
-          !     N, ...... N/2+2  again a(i) conjugate of a(N+2-i)
-          do i=d1/2+2,d1
-             buf(i) =  conjg(buf(d1+2-i))
-          end do
-          call spcfft(buf,d1,1,scratch)
-          do i=1,d1
-             ! simply drop imaginary part
-             output(i,j,k) = real(buf(i), kind=mytype)
-          end do
+    do concurrent (k=1:d3, j=1:d2)
+       ! Glassman's FFT is c2c only, 
+       ! needing some pre- and post-processing for c2r
+       do concurrent (i=1:d1/2+1)
+          buf(i) = input(i,j,k)
+       end do
+       ! expanding to a full-size complex array
+       ! For odd N, the storage is:
+       !  1, 2, ...... N/2+1   integer division rounded down
+       !     N, ...... N/2+2   => a(i) is conjugate of a(N+2-i)
+       ! For even N, the storage is:
+       !  1, 2, ...... N/2  , N/2+1
+       !     N, ...... N/2+2  again a(i) conjugate of a(N+2-i)
+       do i=d1/2+2,d1
+          buf(i) =  conjg(buf(d1+2-i))
+       end do
+       call spcfft(buf,d1,1,scratch)
+       do concurrent (i=1:d1)
+          ! simply drop imaginary part
+          output(i,j,k) = real(buf(i), kind=mytype)
        end do
     end do
 
@@ -269,6 +269,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
 
@@ -278,18 +280,16 @@ module decomp_2d_fft
     d2 = size(output,2)
     d3 = size(output,3)
 
-    do j=1,d2
-       do i=1,d1
-          do k=1,d3/2+1
-             buf(k) = input(i,j,k)
-          end do
-          do k=d3/2+2,d3
-             buf(k) =  conjg(buf(d3+2-k))
-          end do
-          call spcfft(buf,d3,1,scratch)
-          do k=1,d3
-             output(i,j,k) = real(buf(k), kind=mytype)
-          end do
+    do concurrent (j=1:d2, i=1:d1)
+       do concurrent (k=1:d3/2+1)
+          buf(k) = input(i,j,k)
+       end do
+       do k=d3/2+2,d3
+          buf(k) = conjg(buf(d3+2-k))
+       end do
+       call spcfft(buf,d3,1,scratch)
+       do concurrent (k=1:d3)
+          output(i,j,k) = real(buf(k), kind=mytype)
        end do
     end do
 

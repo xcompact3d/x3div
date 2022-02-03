@@ -18,7 +18,7 @@ FFT = generic# generic,fftw3,mkl
 #######CMP settings###########
 ifeq ($(CMP),intel)
 FC = mpiifort
-FFLAGS = -fpp -O3 -mavx2 -mlzcnt -march=core-avx2 -mf16c
+FFLAGS = -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
 FFLAGS += -fopenmp -I$(MPI_ROOT)/lib
 else ifeq ($(CMP),gcc)
 FC = mpif90

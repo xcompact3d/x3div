@@ -53,7 +53,6 @@ contains
     USE decomp_2d_poisson, ONLY : poisson
     USE variables, ONLY : nzm
     USE param, ONLY : npress
-    use nvtx
 
     implicit none
 
@@ -69,17 +68,11 @@ contains
 
     nlock = 1 !! Corresponds to computing div(u*)
 
-    call nvtxStartRange("divergence")
     CALL divergence(pp3(:,:,:,1),ux1,uy1,uz1,nlock)
-    call nvtxEndRange
     !
-    call nvtxStartRange("poisson")
     CALL poisson(pp3(:,:,:,1))
-    call nvtxEndRange
     !
-    call nvtxStartRange("gradp")
     CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
-    call nvtxEndRange
 
   END SUBROUTINE solve_poisson
   !############################################################################
@@ -137,7 +130,6 @@ contains
          duxdxp2, uyp2, uzp2, duydypi2, upi2, ta2, &
          duxydxyp3, uzp3, po3
     USE MPI
-    use nvtx
 
     implicit none
 
@@ -167,15 +159,9 @@ contains
     call interxvp(pgy1,tb1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
     call interxvp(pgz1,tc1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
 
-    call nvtxStartRange("Transpose xty pp1")
     call transpose_x_to_y(pp1,duxdxp2,ph2)!->NXM NY NZ
-    call nvtxEndRange
-    call nvtxStartRange("Transpose xty pgy")
     call transpose_x_to_y(pgy1,uyp2,ph2)
-    call nvtxEndRange
-    call nvtxStartRange("Transpose xty pgz")
     call transpose_x_to_y(pgz1,uzp2,ph2)
-    call nvtxEndRange
 
     !WORK Y-PENCILS
     call interyvp(upi2,duxdxp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
@@ -188,9 +174,7 @@ contains
 
     call interyvp(upi2,uzp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
-    call nvtxStartRange("Transpose ytz duy")
     call transpose_y_to_z(duydypi2,duxydxyp3,ph3)!->NXM NYM NZ
-    call nvtxEndRange
     call transpose_y_to_z(upi2,uzp3,ph3)
 
     !WORK Z-PENCILS

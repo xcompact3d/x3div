@@ -171,9 +171,10 @@ subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
      tx(nx,j,k) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
                 + bfix*(ux(2,j,k)-ux(nx-2,j,k))
 
-     ! Solve tri-diagonal system
-     call xthomas(tx(1:nx,j:j,k:k), sx(j:j,k:k), x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, 1, 1)
   enddo
+
+  ! Solve tri-diagonal system
+  call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine derx_00
 
@@ -232,10 +233,10 @@ subroutine derx_ij(tx,ux,sx,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
         tx(nx-1,j,k) = afmx*(ux(nx,j,k)-ux(nx-2,j,k))
         tx(nx,j,k) = - afnx*ux(nx,j,k) - bfnx*ux(nx-1,j,k) - cfnx*ux(nx-2,j,k)
      endif
-
-     ! Solve tri-diagonal system
-     call xthomas(tx(1:nx,j:j,k:k), ff, fs, fw, nx, 1, 1)
   enddo
+
+  ! Solve tri-diagonal system
+  call xthomas(tx, ff, fs, fw, nx, ny, nz)
 
 end subroutine derx_ij
 
@@ -526,7 +527,6 @@ end subroutine dery_22
 subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
 
   use x3d_operator_z_data
-  use nvtx
 
   implicit none
 
@@ -570,9 +570,7 @@ subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call nvtxStartRange("zthomas")
   call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-  call nvtxEndRange
 
 end subroutine derz_00
 

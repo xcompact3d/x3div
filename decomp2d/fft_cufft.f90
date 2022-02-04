@@ -15,6 +15,7 @@ module decomp_2d_fft
 
   use decomp_2d  ! 2D decomposition module
   use iso_c_binding
+  use cudafor
   use cufft
 
   implicit none
@@ -52,12 +53,12 @@ module decomp_2d_fft
     integer, pointer :: null_fptr
     call c_f_pointer( c_null_ptr, null_fptr )
    
-    istat = cufftCreate(plan1)
+    call cufftCreate(plan1)
     istat = cufftSetAutoAllocation(plan1,0)
-    istat = cufftMakePlanMany(plan1,1,
-                              decomp%xsz(1),null_fptr,1,
-                              decomp%xsz(1),null_fptr,1,
-                              decomp%xsz(1),cufft_type,
+    istat = cufftMakePlanMany(plan1,1,                           &
+                              decomp%xsz(1),null_fptr,1,         &
+                              decomp%xsz(1),null_fptr,1,         &
+                              decomp%xsz(1),cufft_type,          &
                               decomp%xsz(2)*decomp%xsz(3),worksize)
 
     return
@@ -83,14 +84,14 @@ module decomp_2d_fft
    
     istat = cufftCreate(plan1)
     istat = cufftSetAutoAllocation(plan1,0)
-    istat = cufftMakePlanMany(plan1,1,
-                              decomp%ysz(2),null_fptr,1,
-                              decomp%ysz(2),null_fptr,1,
-                              decomp%ysz(2),cufft_type,
+    istat = cufftMakePlanMany(plan1,1,                    &
+                              decomp%ysz(2),null_fptr,1,  &
+                              decomp%ysz(2),null_fptr,1,  &
+                              decomp%ysz(2),cufft_type,   &
                               decomp%ysz(1),worksize)
 
-    return
-  end subroutine c2c_1m_y_plan
+    return 
+  end subroutine plan_1m_y
 
   ! Return a cuFFT plan for multiple 1D FFTs in Z direction
   subroutine plan_1m_z(plan1, decomp, cufft_type)
@@ -108,13 +109,12 @@ module decomp_2d_fft
    
     istat = cufftCreate(plan1)
     istat = cufftSetAutoAllocation(plan1,0)
-    istat = cufftMakePlanMany(plan1,1,
-                              decomp%zsz(3),null_fptr,1,
-                              decomp%zsz(3),null_fptr,1,
-                              decomp%zsz(3),cufft_type,
+    istat = cufftMakePlanMany(plan1,1,                      &
+                              decomp%zsz(3),null_fptr,1,    &
+                              decomp%zsz(3),null_fptr,1,    &
+                              decomp%zsz(3),cufft_type,     &
                               decomp%zsz(1)*decomp%zsz(2),worksize)
 
-    deallocate(a1)
 
     return
   end subroutine plan_1m_z
@@ -242,9 +242,9 @@ module decomp_2d_fft
     integer :: istat
 
 #ifdef DOUBLE_PREC
-    istat = cufftExecZ2Z(plan1, inout, inout)
+    istat = cufftExecZ2Z(plan1, inout, inout,isign)
 #else
-    istat = cufftExecZ2Z(plan1, inout, inout)
+    istat = cufftExecC2C(plan1, inout, inout,isign)
 #endif
 
     return
@@ -267,9 +267,9 @@ module decomp_2d_fft
     s3 = size(inout,3)
     do k=1,s3
 #ifdef DOUBLE_PREC
-       istat = cufftExecZ2Z(plan1, inout(:,:,k), inout(:,:,k))
+       istat = cufftExecZ2Z(plan1, inout(:,:,k), inout(:,:,k),isign)
 #else
-       istat = cufftExecC2C(plan1, inout(:,:,k), inout(:,:,k))
+       istat = cufftExecC2C(plan1, inout(:,:,k), inout(:,:,k),isign)
 #endif
     end do
 
@@ -287,9 +287,9 @@ module decomp_2d_fft
     integer :: istat
 
 #ifdef DOUBLE_PREC
-    istat = cufftExecZ2Z(plan1, inout, inout)
+    istat = cufftExecZ2Z(plan1, inout, inout,isign)
 #else
-    istat = cufftExecC2C(plan1, inout, inout)
+    istat = cufftExecC2C(plan1, inout, inout,isign)
 #endif
 
     return
@@ -341,11 +341,12 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
+    integer :: istat
 
 #ifdef DOUBLE_PREC
-    call dfftw_execute_dft_c2r(plan(2,1), input, output)
+    istat = cufftExecZ2D(plan(2,1), input, output)
 #else
-    call sfftw_execute_dft_c2r(plan(2,1), input, output)
+    istat = cufftExecC2R(plan(2,1), input, output)
 #endif
 
     return
@@ -359,12 +360,13 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN) :: input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
+    integer :: istat
 
 #ifdef DOUBLE_PREC
-    call dfftw_execute_dft_c2r(plan(2,3), input, output)
+    istat = cufftExecZ2D(plan(2,3), input, output)
 #else
-    call sfftw_execute_dft_c2r(plan(2,3), input, output)
-#endif    
+    istat = cufftExecC2R(plan(2,3), input, output)
+#endif
 
     return
 

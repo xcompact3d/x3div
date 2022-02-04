@@ -13,7 +13,7 @@ DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 LCL = local# local,lad,sdu,archer
 IVER = 17# 15,16,17,18
 CMP = nvhpc# intel,gcc,nvhpc
-FFT = generic# generic,fftw3,mkl
+FFT = cufft# generic,fftw3,mkl,cufft
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
@@ -36,7 +36,7 @@ FC = ftn
 FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
-FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -stdpar=gpu -gpu=cc80,managed -O3
+FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -stdpar=gpu -gpu=cc80,managed -O3 -Mcuda=ccall,cuda11.5 -DUSE_CUDA
 #FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
 endif
 
@@ -72,6 +72,10 @@ else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 	INC=-I$(MKLROOT)/include
+else ifeq ($(FFT),cufft)
+  CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
+  INC=-I$(CUFFT_PATH)/include
+  LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
 endif
 
 #######OPTIONS settings###########

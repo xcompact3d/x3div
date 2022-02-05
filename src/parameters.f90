@@ -116,10 +116,12 @@ subroutine parameter()
   dy2 = dy * dy
   dz2 = dz * dz
 
+  ! cfl = 0.2 and u = 1
+  dt = 0.2_mytype * dx
   if (abs(re) > epsilon(re)) then
      xnu = one / re
   else
-     xnu = zero
+     xnu = one / 1600._mytype
   endif
 
   anglex = sin(pi*angle/180._mytype)
@@ -215,6 +217,7 @@ subroutine parameter_defaults()
 
   use param
   use variables
+  use x3dprecision
 
   implicit none
 
@@ -241,7 +244,7 @@ subroutine parameter_defaults()
   t0 = zero
   dt = zero
 
-  xlx = one; yly = one; zlz = one
+  xlx = twopi; yly = twopi; zlz = one
   nclx1 = 0; nclxn = 0
   ncly1 = 0; nclyn = 0
   nclz1 = 0; nclzn = 0

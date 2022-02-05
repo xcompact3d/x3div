@@ -74,6 +74,11 @@ module x3d_operator_1d
   ! Interpolation from pressure grid => velocity grid
   type(x3doperator1d), save, public :: x3d_op_intxpv, x3d_op_intypv, x3d_op_intzpv
 
+  ! Second derivative on the velocity grid
+  type(x3doperator1d), save, public :: x3d_op_derxx, x3d_op_derxxp
+  type(x3doperator1d), save, public :: x3d_op_deryy, x3d_op_deryyp
+  type(x3doperator1d), save, public :: x3d_op_derzz, x3d_op_derzzp
+
   ! Make everything private unless declared public
   private
   public :: x3d_operator_1d_init, x3d_operator_1d_finalize
@@ -101,39 +106,70 @@ contains
       if (nrank == 0) write (*, *) '# x3d_operator_1d_init start'
 #endif
 
-      call first_derivative(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
+      call first_deriv_exp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
+                            cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, dx, nx, nclx1, nclxn)
+      call first_deriv_imp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
                             cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, &
                             ffx, fsx, fwx, ffxp, fsxp, fwxp, dx, nx, nclx1, nclxn)
-      call first_derivative(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
+      call first_deriv_exp_(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
+                            cfny, dfny, alfamy, afmy, alfajy, afjy, bfjy, dy, ny, ncly1, nclyn)
+      call first_deriv_imp_(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
                             cfny, dfny, alfamy, afmy, alfajy, afjy, bfjy, &
                             ffy, fsy, fwy, ffyp, fsyp, fwyp, dy, ny, ncly1, nclyn)
-      call first_derivative(alfa1z, af1z, bf1z, cf1z, df1z, alfa2z, af2z, alfanz, afnz, bfnz, &
-                            cfnz, dfnz, alfamz, afmz, alfakz, afkz, bfkz, &
-                            ffz, fsz, fwz, ffzp, fszp, fwzp, dz, nz, nclz1, nclzn)
+      call first_deriv_exp_(alfa1z, af1z, bf1z, cf1z, df1z, alfa2z, af2z, alfanz, afnz, bfnz, &
+                            cfnz, dfnz, alfamz, afmz, alfakz, afkz, bfkz, dz, nz, nclz1, nclzn)
+      if (nz /= 1) then
+         call first_deriv_imp_(alfa1z, af1z, bf1z, cf1z, df1z, alfa2z, af2z, alfanz, afnz, bfnz, &
+                               cfnz, dfnz, alfamz, afmz, alfakz, afkz, bfkz, &
+                               ffz, fsz, fwz, ffzp, fszp, fwzp, dz, nz, nclz1, nclzn)
+      endif
 
-      call second_derivative(alsa1x, as1x, bs1x, &
+      call second_deriv_exp_(alsa1x, as1x, bs1x, &
+                             cs1x, ds1x, alsa2x, as2x, alsanx, asnx, bsnx, csnx, dsnx, alsamx, &
+                             asmx, alsa3x, as3x, bs3x, alsatx, astx, bstx, &
+                             alsa4x, as4x, bs4x, cs4x, &
+                             alsattx, asttx, bsttx, csttx, &
+                             alsaix, asix, bsix, csix, dsix, dx2, nx, nclx1, nclxn)
+      call second_deriv_imp_(alsa1x, as1x, bs1x, &
                              cs1x, ds1x, alsa2x, as2x, alsanx, asnx, bsnx, csnx, dsnx, alsamx, &
                              asmx, alsa3x, as3x, bs3x, alsatx, astx, bstx, &
                              alsa4x, as4x, bs4x, cs4x, &
                              alsattx, asttx, bsttx, csttx, &
                              alsaix, asix, bsix, csix, dsix, &
                              sfx, ssx, swx, sfxp, ssxp, swxp, dx2, nx, nclx1, nclxn)
-      call second_derivative(alsa1y, as1y, bs1y, &
+      call second_deriv_exp_(alsa1y, as1y, bs1y, &
+                             cs1y, ds1y, alsa2y, as2y, alsany, asny, bsny, csny, dsny, alsamy, &
+                             asmy, alsa3y, as3y, bs3y, alsaty, asty, bsty, &
+                             alsa4y, as4y, bs4y, cs4y, &
+                             alsatty, astty, bstty, cstty, &
+                             alsajy, asjy, bsjy, csjy, dsjy, dy2, ny, ncly1, nclyn)
+      call second_deriv_imp_(alsa1y, as1y, bs1y, &
                              cs1y, ds1y, alsa2y, as2y, alsany, asny, bsny, csny, dsny, alsamy, &
                              asmy, alsa3y, as3y, bs3y, alsaty, asty, bsty, &
                              alsa4y, as4y, bs4y, cs4y, &
                              alsatty, astty, bstty, cstty, &
                              alsajy, asjy, bsjy, csjy, dsjy, &
                              sfy, ssy, swy, sfyp, ssyp, swyp, dy2, ny, ncly1, nclyn)
-      call second_derivative(alsa1z, as1z, bs1z, &
+      call second_deriv_exp_(alsa1z, as1z, bs1z, &
                              cs1z, ds1z, alsa2z, as2z, alsanz, asnz, bsnz, csnz, dsnz, alsamz, &
                              asmz, alsa3z, as3z, bs3z, alsatz, astz, bstz, &
                              alsa4z, as4z, bs4z, cs4z, &
                              alsattz, asttz, bsttz, csttz, &
-                             alsakz, askz, bskz, cskz, dskz, &
-                             sfz, ssz, swz, sfzp, sszp, swzp, dz2, nz, nclz1, nclzn)
+                             alsakz, askz, bskz, cskz, dskz, dz2, nz, nclz1, nclzn)
+      if (nz /= 1) then
+         call second_deriv_imp_(alsa1z, as1z, bs1z, &
+                                cs1z, ds1z, alsa2z, as2z, alsanz, asnz, bsnz, csnz, dsnz, alsamz, &
+                                asmz, alsa3z, as3z, bs3z, alsatz, astz, bstz, &
+                                alsa4z, as4z, bs4z, cs4z, &
+                                alsattz, asttz, bsttz, csttz, &
+                                alsakz, askz, bskz, cskz, dskz, &
+                                sfz, ssz, swz, sfzp, sszp, swzp, dz2, nz, nclz1, nclzn)
+      endif
 
-      call interpolation(dx, nxm, nx, nclx1, nclxn, &
+      call interpol_exp_(dx, nxm, nx, nclx1, nclxn, &
+                         alcaix6, acix6, bcix6, &
+                         ailcaix6, aicix6, bicix6, cicix6, dicix6)
+      call interpol_imp_(dx, nxm, nx, nclx1, nclxn, &
                          alcaix6, acix6, bcix6, &
                          ailcaix6, aicix6, bicix6, cicix6, dicix6, &
                          cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
@@ -142,7 +178,10 @@ contains
                          cfi6, cci6, cbi6, cfip6, csip6, cwip6, csi6, &
                          cwi6, cifi6, cici6, cibi6, cifip6, &
                          cisip6, ciwip6, cisi6, ciwi6)
-      call interpolation(dy, nym, ny, ncly1, nclyn, &
+      call interpol_exp_(dy, nym, ny, ncly1, nclyn, &
+                         alcaiy6, aciy6, bciy6, &
+                         ailcaiy6, aiciy6, biciy6, ciciy6, diciy6)
+      call interpol_imp_(dy, nym, ny, ncly1, nclyn, &
                          alcaiy6, aciy6, bciy6, &
                          ailcaiy6, aiciy6, biciy6, ciciy6, diciy6, &
                          cfy6, ccy6, cby6, cfyp6, ciwyp6, csyp6, &
@@ -151,15 +190,20 @@ contains
                          cfi6y, cci6y, cbi6y, cfip6y, csip6y, cwip6y, csi6y, &
                          cwi6y, cifi6y, cici6y, cibi6y, cifip6y, &
                          cisip6y, ciwip6y, cisi6y, ciwi6y)
-      call interpolation(dz, nzm, nz, nclz1, nclzn, &
+      call interpol_exp_(dz, nzm, nz, nclz1, nclzn, &
                          alcaiz6, aciz6, bciz6, &
-                         ailcaiz6, aiciz6, biciz6, ciciz6, diciz6, &
-                         cfz6, ccz6, cbz6, cfzp6, ciwzp6, cszp6, &
-                         cwzp6, csz6, cwz6, cifz6, cicz6, cisz6, &
-                         cibz6, cifzp6, ciszp6, ciwz6, &
-                         cfi6z, cci6z, cbi6z, cfip6z, csip6z, cwip6z, csi6z, &
-                         cwi6z, cifi6z, cici6z, cibi6z, cifip6z, &
-                         cisip6z, ciwip6z, cisi6z, ciwi6z)
+                         ailcaiz6, aiciz6, biciz6, ciciz6, diciz6)
+      if (nz /= 1) then
+         call interpol_imp_(dz, nzm, nz, nclz1, nclzn, &
+                            alcaiz6, aciz6, bciz6, &
+                            ailcaiz6, aiciz6, biciz6, ciciz6, diciz6, &
+                            cfz6, ccz6, cbz6, cfzp6, ciwzp6, cszp6, &
+                            cwzp6, csz6, cwz6, cifz6, cicz6, cisz6, &
+                            cibz6, cifzp6, ciszp6, ciwz6, &
+                            cfi6z, cci6z, cbi6z, cfip6z, csip6z, cwip6z, csi6z, &
+                            cwi6z, cifi6z, cici6z, cibi6z, cifip6z, &
+                            cisip6z, ciwip6z, cisi6z, ciwi6z)
+     endif
 
     ! derx operators for the velocity
     call init(x3d_op_derx,  ffx,  fsx,  fwx,  nx, nclx, alfaix, 0)
@@ -217,6 +261,14 @@ contains
       call init(x3d_op_intzpv, cifip6z, cisip6z, ciwip6z, nz, nclz, ailcaiz6, 1)
     endif
 
+    ! Second derivative on the velocity grid
+    call init(x3d_op_derxx, sfx, ssx, swx, nx, nclx, alsaix, 0)
+    call init(x3d_op_derxxp, sfxp, ssxp, swxp, nx, nclx, alsaix, 1)
+    call init(x3d_op_deryy, sfy, ssy, swy, ny, ncly, alsajy, 0)
+    call init(x3d_op_deryyp, sfyp, ssyp, swyp, ny, ncly, alsajy, 1)
+    call init(x3d_op_derzz, sfz, ssz, swz, nz, nclz, alsakz, 0)
+    call init(x3d_op_derzzp, sfzp, sszp, swzp, nz, nclz, alsakz, 1)
+
   end subroutine x3d_operator_1d_init
 
   !
@@ -250,6 +302,13 @@ contains
     call finalize(x3d_op_intxpv)
     call finalize(x3d_op_intypv)
     call finalize(x3d_op_intzpv)
+
+    call finalize(x3d_op_derxx)
+    call finalize(x3d_op_derxxp)
+    call finalize(x3d_op_deryy)
+    call finalize(x3d_op_deryyp)
+    call finalize(x3d_op_derzz)
+    call finalize(x3d_op_derzzp)
 
   end subroutine x3d_operator_1d_finalize
 
@@ -333,9 +392,9 @@ contains
 
    end subroutine prepare
 
-   subroutine first_derivative(alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
+   subroutine first_deriv_exp_(alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
                                cfn, dfn, alfam, afm, alfai, afi, bfi, &
-                               ff, fs, fw, ffp, fsp, fwp, d, n, ncl1, ncln)
+                               d, n, ncl1, ncln)
 
       use decomp_2d, only: mytype, decomp_2d_abort
       use param
@@ -344,16 +403,9 @@ contains
 
       real(mytype), intent(in) :: d
       integer, intent(in) :: n, ncl1, ncln
-      real(mytype), dimension(n), intent(out) :: ff, fs, fw, ffp, fsp, fwp
       real(mytype), intent(out) :: alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
                                    cfn, dfn, alfam, afm, alfai, afi, bfi
       integer :: i
-      real(mytype), dimension(n) :: fb, fc
-
-      if (n==1) return
-
-      ff = zero; fs = zero; fw = zero; ffp = zero; fsp = zero; fwp = zero
-      fb = zero; fc = zero
 
       if (ifirstder == 1) then    ! Second-order central
          alfai = zero
@@ -404,6 +456,28 @@ contains
          alfam = one/four
          afm = (three/four)/d
       end if
+
+   end subroutine first_deriv_exp_
+
+   subroutine first_deriv_imp_(alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
+                               cfn, dfn, alfam, afm, alfai, afi, bfi, &
+                               ff, fs, fw, ffp, fsp, fwp, d, n, ncl1, ncln)
+
+      use decomp_2d, only: mytype, decomp_2d_abort
+      use param
+
+      implicit none
+
+      real(mytype), intent(in) :: d
+      integer, intent(in) :: n, ncl1, ncln
+      real(mytype), dimension(n), intent(out) :: ff, fs, fw, ffp, fsp, fwp
+      real(mytype), intent(out) :: alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
+                                   cfn, dfn, alfam, afm, alfai, afi, bfi
+      integer :: i
+      real(mytype), dimension(n) :: fb, fc
+
+      ff = zero; fs = zero; fw = zero; ffp = zero; fsp = zero; fwp = zero
+      fb = zero; fc = zero
 
       if (ncl1 .eq. 0) then !Periodic
          ff(1) = alfai
@@ -479,15 +553,14 @@ contains
 
       call prepare(fb, fc, ffp, fsp, fwp, n)
 
-   end subroutine first_derivative
+   end subroutine first_deriv_imp_
 
-   subroutine second_derivative(alsa1, as1, bs1, &
+   subroutine second_deriv_exp_(alsa1, as1, bs1, &
                                 cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
                                 asm, alsa3, as3, bs3, alsat, ast, bst, &
                                 alsa4, as4, bs4, cs4, &
                                 alsatt, astt, bstt, cstt, &
-                                alsai, asi, bsi, csi, dsi, &
-                                sf, ss, sw, sfp, ssp, swp, d2, n, ncl1, ncln)
+                                alsai, asi, bsi, csi, dsi, d2, n, ncl1, ncln)
 
       use decomp_2d, only: mytype, nrank, decomp_2d_abort
       use x3dprecision, only: pi, twopi
@@ -498,7 +571,6 @@ contains
 
       real(mytype), intent(in) :: d2
       integer, intent(in) :: n, ncl1, ncln
-      real(mytype), dimension(n), intent(out) :: sf, ss, sw, sfp, ssp, swp
       real(mytype), intent(out) :: alsa1, as1, bs1, &
                                    cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
                                    asm, alsa3, as3, bs3, alsat, ast, bst, &
@@ -506,12 +578,7 @@ contains
                                    alsatt, astt, bstt, cstt, &
                                    alsai, asi, bsi, csi, dsi
       integer :: i
-      real(mytype), dimension(n) :: sb, sc
       real(mytype) :: dpis3, kppkc, kppkm, xnpi2, xmpi2, den
-
-      if (n==1) return
-
-      sf = zero; ss = zero; sw = zero; sfp = zero; ssp = zero; swp = zero
 
       ! Define coefficients based on the desired formal accuracy of the numerical schemes
       if (isecondder == 1) then    ! Second-order central
@@ -617,6 +684,35 @@ contains
       astt = (12._mytype/11._mytype)/d2
       bstt = (three/44._mytype)/d2
       cstt = zero
+
+   end subroutine second_deriv_exp_
+
+   subroutine second_deriv_imp_(alsa1, as1, bs1, &
+                                cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
+                                asm, alsa3, as3, bs3, alsat, ast, bst, &
+                                alsa4, as4, bs4, cs4, &
+                                alsatt, astt, bstt, cstt, &
+                                alsai, asi, bsi, csi, dsi, &
+                                sf, ss, sw, sfp, ssp, swp, d2, n, ncl1, ncln)
+
+      use decomp_2d, only: mytype, nrank, decomp_2d_abort
+      use param
+
+      implicit none
+
+      real(mytype), intent(in) :: d2
+      integer, intent(in) :: n, ncl1, ncln
+      real(mytype), dimension(n), intent(out) :: sf, ss, sw, sfp, ssp, swp
+      real(mytype), intent(out) :: alsa1, as1, bs1, &
+                                   cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
+                                   asm, alsa3, as3, bs3, alsat, ast, bst, &
+                                   alsa4, as4, bs4, cs4, &
+                                   alsatt, astt, bstt, cstt, &
+                                   alsai, asi, bsi, csi, dsi
+      integer :: i
+      real(mytype), dimension(n) :: sb, sc
+
+      sf = zero; ss = zero; sw = zero; sfp = zero; ssp = zero; swp = zero
 
       if (ncl1 .eq. 0) then !Periodic
          sf(1) = alsai
@@ -729,9 +825,69 @@ contains
          call prepare(sb, sc, sf, ss, sw, n)
       end if
 
-   end subroutine second_derivative
+   end subroutine second_deriv_imp_
 
-   subroutine interpolation(dx, nxm, nx, nclx1, nclxn, &
+   subroutine interpol_exp_(dx, nxm, nx, nclx1, nclxn, &
+                            alcaix6, acix6, bcix6, &
+                            ailcaix6, aicix6, bicix6, cicix6, dicix6)
+
+      use decomp_2d, only: mytype
+      use param, only: zero, half, one, two, three, four, nine, ten, ipinter, ifirstder
+
+      implicit none
+
+      real(mytype), intent(in) :: dx
+      integer, intent(in) :: nxm, nx, nclx1, nclxn
+      real(mytype) :: alcaix6, acix6, bcix6
+      real(mytype) :: ailcaix6, aicix6, bicix6, cicix6, dicix6
+
+      integer :: i
+
+      if (ifirstder == 1) then
+         alcaix6 = zero
+         acix6 = one/dx
+         bcix6 = zero
+      else
+         alcaix6 = nine/62._mytype
+         acix6 = (63._mytype/62._mytype)/dx
+         bcix6 = (17._mytype/62._mytype)/three/dx
+      end if
+
+      if (ifirstder == 1) then
+         ailcaix6 = zero
+         aicix6 = half
+         bicix6 = zero
+         cicix6 = zero
+         dicix6 = zero
+      else if (ipinter .eq. 1) then
+         ailcaix6 = three/ten
+         aicix6 = three/four
+         bicix6 = one/(two*ten)
+         cicix6 = zero
+         dicix6 = zero
+      else if (ipinter .eq. 2) then
+         ailcaix6 = 0.461658_mytype
+
+         dicix6 = 0.00293016_mytype
+         aicix6 = one/64._mytype*(75._mytype + 70._mytype*ailcaix6 - 320._mytype*dicix6)
+         bicix6 = one/128._mytype*(126._mytype*ailcaix6 - 25._mytype + 1152._mytype*dicix6)
+         cicix6 = one/128._mytype*(-ten*ailcaix6 + three - 640._mytype*dicix6)
+
+         aicix6 = aicix6/two
+         bicix6 = bicix6/two
+         cicix6 = cicix6/two
+         dicix6 = dicix6/two
+      else if (ipinter .eq. 3) then
+         ailcaix6 = 0.49_mytype
+         aicix6 = one/128._mytype*(75._mytype + 70._mytype*ailcaix6)
+         bicix6 = one/256._mytype*(126._mytype*ailcaix6 - 25._mytype)
+         cicix6 = one/256._mytype*(-ten*ailcaix6 + three)
+         dicix6 = zero
+      end if
+
+   end subroutine interpol_exp_
+
+   subroutine interpol_imp_(dx, nxm, nx, nclx1, nclxn, &
                             alcaix6, acix6, bcix6, &
                             ailcaix6, aicix6, bicix6, cicix6, dicix6, &
                             cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
@@ -758,18 +914,6 @@ contains
       real(mytype), dimension(nx) :: cisip6, ciwip6, cisi6, ciwi6
 
       integer :: i
-
-      if (nx==1) return
-
-      if (ifirstder == 1) then
-         alcaix6 = zero
-         acix6 = one/dx
-         bcix6 = zero
-      else
-         alcaix6 = nine/62._mytype
-         acix6 = (63._mytype/62._mytype)/dx
-         bcix6 = (17._mytype/62._mytype)/three/dx
-      end if
 
       cfx6(1) = alcaix6
       cfx6(2) = alcaix6
@@ -816,38 +960,6 @@ contains
          cci6(i) = one
          cbi6(i) = alcaix6
       end do
-
-      if (ifirstder == 1) then
-         ailcaix6 = zero
-         aicix6 = half
-         bicix6 = zero
-         cicix6 = zero
-         dicix6 = zero
-      else if (ipinter .eq. 1) then
-         ailcaix6 = three/ten
-         aicix6 = three/four
-         bicix6 = one/(two*ten)
-         cicix6 = zero
-         dicix6 = zero
-      else if (ipinter .eq. 2) then
-         ailcaix6 = 0.461658_mytype
-
-         dicix6 = 0.00293016_mytype
-         aicix6 = one/64._mytype*(75._mytype + 70._mytype*ailcaix6 - 320._mytype*dicix6)
-         bicix6 = one/128._mytype*(126._mytype*ailcaix6 - 25._mytype + 1152._mytype*dicix6)
-         cicix6 = one/128._mytype*(-ten*ailcaix6 + three - 640._mytype*dicix6)
-
-         aicix6 = aicix6/two
-         bicix6 = bicix6/two
-         cicix6 = cicix6/two
-         dicix6 = dicix6/two
-      else if (ipinter .eq. 3) then
-         ailcaix6 = 0.49_mytype
-         aicix6 = one/128._mytype*(75._mytype + 70._mytype*ailcaix6)
-         bicix6 = one/256._mytype*(126._mytype*ailcaix6 - 25._mytype)
-         cicix6 = one/256._mytype*(-ten*ailcaix6 + three)
-         dicix6 = zero
-      end if
 
       cifx6(1) = ailcaix6
       cifx6(2) = ailcaix6
@@ -933,6 +1045,6 @@ contains
          call prepare(cibi6, cici6, cifip6, cisip6, ciwip6, nx)
       end if
 
-   end subroutine interpolation
+   end subroutine interpol_imp_
 
 end module x3d_operator_1d

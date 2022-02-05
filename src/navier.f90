@@ -188,28 +188,21 @@ contains
        pp3(i,j,k) = pp3(i,j,k) + po3(i,j,k)
     enddo
 
-    if (nlock==2) then
-       do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
-          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1%zst(1),ph1%zst(2),nzm)
-       enddo
-    endif
-
     tmax = maxval(abs(pp3))
     tmoy = sum(abs(pp3)) / nvect3
 
-    if (test_mode) then
-       call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
-       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-       call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
-       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-       if ((nrank==0).and.(nlock.gt.0)) then
-          if (nlock==2) then
-             print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-          else
-             print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-          endif
+    call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+    call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+
+    if ((nrank==0).and.(nlock.gt.0)) then
+       if (nlock==2) then
+          print *,'DIV U  max mean=', tmax1, tmoy1
+       else
+          print *,'DIV U* max mean=', tmax1, tmoy1
        endif
-    end if
+    endif
 
     return
   end subroutine divergence

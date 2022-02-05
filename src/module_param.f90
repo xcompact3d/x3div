@@ -55,7 +55,7 @@ module variables
   integer :: nx,ny,nz,numscalar,p_row,p_col,nxm,nym,nzm,spinup_time
   integer :: nstat=1,nvisu=1,nprobe=1,nlength=1
 
-  real(mytype),allocatable,dimension(:) :: sc,uset,cp,ri,group
+  real(mytype), save, allocatable, dimension(:) :: sc,uset,cp,ri,group
   real(mytype) :: nu0nu, cnu
 
 #ifndef DOUBLE_PREC
@@ -71,14 +71,12 @@ module variables
   !module filter
   real(mytype),dimension(200) :: idata
 
-  real(mytype),allocatable,dimension(:,:) :: fisx,fivx
-  real(mytype),allocatable,dimension(:,:) :: fisy,fivy
-  real(mytype),allocatable,dimension(:,:) :: fisz,fivz
+  real(mytype), save, allocatable, dimension(:,:) :: fisx,fivx
+  real(mytype), save, allocatable, dimension(:,:) :: fisy,fivy
+  real(mytype), save, allocatable, dimension(:,:) :: fisz,fivz
 
-
-  real(mytype), save, allocatable, dimension(:,:) :: sx,vx
-  real(mytype), save, allocatable, dimension(:,:) :: sy,vy
-  real(mytype), save, allocatable, dimension(:,:) :: sz,vz
+  !module derivative
+  real(mytype), save, allocatable, dimension(:,:) :: sx, sy, sz
 
   !! X3DIV
   logical :: test_mode

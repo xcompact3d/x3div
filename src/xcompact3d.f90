@@ -39,7 +39,7 @@ program xcompact3d
   use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
-  use mom,     only : test_du, test_dv, test_dw
+  use mom,     only : test_tgv2d
 
   implicit none
 
@@ -57,6 +57,7 @@ program xcompact3d
   tmin = telapsed
 
   ndt = 1
+  call test_tgv2d(ux1, uy1, uz1, ndt)
 
   do while(ndt < ndt_max)
      itr = 1 ! no inner iterations
@@ -91,6 +92,7 @@ program xcompact3d
      end if
 
      ndt = ndt + 1
+     call test_tgv2d(ux1, uy1, uz1, ndt)
   end do
 
   if (nrank == 0) then

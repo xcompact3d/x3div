@@ -89,7 +89,7 @@ contains
 
 
     !X PENCILS
-    call alloc_x(ux1, opt_global=.true.) !global indices
+    call alloc_x(ux1)
     ux1 = zero
     allocate(uy1, uz1, px1, py1, pz1, source=ux1)
 
@@ -153,15 +153,10 @@ contains
     !module derivative
     allocate(sx(xsize(2),xsize(3)))
     sx=zero
-    allocate(vx, source=sx)
-
     allocate(sy(ysize(1),ysize(3)))
     sy=zero
-    allocate(vy, source=sy)
-
     allocate(sz(zsize(1),zsize(2)))
     sz=zero
-    allocate(vz, source=sz)
 
     !module waves
     allocate(zkz(nz/2+1))
@@ -248,7 +243,6 @@ contains
   subroutine var_finalize()
 
     use variables
-    use param
 
     implicit none
 
@@ -333,13 +327,8 @@ contains
 
     !module derivative
     deallocate(sx)
-    deallocate(vx)
-
     deallocate(sy)
-    deallocate(vy)
-
     deallocate(sz)
-    deallocate(vz)
 
     !module waves
     deallocate(zkz)

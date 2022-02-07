@@ -371,12 +371,8 @@ contains
              tmp1 = real(kxyz(i,j,k), kind=mytype)
              tmp2 = aimag(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
-             if ((tmp1 < epsilon).and.(tmp2 < epsilon)) then
+             if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
                 cw1(i,j,k) = zero
-             elseif ((tmp1 < epsilon).and.(tmp2 >= epsilon)) then
-                cw1(i,j,k) = cmplx(zero, aimag(cw1(i,j,k)) / (-tmp2), kind=mytype)
-             elseif ((tmp1 >= epsilon).and.(tmp2 < epsilon)) then
-                cw1(i,j,k) = cmplx(real(cw1(i,j,k),kind=mytype) / (-tmp1), zero)
              else
                 cw1(i,j,k) = cmplx(real(cw1(i,j,k),kind=mytype) / (-tmp1), &
                                   aimag(cw1(i,j,k)) / (-tmp2), kind=mytype)
@@ -856,7 +852,6 @@ contains
           ezs(k) = cx_one_one * (nz * w / zlz)
           zk2(k) = cx_one_one * (nz * wp / zlz)**2
 !
-
        enddo
     else
        do k= 1, nz/2 + 1

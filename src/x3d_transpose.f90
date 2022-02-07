@@ -1,21 +1,36 @@
 !################################################################################
-!This file is part of Xcompact3d.
+!This file is part of Xcompact3d
 !
 !Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
+!Copyright (c) 2012-2022, Xcompact3d
 !eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
 !
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
+!BSD 3-Clause License
 !
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
+!Redistribution and use in source and binary forms, with or without
+!modification, are permitted provided that the following conditions are met:
 !
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
+!1. Redistributions of source code must retain the above copyright notice, this
+!   list of conditions and the following disclaimer.
+!
+!2. Redistributions in binary form must reproduce the above copyright notice,
+!   this list of conditions and the following disclaimer in the documentation
+!   and/or other materials provided with the distribution.!
+!
+!3. Neither the name of the copyright holder nor the names of its
+!   contributors may be used to endorse or promote products derived from
+!   this software without specific prior written permission.
+!
+!THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+!AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+!IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+!DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+!FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+!DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+!SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+!CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+!OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+!OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
 !    We kindly request that you cite Xcompact3d/Incompact3d in your
@@ -29,8 +44,6 @@
 !    problems with up to 0(10^5) computational cores, Int. J. of Numerical
 !    Methods in Fluids, vol 67 (11), pp 1735-1757
 !################################################################################
-!##################################################################
-! This is the main 2D pencil decomposition module
 
 module x3d_transpose
 
@@ -81,7 +94,6 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_x_to_y
-  !!      AUTHOR: Stefano Rolfo
   !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
   !!              single core calculation
   !############################################################################
@@ -136,7 +148,6 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_y_to_z
-  !!      AUTHOR: Stefano Rolfo
   !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
   !!              single core calculation
   !############################################################################
@@ -191,7 +202,6 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_z_to_y
-  !!      AUTHOR: Stefano Rolfo
   !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
   !!              single core calculation
   !############################################################################
@@ -246,7 +256,6 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_y_to_z
-  !!      AUTHOR: Stefano Rolfo
   !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
   !!              single core calculation
   !############################################################################
@@ -301,7 +310,6 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_*_to_*_short
-  !!      AUTHOR: Cédric Flageul
   !! DESCRIPTION: Call the x3d_transpose_*_to_* with the decomp_info object
   !############################################################################
   subroutine x3d_transpose_x_to_y_real_short(data_in, data_out)

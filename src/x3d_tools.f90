@@ -229,7 +229,9 @@ subroutine init_flowfield()
   use case
   use var
 
-  use param, only: zero
+  use param, only: zero, itime
+
+  implicit none
 
   call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
   itime = 0

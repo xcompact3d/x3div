@@ -53,7 +53,7 @@ module mom
   use decomp_2d, only : nrank, nproc
   use decomp_2d, only : xsize, ysize, zsize
   use decomp_2d, only : xstart, ystart, zstart
-  use x3dprecision, only : twopi
+  use x3d_precision, only : twopi
   use param    , only : dx, dy, dz, xlx, yly, zlz
   use variables, only : test_mode
   use variables, only : nx, ny, nz
@@ -195,7 +195,7 @@ contains
 
     use param, only : dx2, three, four, half, nine, eight
     use x3d_operator_x_data
-    use x3dprecision, only : pi
+    use x3d_precision, only : pi
 
     implicit none
 
@@ -219,7 +219,7 @@ contains
 
     use param, only : dx2, three, four, half, nine, eight
     use x3d_operator_y_data
-    use x3dprecision, only : pi
+    use x3d_precision, only : pi
 
     implicit none
 

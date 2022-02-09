@@ -577,7 +577,7 @@ contains
                                 alsai, asi, bsi, csi, dsi, d2, n, ncl1, ncln)
 
       use decomp_2d, only: mytype, nrank, decomp_2d_abort
-      use x3dprecision, only: pi, twopi
+      use x3d_precision, only: pi, twopi
       use param
       use variables, only: nu0nu, cnu
 

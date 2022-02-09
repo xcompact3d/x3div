@@ -110,8 +110,9 @@ contains
 
     ! Temporal variation (explicit Euler time scheme)
     kxtgv = twopi / xlx
-    call compute_k2(kxtgv, kx2tgv)
-    ky2tgv = kx2tgv
+    kytgv = twopi / yly
+    call compute_kx2(kxtgv, kx2tgv)
+    call compute_ky2(kytgv, ky2tgv)
     factor = one
     do it = 2, ndt
        factor = factor * (one - dt*xnu*(kx2tgv+ky2tgv))
@@ -189,9 +190,8 @@ contains
 
   end subroutine test_tgv2d
  
-  ! Compute the modified wavenumber for the second derivative
-  ! Warning : we use the X momentum wavenumber for Y momentum and for the scalars
-  subroutine compute_k2(kin,k2out)
+  ! Compute the modified wavenumber for the second derivative in x
+  subroutine compute_kx2(kin,k2out)
 
     use param, only : dx2, three, four, half, nine, eight
     use x3d_operator_x_data
@@ -212,6 +212,30 @@ contains
           + 16._mytype * dsix * (one / eight) * (one - cos(four*kin*dx))
     k2out = k2out / (one + two * alsaix * cos(kin*dx))
 
-  end subroutine compute_k2
+  end subroutine compute_kx2
+
+  ! Compute the modified wavenumber for the second derivative in y
+  subroutine compute_ky2(kin,k2out)
+
+    use param, only : dx2, three, four, half, nine, eight
+    use x3d_operator_y_data
+    use x3dprecision, only : pi
+
+    implicit none
+
+    real(mytype), intent(in) :: kin
+    real(mytype), intent(out) :: k2out
+
+    if (kin.lt.zero .or. kin.gt.pi/min(dx,dy)) then
+      if (nrank==0) write(*,*) "TGV2D: Warning, incorrect wavenumber provided."
+    endif
+
+    k2out = asjy * two * (one - cos(kin*dx)) &
+          + four * bsjy * half * (one - cos(two*kin*dx)) &
+          + nine * csjy * (two / nine) * (one - cos(three*kin*dx)) &
+          + 16._mytype * dsjy * (one / eight) * (one - cos(four*kin*dx))
+    k2out = k2out / (one + two * alsajy * cos(kin*dx))
+
+  end subroutine compute_ky2
 
 end module mom

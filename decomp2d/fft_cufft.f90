@@ -244,7 +244,7 @@ module decomp_2d_fft
 #ifdef DOUBLE_PREC
     istat = cufftExecZ2Z(plan1, inout, inout)
 #else
-    istat = cufftExecZ2Z(plan1, inout, inout)
+    istat = cufftExecC2C(plan1, inout, inout)
 #endif
 
     return
@@ -341,11 +341,12 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
+    integer :: istat
 
 #ifdef DOUBLE_PREC
-    call dfftw_execute_dft_c2r(plan(2,1), input, output)
+    istat = cufftExecZ2D(plan(2,1), input, output)
 #else
-    call sfftw_execute_dft_c2r(plan(2,1), input, output)
+    istat = cufftExecC2R(plan(2,1), input, output)
 #endif
 
     return
@@ -359,12 +360,13 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN) :: input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
+    integer :: istat
 
 #ifdef DOUBLE_PREC
-    call dfftw_execute_dft_c2r(plan(2,3), input, output)
+    istat = cufftExecZ2D(plan(2,3), input, output)
 #else
-    call sfftw_execute_dft_c2r(plan(2,3), input, output)
-#endif    
+    istat = cufftExecC2R(plan(2,3), input, output)
+#endif
 
     return
 

@@ -36,13 +36,6 @@ subroutine derxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
   ! Local variables
   integer :: i, j, k
 
-  if (nx==1) then
-     do concurrent(k=1:nz, j=1:ny, i=1:nxm)
-        tx(i,j,k) = zero
-     enddo
-     return
-  endif
-
   if (nclx) then
      ! nxm = nx
      do concurrent (k=1:nz, j=1:ny)
@@ -122,13 +115,6 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-
-  if (nx==1) then
-     do concurrent(k=1:nz, j=1:ny, i=1:nxm)
-        tx(i,j,k) = zero
-     enddo
-     return
-  endif
 
   if (nclx) then
      ! nxm = nx
@@ -238,13 +224,6 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
-  if (nx==1) then
-     do concurrent(k=1:nz, j=1:ny, i=1:nx)
-        tx(i,j,k) = zero
-     enddo
-     return
-  endif
-
   if (nclx) then
      ! nxm = nx
      do concurrent (k=1:nz, j=1:ny)
@@ -310,13 +289,6 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-
-  if (nx==1) then
-     do concurrent(k=1:nz, j=1:ny, i=1:nx)
-        tx(i,j,k) = zero
-     enddo
-     return
-  endif
 
   if (nclx) then
      ! nxm = nx
@@ -433,13 +405,6 @@ subroutine interyvp(ty,uy,sy,x3dop,nx,ny,nym,nz)
 
   ! Local variables
   integer :: i, j, k
-
-  if (ny==1) then
-     do concurrent(k=1:nz, j=1:nym, i=1:nx)
-        ty(i,j,k) = zero
-     enddo
-     return
-  endif
 
   if (ncly) then
      ! nym = ny
@@ -576,13 +541,6 @@ subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
   ! Local variables
   integer :: i, j, k
 
-  if (ny==1) then
-     do concurrent(k=1:nz, j=1:nym, i=1:nx)
-        ty(i,j,k) = zero
-     enddo
-     return
-  endif
-
   if (ncly) then
      ! nym = ny
      do concurrent (k=1:nz)
@@ -672,13 +630,6 @@ subroutine interypv(ty,uy,sy,x3dop,nx,nym,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-
-  if (ny==1) then
-     do concurrent(k=1:nz, j=1:ny, i=1:nx)
-        ty(i,j,k) = zero
-     enddo
-     return
-  endif
 
   if (ncly) then
      ! nym = ny
@@ -826,13 +777,6 @@ subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-
-  if (ny==1) then
-     do concurrent(k=1:nz, j=1:ny, i=1:nx)
-        ty(i,j,k) = zero
-     enddo
-     return
-  endif
 
   if (ncly) then
      ! nym = ny

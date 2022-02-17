@@ -61,8 +61,6 @@ contains
 
       implicit none
 
-      if (nx==1) return
-
       allocate (ffx(nx))
       ffx = zero
       allocate (sfx, source=ffx)
@@ -136,11 +134,7 @@ contains
    !
    subroutine x3d_operator_x_data_finalize()
 
-      use variables, only : nx
-
       implicit none
-
-      if (nx == 1) return
 
       deallocate (ffx)
       deallocate (sfx)

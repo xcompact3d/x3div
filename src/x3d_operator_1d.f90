@@ -79,18 +79,14 @@ contains
 
       call first_deriv_exp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
                             cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, dx, nx, nclx1, nclxn)
-      if (nx /= 1) then
-         call first_deriv_imp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
-                               cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, &
-                               ffx, fsx, fwx, ffxp, fsxp, fwxp, dx, nx, nclx1, nclxn)
-      endif
+      call first_deriv_imp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
+                            cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, &
+                            ffx, fsx, fwx, ffxp, fsxp, fwxp, dx, nx, nclx1, nclxn)
       call first_deriv_exp_(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
                             cfny, dfny, alfamy, afmy, alfajy, afjy, bfjy, dy, ny, ncly1, nclyn)
-      if (ny /= 1) then
-         call first_deriv_imp_(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
-                               cfny, dfny, alfamy, afmy, alfajy, afjy, bfjy, &
-                               ffy, fsy, fwy, ffyp, fsyp, fwyp, dy, ny, ncly1, nclyn)
-      endif
+      call first_deriv_imp_(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
+                            cfny, dfny, alfamy, afmy, alfajy, afjy, bfjy, &
+                            ffy, fsy, fwy, ffyp, fsyp, fwyp, dy, ny, ncly1, nclyn)
       call first_deriv_exp_(alfa1z, af1z, bf1z, cf1z, df1z, alfa2z, af2z, alfanz, afnz, bfnz, &
                             cfnz, dfnz, alfamz, afmz, alfakz, afkz, bfkz, dz, nz, nclz1, nclzn)
       if (nz /= 1) then
@@ -105,30 +101,26 @@ contains
                              alsa4x, as4x, bs4x, cs4x, &
                              alsattx, asttx, bsttx, csttx, &
                              alsaix, asix, bsix, csix, dsix, dx2, nx, nclx1, nclxn)
-      if (nx /= 1) then
-         call second_deriv_imp_(alsa1x, as1x, bs1x, &
-                                cs1x, ds1x, alsa2x, as2x, alsanx, asnx, bsnx, csnx, dsnx, alsamx, &
-                                asmx, alsa3x, as3x, bs3x, alsatx, astx, bstx, &
-                                alsa4x, as4x, bs4x, cs4x, &
-                                alsattx, asttx, bsttx, csttx, &
-                                alsaix, asix, bsix, csix, dsix, &
-                                sfx, ssx, swx, sfxp, ssxp, swxp, dx2, nx, nclx1, nclxn)
-      endif
+      call second_deriv_imp_(alsa1x, as1x, bs1x, &
+                             cs1x, ds1x, alsa2x, as2x, alsanx, asnx, bsnx, csnx, dsnx, alsamx, &
+                             asmx, alsa3x, as3x, bs3x, alsatx, astx, bstx, &
+                             alsa4x, as4x, bs4x, cs4x, &
+                             alsattx, asttx, bsttx, csttx, &
+                             alsaix, asix, bsix, csix, dsix, &
+                             sfx, ssx, swx, sfxp, ssxp, swxp, dx2, nx, nclx1, nclxn)
       call second_deriv_exp_(alsa1y, as1y, bs1y, &
                              cs1y, ds1y, alsa2y, as2y, alsany, asny, bsny, csny, dsny, alsamy, &
                              asmy, alsa3y, as3y, bs3y, alsaty, asty, bsty, &
                              alsa4y, as4y, bs4y, cs4y, &
                              alsatty, astty, bstty, cstty, &
                              alsajy, asjy, bsjy, csjy, dsjy, dy2, ny, ncly1, nclyn)
-      if (ny /= 1) then
-         call second_deriv_imp_(alsa1y, as1y, bs1y, &
-                                cs1y, ds1y, alsa2y, as2y, alsany, asny, bsny, csny, dsny, alsamy, &
-                                asmy, alsa3y, as3y, bs3y, alsaty, asty, bsty, &
-                                alsa4y, as4y, bs4y, cs4y, &
-                                alsatty, astty, bstty, cstty, &
-                                alsajy, asjy, bsjy, csjy, dsjy, &
-                                sfy, ssy, swy, sfyp, ssyp, swyp, dy2, ny, ncly1, nclyn)
-      endif
+      call second_deriv_imp_(alsa1y, as1y, bs1y, &
+                             cs1y, ds1y, alsa2y, as2y, alsany, asny, bsny, csny, dsny, alsamy, &
+                             asmy, alsa3y, as3y, bs3y, alsaty, asty, bsty, &
+                             alsa4y, as4y, bs4y, cs4y, &
+                             alsatty, astty, bstty, cstty, &
+                             alsajy, asjy, bsjy, csjy, dsjy, &
+                             sfy, ssy, swy, sfyp, ssyp, swyp, dy2, ny, ncly1, nclyn)
       call second_deriv_exp_(alsa1z, as1z, bs1z, &
                              cs1z, ds1z, alsa2z, as2z, alsanz, asnz, bsnz, csnz, dsnz, alsamz, &
                              asmz, alsa3z, as3z, bs3z, alsatz, astz, bstz, &
@@ -148,31 +140,27 @@ contains
       call interpol_exp_(dx, nxm, nx, nclx1, nclxn, &
                          alcaix6, acix6, bcix6, &
                          ailcaix6, aicix6, bicix6, cicix6, dicix6)
-      if (nx /= 1) then
-         call interpol_imp_(dx, nxm, nx, nclx1, nclxn, &
-                            alcaix6, acix6, bcix6, &
-                            ailcaix6, aicix6, bicix6, cicix6, dicix6, &
-                            cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
-                            cwxp6, csx6, cwx6, cifx6, cicx6, cisx6, &
-                            cibx6, cifxp6, cisxp6, ciwx6, &
-                            cfi6, cci6, cbi6, cfip6, csip6, cwip6, csi6, &
-                            cwi6, cifi6, cici6, cibi6, cifip6, &
-                            cisip6, ciwip6, cisi6, ciwi6)
-      endif
+      call interpol_imp_(dx, nxm, nx, nclx1, nclxn, &
+                         alcaix6, acix6, bcix6, &
+                         ailcaix6, aicix6, bicix6, cicix6, dicix6, &
+                         cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
+                         cwxp6, csx6, cwx6, cifx6, cicx6, cisx6, &
+                         cibx6, cifxp6, cisxp6, ciwx6, &
+                         cfi6, cci6, cbi6, cfip6, csip6, cwip6, csi6, &
+                         cwi6, cifi6, cici6, cibi6, cifip6, &
+                         cisip6, ciwip6, cisi6, ciwi6)
       call interpol_exp_(dy, nym, ny, ncly1, nclyn, &
                          alcaiy6, aciy6, bciy6, &
                          ailcaiy6, aiciy6, biciy6, ciciy6, diciy6)
-      if (ny /= 1) then
-         call interpol_imp_(dy, nym, ny, ncly1, nclyn, &
-                            alcaiy6, aciy6, bciy6, &
-                            ailcaiy6, aiciy6, biciy6, ciciy6, diciy6, &
-                            cfy6, ccy6, cby6, cfyp6, ciwyp6, csyp6, &
-                            cwyp6, csy6, cwy6, cify6, cicy6, cisy6, &
-                            ciby6, cifyp6, cisyp6, ciwy6, &
-                            cfi6y, cci6y, cbi6y, cfip6y, csip6y, cwip6y, csi6y, &
-                            cwi6y, cifi6y, cici6y, cibi6y, cifip6y, &
-                            cisip6y, ciwip6y, cisi6y, ciwi6y)
-      endif
+      call interpol_imp_(dy, nym, ny, ncly1, nclyn, &
+                         alcaiy6, aciy6, bciy6, &
+                         ailcaiy6, aiciy6, biciy6, ciciy6, diciy6, &
+                         cfy6, ccy6, cby6, cfyp6, ciwyp6, csyp6, &
+                         cwyp6, csy6, cwy6, cify6, cicy6, cisy6, &
+                         ciby6, cifyp6, cisyp6, ciwy6, &
+                         cfi6y, cci6y, cbi6y, cfip6y, csip6y, cwip6y, csi6y, &
+                         cwi6y, cifi6y, cici6y, cibi6y, cifip6y, &
+                         cisip6y, ciwip6y, cisi6y, ciwi6y)
       call interpol_exp_(dz, nzm, nz, nclz1, nclzn, &
                          alcaiz6, aciz6, bciz6, &
                          ailcaiz6, aiciz6, biciz6, ciciz6, diciz6)
@@ -315,7 +303,7 @@ contains
     ! Local variable
     integer :: i
 
-    ! Nothing to do when n=1
+    ! Nothing to do when n=1 (nz=1 for instance)
     if (n==1) return
 
     x3dop%n = n

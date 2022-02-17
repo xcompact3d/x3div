@@ -33,20 +33,6 @@ subroutine parameter()
 
   call parameter_defaults()
 
-  if (nx==1) then
-     nclx1 = 0
-     nclxn = 0
-     p_row = 1
-     p_col = nproc
-  endif
-
-  if (ny==1) then
-     ncly1 = 0
-     nclyn = 0
-     p_row = 1
-     p_col = 1
-  endif
-
   if (nz==1) then
      nclz1 = 0
      nclzn = 0
@@ -98,10 +84,7 @@ subroutine parameter()
   endif
 
   ! Some safety check
-  if (ny==1 .and. nproc>1) &
-     call decomp_2d_abort(__FILE__, __LINE__, nproc, "No parallel simulation when ny=1")
-  if (itimescheme > 1) &
-     call decomp_2d_abort(__FILE__, __LINE__, itimescheme, "itimescheme must be specified as 1-6")
+  if (itimescheme > 1) call decomp_2d_abort(itimescheme, "itimescheme must be specified as 1-6")
 
 end subroutine parameter
 

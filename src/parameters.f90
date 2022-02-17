@@ -116,7 +116,11 @@ subroutine parameter()
   dy2 = dy * dy
   dz2 = dz * dz
 
-  xnu=one/re
+  if (abs(re) > epsilon(re)) then
+     xnu = one / re
+  else
+     xnu = zero
+  endif
 
   anglex = sin(pi*angle/180._mytype)
   angley = cos(pi*angle/180._mytype)

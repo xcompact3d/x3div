@@ -1,0 +1,37 @@
+name: Build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    # We don't want to build openmpi each time this workflow is
+    # run. Setup caching of OpenMPI after it is built and installed.
+    # See "Caching dependencies to speed up workflows" on the GH
+    # actions docs.
+    - name: Cache OpenMPI
+      id: cache-openmpi
+      uses: actions/cache@v2
+      with:
+        path: openmpi-4.1.2/installed
+        key: openmpi-4.1.2
+
+    - name: Build openmpi
+      if: steps.cache-openmpi.outputs.cache-hit != 'true'
+      run: |
+        wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.2.tar.gz
+        tar -xf openmpi-4.1.2.tar.gz
+        cd openmpi-4.1.2/ && mkdir installed
+        ./configure --prefix=$(pwd)/installed
+        make all install
+
+    # Just a way to interact with a github runner through ssh, using
+    # tmate. Useful for debugging in case sthg goes wrong. See
+    # https://github.com/marketplace/actions/debugging-with-tmate
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3

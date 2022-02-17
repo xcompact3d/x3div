@@ -98,11 +98,11 @@ contains
     if (nclx1.eq.2.and.nclxn.eq.1) derxx => derxx_21
     if (nclx1.eq.2.and.nclxn.eq.2) derxx => derxx_22
     !
-    if (ncly1.eq.0.and.nclxn.eq.0) deryy => deryy_00
-    if (ncly1.eq.1.and.nclxn.eq.1) deryy => deryy_11
-    if (ncly1.eq.1.and.nclxn.eq.2) deryy => deryy_12
-    if (ncly1.eq.2.and.nclxn.eq.1) deryy => deryy_21
-    if (ncly1.eq.2.and.nclxn.eq.2) deryy => deryy_22
+    if (ncly1.eq.0.and.nclyn.eq.0) deryy => deryy_00
+    if (ncly1.eq.1.and.nclyn.eq.1) deryy => deryy_11
+    if (ncly1.eq.1.and.nclyn.eq.2) deryy => deryy_12
+    if (ncly1.eq.2.and.nclyn.eq.1) deryy => deryy_21
+    if (ncly1.eq.2.and.nclyn.eq.2) deryy => deryy_22
     !
     if (nclz1.eq.0.and.nclzn.eq.0) derzz => derzz_00
     if (nclz1.eq.1.and.nclzn.eq.1) derzz => derzz_11

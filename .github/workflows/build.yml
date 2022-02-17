@@ -30,8 +30,7 @@ jobs:
         ./configure --prefix=$(pwd)/installed
         make all install
 
-    # Just a way to interact with a github runner through ssh, using
-    # tmate. Useful for debugging in case sthg goes wrong. See
-    # https://github.com/marketplace/actions/debugging-with-tmate
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
+    - name: Build x3div
+      run: |
+        export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
+        make CMP=gcc

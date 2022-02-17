@@ -4,56 +4,132 @@
 
 module case
 
-  use param
-  use decomp_2d, only : mytype
-  use variables
+  use param, only : itype, itype_tgv2d
+  use decomp_2d, only : mytype, xsize
+
+  use tgv2d
 
   implicit none
 
   private ! All functions/subroutines private by default
-  public :: init
+  public :: case_boot, &
+            case_listing, &
+            case_init, &
+            case_bc, &
+            case_forcing, &
+            case_visu, &
+            case_postprocess, &
+            case_finalize
 
 contains
-  !##################################################################
-  subroutine init (ux1, uy1, uz1, dux1, duy1, duz1, &
-       pp3, px1, py1, pz1)
 
-    use mom, only : vel
-    use decomp_2d, only : xsize, ph1
+  !
+  ! Read case-specific parameters in the input file
+  ! Initialize case-specific IO
+  ! Allocate memory
+  !
+  subroutine case_boot()
 
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux1,uy1,uz1
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3),ntime) :: dux1,duy1,duz1
-    real(mytype),dimension(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress) :: pp3
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1, py1, pz1
+    implicit none
 
-    integer :: it, is
-    integer :: i, j, k 
+    if (itype == itype_tgv2d) call tgv2d_boot()
 
-    !! Zero out the pressure field
-    do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
-      pp3(i,j,k,1) = zero
-    enddo
-    
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
-      px1(i,j,k) = zero
-      py1(i,j,k) = zero
-      pz1(i,j,k) = zero
-    enddo
+  end subroutine case_boot
 
-    call vel(ux1, uy1, uz1)
-    
-    !! Setup old arrays
-    do it = 1, ntime
-      do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
-        dux1(i,j,k,it)=ux1(i,j,k)
-        duy1(i,j,k,it)=uy1(i,j,k)
-        duz1(i,j,k,it)=uz1(i,j,k)
-      enddo
-    enddo
+  !
+  ! Print case-specific parameters in the listing
+  !
+  subroutine case_listing()
 
+    implicit none
 
-  end subroutine init
+    if (itype == itype_tgv2d) call tgv2d_listing()
+
+  end subroutine case_listing
+
+  !
+  ! Case-specific initialization
+  !
+  subroutine case_init(ux1, uy1, uz1)
+
+    implicit none
+
+    ! Arguments
+    real(mytype),intent(out),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1
+
+    ! Case-specific init
+    if (itype == itype_tgv2d) call tgv2d_init(ux1, uy1, uz1)
+
+  end subroutine case_init
+
+  !
+  ! Case-specific boundary conditions
+  !
+  subroutine case_bc(ux1, uy1, uz1)
+
+    implicit none
+
+    ! Arguments
+    real(mytype), intent(inout), dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1
+
+  end subroutine case_bc
+
+  !
+  ! Add case-specific forcing term in the momentum r.h.s.
+  !
+  subroutine case_forcing(dux1, duy1, duz1)
+
+    use param, only : ntime
+
+    implicit none
+
+    ! Arguments
+    real(mytype), intent(inout), dimension(xsize(1),xsize(2),xsize(3),ntime) :: dux1, duy1, duz1
+
+  end subroutine case_forcing
+
+  !
+  ! Visualization
+  ! This is called when itime % ioutput = 0
+  !
+  subroutine case_visu()
+
+    implicit none
+
+  end subroutine case_visu
+
+  !
+  ! Case-specific post-processing
+  ! This is called at the end of each time step
+  !
+  subroutine case_postprocess(ux1, uy1, uz1, ndt)
+
+    use param, only : ivisu, ioutput
+
+    implicit none
+
+    ! Arguments
+    real(mytype), dimension(xsize(1),xsize(2),xsize(3)), intent(in) :: ux1, uy1, uz1
+    integer, intent(in) :: ndt
+
+    if (itype == itype_tgv2d) call tgv2d_postprocess(ux1, uy1, uz1, ndt)
+
+    if ((ivisu /= 0).and.(ioutput /= 0)) then
+      if (mod(ndt, ioutput) == 0) call case_visu()
+    endif
+
+  end subroutine case_postprocess
+
+  !
+  ! Finalize case-specific IO
+  ! Free memory
+  !
+  subroutine case_finalize()
+
+    implicit none
+
+    if (itype == itype_tgv2d) call tgv2d_finalize()
+
+  end subroutine case_finalize
+
 end module case
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!! case.f90 ends here

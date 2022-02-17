@@ -2,42 +2,34 @@
 !This file is part of Xcompact3d (xcompact3d.com)
 !SPDX-License-Identifier: BSD 3-Clause
 
+module parameters
+
+  use decomp_2d, only : mytype, nrank, nproc, decomp_2d_abort
+  use param
+  use variables
+
+  private :: parameter_defaults
+
+contains
+
 !###########################################################################
 !
 !  SUBROUTINE: parameter
 ! DESCRIPTION: Reads the input.i3d file and sets the parameters of the
 !              simulation.
+! FIXME      : Only rank=0 should read input.i3d, then MPI_BCAST
 !
 !###########################################################################
 subroutine parameter()
 
-  use iso_fortran_env
-
-  use decomp_2d, only : mytype
   use x3d_precision, only : pi
-  use param
-  use variables
-  use decomp_2d, only : nrank, nproc
 
   implicit none
 
-  real(mytype) :: theta, cfl,cf2
   integer :: longueur ,impi,j, is, total
 #ifdef DEBUG
   if (nrank == 0) write(*,*) '# parameter start'
 #endif
-
-  if (nrank==0) then
-     write(*,*) '==========================================================='
-     write(*,*) '======================Xcompact3D==========================='
-     write(*,*) '===Copyright (c) 2022 Éric Lamballais and Sylvain Laizet==='
-     write(*,*) '==========================================================='
-#if defined(VERSION)
-     write(*,*)'Git version        : ', VERSION
-#else
-     write(*,*)'Git version        : unknown'
-#endif
-  endif
 
   call parameter_defaults()
 
@@ -85,21 +77,84 @@ subroutine parameter()
   dy2 = dy * dy
   dz2 = dz * dz
 
-  ! cfl = 0.2 and u = 1
-  dt = 0.2_mytype * dx
   if (abs(re) > epsilon(re)) then
      xnu = one / re
   else
-     xnu = one / 1600._mytype
+     xnu = zero
   endif
 
-  anglex = sin(pi*angle/180._mytype)
-  angley = cos(pi*angle/180._mytype)
-  !###########################################################################
-  ! Log-output
-  !###########################################################################
+  ! Some safety check
+  if (itimescheme > 1) call decomp_2d_abort(itimescheme, "itimescheme must be specified as 1-6")
+
+end subroutine parameter
+
+!###########################################################################
+!
+!  SUBROUTINE: parameter_defaults
+! DESCRIPTION: Sets the default simulation parameters.
+!
+!###########################################################################
+subroutine parameter_defaults()
+
+  use x3d_precision, only : twopi
+
+  implicit none
+
+  integer :: i
+
+  ifirstder = 4
+  isecondder = 4
+  ro = 99999999._mytype
+  angle = zero
+  u1 = 2
+  u2 = 1
+  init_noise = zero
+  inflow_noise = zero
+  iin = 0
+  itimescheme = 1
+  iimplicit = 0
+  istret = 0
+  ipinter=3
+  beta = 0
+  iscalar = 0
+  cont_phi = 0
+  irestart = 0
+  itime0 = 0
+  t0 = zero
+  dt = zero
+
+  nclx1 = 0; nclxn = 0
+  ncly1 = 0; nclyn = 0
+  nclz1 = 0; nclzn = 0
+  
+  npress = 1 !! By default people only need one pressure field
+  imodulo2 = 1
+
+  itype = itype_tgv2d
+  ivisu = 0
+  ioutput = 0
+
+end subroutine parameter_defaults
+
+!
+! Log / output
+!
+subroutine listing()
+
+  use iso_fortran_env
+
+  implicit none
 
   if (nrank==0) then
+     write(*,*) '==========================================================='
+     write(*,*) '======================Xcompact3D==========================='
+     write(*,*) '===Copyright (c) 2022 Éric Lamballais and Sylvain Laizet==='
+     write(*,*) '==========================================================='
+#if defined(VERSION)
+     write(*,*)'Git version        : ', VERSION
+#else
+     write(*,*)'Git version        : unknown'
+#endif
      write(*,"(' Reynolds number Re     : ',F17.3)") re
      write(*,"(' xnu                    : ',F17.8)") xnu
      print *,'==========================================================='
@@ -108,7 +163,6 @@ subroutine parameter()
      write(*,"(' Time step dt           : ',F17.8)") dt
      !
      if (itimescheme.eq.1) then
-       !print *,'Temporal scheme        : Forwards Euler'
        write(*,"(' Temporal scheme        : ',A20)") "Forwards Euler"
      else
        print *,'Error: itimescheme must be specified as 1-6'
@@ -168,56 +222,6 @@ subroutine parameter()
 
   endif
 
-#ifdef DEBUG
-  if (nrank .eq. 0) write(*,*)'# parameter done'
-#endif
+end subroutine listing
 
-  return
-end subroutine parameter
-
-!###########################################################################
-!
-!  SUBROUTINE: parameter_defaults
-! DESCRIPTION: Sets the default simulation parameters.
-!
-!###########################################################################
-subroutine parameter_defaults()
-
-  use param
-  use variables
-  use x3d_precision, only : twopi
-
-  implicit none
-
-  integer :: i
-
-  ifirstder = 4
-  isecondder = 4
-  ro = 99999999._mytype
-  angle = zero
-  u1 = 2
-  u2 = 1
-  init_noise = zero
-  inflow_noise = zero
-  iin = 0
-  itimescheme = 1
-  iimplicit = 0
-  istret = 0
-  ipinter=3
-  beta = 0
-  iscalar = 0
-  cont_phi = 0
-  irestart = 0
-  itime0 = 0
-  t0 = zero
-  dt = zero
-
-  xlx = twopi; yly = twopi; zlz = one
-  nclx1 = 0; nclxn = 0
-  ncly1 = 0; nclyn = 0
-  nclz1 = 0; nclzn = 0
-  
-  npress = 1 !! By default people only need one pressure field
-  imodulo2 = 1
-
-end subroutine parameter_defaults
+end module parameters

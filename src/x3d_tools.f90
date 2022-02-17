@@ -86,6 +86,7 @@ subroutine init_xcompact3d(ndt_max)
   use x3d_operator_z_data, only : x3d_operator_z_data_init
   use x3d_operator_1d, only : x3d_operator_1d_init
   use x3d_derive, only : x3d_derive_init
+  use parameters
   use case
 
   use var
@@ -155,6 +156,9 @@ subroutine init_xcompact3d(ndt_max)
   enddo
 
   call parameter()
+  call case_boot()
+  call listing()
+  call case_listing()
 
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
   call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
@@ -176,24 +180,7 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
-  call init_flowfield()
-
 endsubroutine init_xcompact3d
-!########################################################################
-!########################################################################
-subroutine init_flowfield()
-  
-  use case
-  use var
-
-  use param, only: zero, itime
-
-  implicit none
-
-  call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
-  itime = 0
-
-end subroutine
 !########################################################################
 !########################################################################
 subroutine finalise_xcompact3d(flag)

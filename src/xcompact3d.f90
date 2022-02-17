@@ -11,7 +11,7 @@ program xcompact3d
   use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
-  use mom,     only : test_tgv2d
+  use case
 
   implicit none
 
@@ -25,17 +25,20 @@ program xcompact3d
 
   call init_xcompact3d(ndt_max)
 
+  call case_init(ux1, uy1, uz1)
+
   telapsed = 0
   tmin = telapsed
-
   ndt = 1
-  call test_tgv2d(ux1, uy1, uz1, ndt)
 
   do while(ndt < ndt_max)
+
      itr = 1 ! no inner iterations
      !call init_flowfield()
 
      tstart = MPI_Wtime()
+
+     call case_bc(ux1, uy1, uz1)
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
      do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
@@ -64,7 +67,8 @@ program xcompact3d
      end if
 
      ndt = ndt + 1
-     call test_tgv2d(ux1, uy1, uz1, ndt)
+     call case_postprocess(ux1, uy1, uz1, ndt)
+
   end do
 
   if (nrank == 0) then

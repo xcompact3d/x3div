@@ -34,3 +34,9 @@ jobs:
       run: |
         export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
         make CMP=gcc
+
+    - name: Run default benchmark
+      run: |
+        export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
+        export LD_LIBRARY_PATH=$(pwd)/openmpi-4.1.2/installed/lib:$LD_LIBRARY_PATH
+        mpirun -n 1 xcompact3d

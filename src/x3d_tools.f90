@@ -195,14 +195,11 @@ subroutine finalise_xcompact3d(flag)
   use x3d_operator_1d, only : x3d_operator_1d_finalize
   use x3d_derive, only : x3d_derive_finalize
   use var, only : var_finalize
-  use case, only : case_finalize
 
   implicit none
 
   logical, intent(in) :: flag
   integer :: ierr
-
-  call case_finalize()
 
   call decomp_info_finalize(ph1)
   call decomp_info_finalize(ph2)

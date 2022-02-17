@@ -77,6 +77,7 @@ program xcompact3d
      print *, "Compute rate (min-max)[dt/s]: ", ndt / tmin, ndt /  tmax
   end if
 
+  call case_finalize()
   call finalise_xcompact3d(.true.)
 
 end program xcompact3d

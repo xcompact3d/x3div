@@ -147,6 +147,13 @@ subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
+  if (nx==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tx(i,j,k) = zero
+     enddo
+     return
+  endif
+
   do concurrent (k=1:nz, j=1:ny)
      ! Compute r.h.s.
      tx(1,j,k) = afix*(ux(2,j,k)-ux(nx,j,k)) &
@@ -185,6 +192,13 @@ subroutine derx_ij(tx,ux,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nx==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tx(i,j,k) = zero
+     enddo
+     return
+  endif
 
   do concurrent (k=1:nz, j=1:ny)
      ! Compute r.h.s.
@@ -315,6 +329,13 @@ subroutine dery_00(ty,uy,sy,x3dop,ppy,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
+  if (ny==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        ty(i,j,k) = zero
+     enddo
+     return
+  endif
+
   ! Compute r.h.s.
   do concurrent (k=1:nz)
      do concurrent (i=1:nx)
@@ -367,6 +388,13 @@ subroutine dery_ij(ty,uy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+
+  if (ny==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        ty(i,j,k) = zero
+     enddo
+     return
+  endif
 
   do concurrent (k=1:nz)
 
@@ -736,6 +764,13 @@ subroutine derxx_00(tx,ux,sx,x3dop,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
+  if (nx==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tx(i,j,k) = zero
+     enddo
+     return
+  endif
+
   ! Compute r.h.s.
   do concurrent (k=1:nz, j=1:ny)
      tx(1,j,k) = asix*(ux(2,j,k)-ux(1   ,j,k) &
@@ -835,6 +870,13 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+
+  if (nx==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        tx(i,j,k) = zero
+     enddo
+     return
+  endif
 
   do concurrent (k=1:nz, j=1:ny)
 
@@ -1092,6 +1134,13 @@ subroutine deryy_00(ty,uy,sy,x3dop,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
+  if (ny==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        ty(i,j,k) = zero
+     enddo
+     return
+  endif
+
   ! Compute r.h.s.
   do concurrent (k=1:nz)
      do concurrent (i=1:nx)
@@ -1207,6 +1256,13 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+
+  if (ny==1) then
+     do concurrent(k=1:nz, j=1:ny, i=1:nx)
+        ty(i,j,k) = zero
+     enddo
+     return
+  endif
 
   ! Compute r.h.s.
   do concurrent (k=1:nz)

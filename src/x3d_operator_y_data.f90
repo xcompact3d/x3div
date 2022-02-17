@@ -61,6 +61,8 @@ contains
 
       implicit none
 
+      if (ny==1) return
+
       allocate (ffy(ny))
       ffy = zero
       allocate (sfy, source=ffy)
@@ -134,7 +136,11 @@ contains
    !
    subroutine x3d_operator_y_data_finalize()
 
+      use variables, only : ny
+
       implicit none
+
+      if (ny==1) return
 
       deallocate (ffy)
       deallocate (sfy)

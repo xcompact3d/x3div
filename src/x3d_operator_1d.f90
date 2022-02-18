@@ -308,6 +308,21 @@ contains
 
   end subroutine finalize
 
+   !
+   ! Prepare Thomas algorithm for a tri-diagonal matrix M
+   ! See https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm#Method
+   ! Here :
+   !     ( c(1) f(1) 0    0    0 ...
+   ! M = ( b(1) c(2) f(2) 0    0 ...
+   !     ( 0    b(2) c(3) f(3) 0 ...
+   !
+   ! b, in, lower diagonal
+   ! c, in, diagonal coefficient
+   ! f, in, upper diagonal
+   ! s, out, vector for the forward step of the Thomas algo.
+   ! w, out, vector for the backward step of the Thomas algo.
+   ! n, in, size of the problem
+   !
    subroutine prepare(b, c, f, s, w, n)
 
       use decomp_2d, only: mytype

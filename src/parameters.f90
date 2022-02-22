@@ -141,6 +141,7 @@ end subroutine parameter_defaults
 !
 subroutine listing()
 
+  use MPI
   use iso_fortran_env
 
   implicit none
@@ -185,7 +186,7 @@ subroutine listing()
      write(*,*)'==========================================================='
      write(*,"(' High and low speed : u1=',F6.2,' and u2=',F6.2)") u1,u2
      write(*,*)'==========================================================='
-     ! Show the compile flags detected
+     ! Show the compile flags detected and the version of the MPI library
 #ifdef DOUBLE_PREC
 #ifdef SAVE_SINGLE
      write(*,*)'Numerical precision: Double, saving in single'
@@ -197,6 +198,7 @@ subroutine listing()
 #endif
      write(*,*)'Compiled with ', compiler_version()
      write(*,*)'Compiler options : ', compiler_options()
+     write(*,'(" Version of the MPI library : ",I0,".",I0)') MPI_VERSION, MPI_SUBVERSION
 #ifdef DEBUG
      write(*,*)'Compile flag DEBUG detected'
 #endif

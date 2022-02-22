@@ -402,15 +402,18 @@ contains
          afi = one/(two*d)
          bfi = zero
       elseif (ifirstder == 2) then ! Fourth-order central
-         call decomp_2d_abort(__FILE__, __LINE__, ifirstder, "Set of coefficients not ready yet")
+         call decomp_2d_abort(__FILE__, __LINE__, ifirstder, &
+                 "Set of coefficients not ready yet")
       elseif (ifirstder == 3) then ! Fourth-order compact
-         call decomp_2d_abort(__FILE__, __LINE__, ifirstder, "Set of coefficients not ready yet")
+         call decomp_2d_abort(__FILE__, __LINE__, ifirstder, &
+                 "Set of coefficients not ready yet")
       elseif (ifirstder == 4) then ! Sixth-order compact
          alfai = one/three
          afi = (seven/nine)/d
          bfi = (one/36._mytype)/d
       else
-         call decomp_2d_abort(__FILE__, __LINE__, ifirstder, "This is not an option. Please use ifirstder=1,2,3,4")
+         call decomp_2d_abort(__FILE__, __LINE__, &
+                 ifirstder, "This is not an option. Please use ifirstder=1,2,3,4")
       end if
 
       if (ifirstder == 1) then
@@ -453,7 +456,6 @@ contains
                                cfn, dfn, alfam, afm, alfai, afi, bfi, &
                                ff, fs, fw, ffp, fsp, fwp, d, n, ncl1, ncln)
 
-      use decomp_2d, only: mytype, decomp_2d_abort
       use param
 
       implicit none
@@ -588,9 +590,11 @@ contains
          bstt = bsi
          cstt = csi
       elseif (isecondder == 2) then ! Fourth-order central
-         call decomp_2d_abort(__FILE__, __LINE__, isecondder, "Set of coefficients not ready yet")
+         call decomp_2d_abort(__FILE__, __LINE__, &
+                 isecondder, "Set of coefficients not ready yet")
       elseif (isecondder == 3) then ! Fourth-order compact
-         call decomp_2d_abort(__FILE__, __LINE__, isecondder, "Set of coefficients not ready yet")
+         call decomp_2d_abort(__FILE__, __LINE__, &
+                 isecondder, "Set of coefficients not ready yet")
       elseif (isecondder == 4) then ! Sixth-order compact Lele style (no extra dissipation)
          alsai = two/11._mytype
          asi = (12._mytype/11._mytype)/d2
@@ -685,7 +689,6 @@ contains
                                 alsai, asi, bsi, csi, dsi, &
                                 sf, ss, sw, sfp, ssp, swp, d2, n, ncl1, ncln)
 
-      use decomp_2d, only: decomp_2d_abort
       use param
 
       implicit none

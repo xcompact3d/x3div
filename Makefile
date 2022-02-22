@@ -15,6 +15,8 @@ IVER = 17# 15,16,17,18
 CMP = nvhpc# intel,gcc,nvhpc
 FFT = generic# generic,fftw3,mkl
 
+BUILD ?=
+
 #######CMP settings###########
 ifeq ($(CMP),intel)
 FC = mpiifort
@@ -22,8 +24,14 @@ FFLAGS = -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
 FFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
 FC = mpif90
-FFLAGS = -cpp -O3 -march=native
+FFLAGS = -cpp
+ifeq ($(BUILD),debug)
+FFLAGS += -g3 -Og
+FFLAGS += -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none
+else
+FFLAGS += -O3 -march=native
 FFLAGS += -fopenmp -ftree-parallelize-loops=12
+endif
 else ifeq ($(CMP),nagfor)
 FC = mpinagfor
 FFLAGS = -fpp

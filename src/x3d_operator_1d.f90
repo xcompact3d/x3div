@@ -240,6 +240,10 @@ contains
     call init(x3d_op_derzz, sfz, ssz, swz, nz, nclz, alsakz, 0)
     call init(x3d_op_derzzp, sfzp, sszp, swzp, nz, nclz, alsakz, 1)
 
+#ifdef DEBUG
+      if (nrank == 0) write (*, *) '# x3d_operator_1d_init done'
+#endif
+
   end subroutine x3d_operator_1d_init
 
   !

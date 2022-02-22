@@ -5,6 +5,7 @@
 module x3d_operator_x_data
 
    use decomp_2d, only: mytype
+   use param, only: zero
 
    implicit none
 
@@ -61,7 +62,7 @@ contains
       implicit none
 
       allocate (ffx(nx))
-      ffx = 0._mytype
+      ffx = zero
       allocate (sfx, source=ffx)
       allocate (fsx, source=ffx)
       allocate (fwx, source=ffx)
@@ -90,7 +91,7 @@ contains
       allocate (swxpS, source=ffx)
 
       allocate (cfx6(nxm))
-      cfx6 = 0._mytype
+      cfx6 = zero
       allocate (ccx6, source=cfx6)
       allocate (cbx6, source=cfx6)
       allocate (cfxp6, source=cfx6)

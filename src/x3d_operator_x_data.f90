@@ -5,7 +5,6 @@
 module x3d_operator_x_data
 
    use decomp_2d, only: mytype
-   use param, only: zero
 
    implicit none
 
@@ -55,14 +54,14 @@ contains
    !
    ! Allocate memory
    !
-   subroutine x3d_operator_x_data_init()
-
-      use variables, only: nx, nxm
+   subroutine x3d_operator_x_data_init(nx, nxm)
 
       implicit none
 
+      integer, intent(in) :: nx, nxm
+
       allocate (ffx(nx))
-      ffx = zero
+      ffx = 0._mytype
       allocate (sfx, source=ffx)
       allocate (fsx, source=ffx)
       allocate (fwx, source=ffx)
@@ -91,7 +90,7 @@ contains
       allocate (swxpS, source=ffx)
 
       allocate (cfx6(nxm))
-      cfx6 = zero
+      cfx6 = 0._mytype
       allocate (ccx6, source=cfx6)
       allocate (cbx6, source=cfx6)
       allocate (cfxp6, source=cfx6)

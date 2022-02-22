@@ -171,9 +171,9 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm, nym, nz, ph3)
 
   call var_init()
-  call x3d_operator_x_data_init()
-  call x3d_operator_y_data_init()
-  call x3d_operator_z_data_init()
+  call x3d_operator_x_data_init(nx, nzm)
+  call x3d_operator_y_data_init(ny, nym)
+  call x3d_operator_z_data_init(nz, nzm)
   call x3d_operator_1d_init()
   call x3d_derive_init()
 
@@ -195,6 +195,7 @@ subroutine finalise_xcompact3d(flag)
   use x3d_operator_1d, only : x3d_operator_1d_finalize
   use x3d_derive, only : x3d_derive_finalize
   use var, only : var_finalize
+  use variables, only : nz
 
   implicit none
 
@@ -211,7 +212,7 @@ subroutine finalise_xcompact3d(flag)
   call x3d_operator_1d_finalize()
   call x3d_operator_x_data_finalize()
   call x3d_operator_y_data_finalize()
-  call x3d_operator_z_data_finalize()
+  call x3d_operator_z_data_finalize(nz)
   call var_finalize()
 
   call decomp_2d_finalize()

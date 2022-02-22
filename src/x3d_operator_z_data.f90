@@ -5,7 +5,6 @@
 module x3d_operator_z_data
 
    use decomp_2d, only: mytype
-   use param, only: zero
 
    implicit none
 
@@ -55,16 +54,16 @@ contains
    !
    ! Allocate memory and prepare arrays
    !
-   subroutine x3d_operator_z_data_init()
-
-      use variables, only: nz, nzm
+   subroutine x3d_operator_z_data_init(nz, nzm)
 
       implicit none
+
+      integer, intent(in) :: nz, nzm
 
       if (nz==1) return
 
       allocate (ffz(nz))
-      ffz = zero
+      ffz = 0._mytype
       allocate (sfz, source=ffz)
       allocate (fsz, source=ffz)
       allocate (fwz, source=ffz)
@@ -93,7 +92,7 @@ contains
       allocate (swzpS, source=ffz)
 
       allocate (cfz6(nzm))
-      cfz6 = zero
+      cfz6 = 0._mytype
       allocate (ccz6, source=cfz6)
       allocate (cbz6, source=cfz6)
       allocate (cfzp6, source=cfz6)
@@ -134,11 +133,11 @@ contains
    !
    ! Free memory
    !
-   subroutine x3d_operator_z_data_finalize()
-
-      use variables, only : nz
+   subroutine x3d_operator_z_data_finalize(nz)
 
       implicit none
+
+      integer, intent(in) :: nz
 
       if (nz==1) return
 

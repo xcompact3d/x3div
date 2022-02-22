@@ -33,6 +33,7 @@ else ifeq ($(CMP),gcc)
     FFLAGS += -fallow-argument-mismatch
   endif
   ifeq ($(BUILD),debug)
+    DEFS += -DDEBUG
     FFLAGS += -g3 -Og
     FFLAGS += -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none
   else

@@ -7,7 +7,7 @@ module case
   use param, only : itype, itype_tgv2d
   use decomp_2d, only : mytype, xsize
 
-  use BC_tgv2d
+  use bc_tgv2d
 
   implicit none
 

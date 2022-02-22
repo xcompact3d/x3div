@@ -2,7 +2,7 @@
 !This file is part of Xcompact3d (xcompact3d.com)
 !SPDX-License-Identifier: BSD 3-Clause
 
-module BC_tgv2d
+module bc_tgv2d
 
   use MPI
 
@@ -296,4 +296,4 @@ contains
 
   end subroutine compute_ky2
 
-end module BC_tgv2d
+end module bc_tgv2d

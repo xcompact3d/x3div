@@ -5,7 +5,6 @@
 module x3d_operator_y_data
 
    use decomp_2d, only: mytype
-   use param, only: zero
 
    implicit none
 
@@ -62,7 +61,7 @@ contains
       implicit none
 
       allocate (ffy(ny))
-      ffy = zero
+      ffy = 0._mytype
       allocate (sfy, source=ffy)
       allocate (fsy, source=ffy)
       allocate (fwy, source=ffy)
@@ -91,7 +90,7 @@ contains
       allocate (swypS, source=ffy)
 
       allocate (cfy6(nym))
-      cfy6 = zero
+      cfy6 = 0._mytype
       allocate (ccy6, source=cfy6)
       allocate (cby6, source=cfy6)
       allocate (cfyp6, source=cfy6)

@@ -4,7 +4,7 @@
 
 module x3d_operator_1d
 
-  use decomp_2d, only: mytype
+  use decomp_2d, only: mytype, nrank
 
   implicit none
 
@@ -548,7 +548,7 @@ contains
                                 alsatt, astt, bstt, cstt, &
                                 alsai, asi, bsi, csi, dsi, d2, n, ncl1, ncln)
 
-      use decomp_2d, only: mytype, nrank, decomp_2d_abort
+      use decomp_2d, only: decomp_2d_abort
       use x3d_precision, only: pi, twopi
       use param
       use variables, only: nu0nu, cnu
@@ -681,7 +681,7 @@ contains
                                 alsai, asi, bsi, csi, dsi, &
                                 sf, ss, sw, sfp, ssp, swp, d2, n, ncl1, ncln)
 
-      use decomp_2d, only: mytype, nrank, decomp_2d_abort
+      use decomp_2d, only: decomp_2d_abort
       use param
 
       implicit none

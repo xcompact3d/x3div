@@ -90,20 +90,18 @@ module param
   !and false otherwise
   logical :: nclx,ncly,nclz
 
-  enum, bind(C)
-       enumerator :: itype_user = 0
-       enumerator :: itype_lockexch = 1
-       enumerator :: itype_tgv = 2
-       enumerator :: itype_channel = 3
-       enumerator :: itype_hill = 4
-       enumerator :: itype_cyl = 5
-       enumerator :: itype_dbg = 6
-       enumerator :: itype_mixlayer = 7
-       enumerator :: itype_jet = 8
-       enumerator :: itype_tbl = 9
-       enumerator :: itype_tgv2d = 10
-  end enum
-  integer(kind=kind(itype_user)), save :: itype
+  integer, parameter :: itype_user = 0
+  integer, parameter :: itype_lockexch = 1
+  integer, parameter :: itype_tgv = 2
+  integer, parameter :: itype_channel = 3
+  integer, parameter :: itype_hill = 4
+  integer, parameter :: itype_cyl = 5
+  integer, parameter :: itype_dbg = 6
+  integer, parameter :: itype_mixlayer = 7
+  integer, parameter :: itype_jet = 8
+  integer, parameter :: itype_tbl = 9
+  integer, parameter :: itype_tgv2d = 10
+  integer, save :: itype
 
   integer :: cont_phi,itr,itime,itest,iprocessing
   integer :: ifft,istret,iforc_entree,iturb

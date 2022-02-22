@@ -11,49 +11,55 @@ GIT_VERSION := $(shell git describe --tag --long --always)
 DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 
 LCL = local# local,lad,sdu,archer
-IVER = 17# 15,16,17,18
-CMP = nvhpc# intel,gcc,nvhpc
-FFT = generic# generic,fftw3,mkl
+CMP = nvhpc# intel,gcc,nagfor,cray,nvhpc
+FFT = generic# fftw3,fftw3_f03,generic,mkl
 
-BUILD ?=
+BUILD ?= # debug can be used with gcc
+FCFLAGS ?= # user can set default compiler flags
+LDFLAGS ?= # user can set default linker flags
+FFLAGS = $(FCFLAGS)
+LFLAGS = $(LDFLAGS)
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
-FC = mpiifort
-FFLAGS = -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
-FFLAGS += -fopenmp
+  FC = mpiifort
+  FFLAGS += -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
+  FFLAGS += -fopenmp
+  LFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
-FC = mpif90
-FFLAGS = -cpp
-ifeq ($(BUILD),debug)
-FFLAGS += -g3 -Og
-FFLAGS += -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none
-else
-FFLAGS += -O3 -march=native
-FFLAGS += -fopenmp -ftree-parallelize-loops=12
-endif
+  FC = mpif90
+  FFLAGS += -cpp
+  ifeq "$(shell expr `gfortran -dumpversion | cut -f1 -d.` \>= 10)" "1"
+    FFLAGS += -fallow-argument-mismatch
+  endif
+  ifeq ($(BUILD),debug)
+    FFLAGS += -g3 -Og
+    FFLAGS += -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none
+  else
+    FFLAGS += -O3 -march=native
+    FFLAGS += -fopenmp -ftree-parallelize-loops=12
+    LFLAGS += -fopenmp
+  endif
 else ifeq ($(CMP),nagfor)
-FC = mpinagfor
-FFLAGS = -fpp
+  FC = mpinagfor
+  FFLAGS += -fpp
 else ifeq ($(CMP),cray)
-FC = ftn
-FFLAGS = -eF -g -O3 -N 1023
+  FC = ftn
+  FFLAGS += -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
-FC = mpif90
-FFLAGS = -cpp -O3 -march=native
-FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-#FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
+  FC = mpif90
+  FFLAGS += -cpp -O3 -march=native
+  FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
+#  FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
+  LFLAGS += -acc -lnvhpcwrapnvtx
 endif
 
-
-MODDIR = ./mod
 DECOMPDIR = ./decomp2d
 SRCDIR = ./src
 
 ### List of files for the main code
 SRCDECOMP = $(DECOMPDIR)/decomp_2d.f90 $(DECOMPDIR)/glassman.f90 $(DECOMPDIR)/fft_$(FFT).f90 
 OBJDECOMP = $(SRCDECOMP:%.f90=%.o)
-#SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/parameters.f90 #$(SRCDIR)/*.f90
 OBJ = $(SRC:%.f90=%.o)
 SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/x3d_transpose.f90 $(SRCDIR)/var.f90 $(SRCDIR)/thomas.f90 $(SRCDIR)/x3d_operator_x_data.f90 $(SRCDIR)/x3d_operator_y_data.f90 $(SRCDIR)/x3d_operator_z_data.f90 $(SRCDIR)/x3d_operator_1d.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/x3d_derive.f90 $(SRCDIR)/x3d_staggered.f90 $(SRCDIR)/x3d_filters.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/BC-tgv2d.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/x3d_tools.f90 $(SRCDIR)/xcompact3d.f90
 
@@ -72,16 +78,16 @@ else ifeq ($(FFT),fftw3_f03)
   LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
 else ifeq ($(FFT),generic)
   INC=
-  LIBFFT=#-lnvhpcwrapnvtx
+  LIBFFT=
 else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-	INC=-I$(MKLROOT)/include
+  INC=-I$(MKLROOT)/include
 endif
 
 #######OPTIONS settings###########
-OPT = -I$(SRCDIR) -I$(DECOMPDIR) $(FFLAGS)
-LINKOPT = $(FFLAGS) #-lnvhpcwrapnvtx
+OPT = -I$(SRCDIR) -I$(DECOMPDIR)
+LINKOPT = $(LFLAGS)
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 
@@ -91,19 +97,12 @@ xcompact3d : $(OBJDECOMP) $(OBJ)
 	$(FC) -o $@ $(LINKOPT) $(OBJDECOMP) $(OBJ) $(LIBFFT)
 
 $(OBJDECOMP):$(DECOMPDIR)%.o : $(DECOMPDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
+	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(INC) -c $<
 	mv $(@F) ${DECOMPDIR}
-	#mv *.mod ${DECOMPDIR}
-
 
 $(OBJ):$(SRCDIR)%.o : $(SRCDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
+	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(INC) -c $<
 	mv $(@F) ${SRCDIR}
-	#mv *.mod ${SRCDIR}
-
-## This %.o : %.f90 doesn't appear to be called...
-%.o : %.f90
-	$(FC) $(FFLAGS) $(DEFS) $(DEFS2) $(INC) -c $<
 
 .PHONY: post
 post:

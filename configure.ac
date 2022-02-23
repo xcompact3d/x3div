@@ -16,6 +16,9 @@ AC_MSG_NOTICE([Compiler detected : $FC])
 # Single precision build, off by default
 AC_ARG_ENABLE([single], AS_HELP_STRING([--enable-single], [single precision build (default is double)]))
 
+# Single precision snapshots, off by default
+AC_ARG_ENABLE([single-snapshot], AS_HELP_STRING([--enable-single-snapshot], [single precision snapshot (default is double)]))
+
 # Debug mode, off by default
 AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [enable debugging (default is no)]))
 
@@ -109,6 +112,9 @@ if test "$?" = "0" ; then
 		FCFLAGS="-cpp"
 	else
                 FCFLAGS="-cpp -DDOUBLE_PREC"
+		if test "x$enable_single_snapshot" = "xyes"; then
+			FCFLAGS="$FCFLAGS -DSAVE_SINGLE"
+		fi
         fi
 	AS_IF([test "x$enable_debug" = "xyes"],
 	      [FCFLAGS="$FCFLAGS -Og -g3 -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none -DDEBUG"],

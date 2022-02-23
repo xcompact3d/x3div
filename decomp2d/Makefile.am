@@ -10,7 +10,7 @@ lib_LTLIBRARIES = libdecomp2d.la
 libdecomp2d_la_SOURCES = \
 decomp_2d.f90 \
 glassman.f90 \
-fft_@fftengine@.f90
+fft_@FFTENGINE@.f90
 libdecomp2d_la_LDFLAGS = -no-undefined
 if HAVE_MKL
 libdecomp2d_la_SOURCES += mkl_dfti.f90
@@ -18,7 +18,7 @@ endif
 
 # Allow parallel make
 glassman.lo: decomp_2d.lo
-fft_@fftengine@.lo: glassman.lo
+fft_@FFTENGINE@.lo: glassman.lo
 
 clean-local:
 	-rm -f *.mod

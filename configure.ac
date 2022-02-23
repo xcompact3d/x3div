@@ -9,14 +9,9 @@ AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 user_FCFLAGS=$FCFLAGS
 #user_LDFLAGS=$LDFLAGS
 
-# Check for a MPI library
-AX_PROG_FC_MPI([],[mpifound=yes],[mpifound=no])
-if test "x$mpifound" = "xyes"; then
-	AC_MSG_NOTICE([MPI detected : $FC])
-fi
-if test "x$mpifound" = "xno"; then
-	AC_MSG_FAILURE([Fortran MPI not detected])
-fi
+# Check for a MPI Fortran compiler if FC is not provided
+AX_PROG_FC_MPI([],[],[])
+AC_MSG_NOTICE([Compiler detected : $FC])
 
 # Single precision build, off by default
 AC_ARG_ENABLE([single], AS_HELP_STRING([--enable-single], [single precision build (default is double)]))
@@ -79,18 +74,20 @@ AC_ARG_WITH(mkl-lib,
 	     MKL_LDFLAGS="-L$with_mkl/lib"
 	     fi])
 # Default FFT engine is generic
-AC_SUBST(fftengine, generic)
+AC_SUBST(FFTENGINE, generic)
 if test "x$with_fftw3" != "xno" -a "x$with_fftw3" != "xcheck"; then
+	AC_MSG_NOTICE([FFT engine fftw3 was provided])
 	AS_IF([test "x$enable_single" = "xyes"],
 	      [FFTW3_LDFLAGS="$FFTW3_LDFLAGS -lfftw3f"],
               [FFTW3_LDFLAGS="$FFTW3_LDFLAGS -lfftw3"])
-	AC_SUBST(fftengine, fftw3)
+	AC_SUBST(FFTENGINE, fftw3)
 	AC_SUBST(FFTW3FCFLAGS, ${FFTW3_FCFLAGS})
 	AC_SUBST(FFTW3LDFLAGS, ${FFTW3_LDFLAGS})
 fi
 AM_CONDITIONAL(HAVE_FFTW3, [test "x$with_fftw3" != "xno" -a "x$with_fftw3" != "xcheck"])
 if test "x$with_mkl" != "xno" -a "x$with_mkl" != "xcheck"; then
-	AC_SUBST(fftengine, mkl)
+	AC_MSG_NOTICE([FFT engine mkl was provided])
+	AC_SUBST(FFTENGINE, mkl)
 	AC_SUBST(MKLFCFLAGS, ${MKL_FCFLAGS})
         AC_SUBST(MKLLDFLAGS, ${MKL_LDFLAGS})
 fi

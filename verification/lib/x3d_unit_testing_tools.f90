@@ -15,8 +15,8 @@ contains
    ! Save given error values in a text file
    subroutine log(filename, l1, l2, linf, time)
 
-      use decomp_2d   , only : nrank, nproc, real_type, decomp_2d_abort
-      use x3dprecision, only : mytype
+      use decomp_2d, only : mytype, nrank, nproc, real_type, decomp_2d_abort
+
       implicit none
 
       character(len=*), intent(in) :: filename

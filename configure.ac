@@ -96,6 +96,19 @@ if test "x$with_mkl" != "xno" -a "x$with_mkl" != "xcheck"; then
 fi
 AM_CONDITIONAL(HAVE_MKL, [test "x$with_mkl" != "xno" -a "x$with_mkl" != "xcheck"])
 
+# pfunit unit tests
+AC_ARG_WITH(pfunit,
+            [AS_HELP_STRING([--with-pfunit=PATH],[prefix directory for pfunit])],
+            [if test "x$withval" = "x"; then
+                with_pfunit=no
+            fi],
+            [with_pfunit=no])
+if test "x$with_pfunit" != "xno"; then
+        AC_MSG_NOTICE([Unit tests activated])
+        AC_SUBST(PFUNITDIR, ${with_pfunit})
+fi
+AM_CONDITIONAL(HAVE_PFUNIT, [test "x$with_pfunit" != "xno"])
+
 #
 # Check the Fortran compiler
 #
@@ -118,7 +131,7 @@ if test "$?" = "0" ; then
         fi
 	AS_IF([test "x$enable_debug" = "xyes"],
 	      [FCFLAGS="$FCFLAGS -Og -g3 -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none -DDEBUG"],
-	      [FCFLAGS="$FCFLAGS -O3 -march=native"])
+	      [FCFLAGS="$FCFLAGS -O3 -march=native -DNDEBUG"])
 fi
 #
 # 2. ifort ?
@@ -149,6 +162,12 @@ AS_IF([test -d ${srcdir}/.git],
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_INIT([disable-static])
 
-AC_CONFIG_FILES([Makefile src/Makefile decomp2d/Makefile])
+AC_CONFIG_FILES([\
+	Makefile \
+	src/Makefile \
+	decomp2d/Makefile \
+	verification/Makefile \
+	verification/lib/Makefile \
+	verification/verif/Makefile])
 
 AC_OUTPUT

@@ -1,4 +1,4 @@
-SUBDIRS = decomp2d src .
+SUBDIRS = decomp2d src verification .
 
 bin_PROGRAMS = xcompact3d
 xcompact3d_SOURCES = src/xcompact3d.f90

@@ -4,6 +4,10 @@
 
 module tools
 
+  use decomp_2d, only : mytype, real_type, xsize, decomp_2d_abort
+  use variables, only : nx, ny, nz
+  use param, only : zero
+
   implicit none
 
   private
@@ -20,10 +24,6 @@ contains
   !##################################################################
   subroutine error_L1_L2_Linf_xsize(err, l1, l2, linf)
 
-    USE variables   , only : nx, ny, nz
-    use decomp_2d, only : mytype
-    use decomp_2d   , only : xsize
-
     implicit none
       
     real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3)) :: err
@@ -38,8 +38,6 @@ contains
   subroutine error_L1_L2_Linf_generic(err, l1, l2, linf, n1, n2, n3, ntot)
 
     ! Compute L1, L2 and Linf norm of given 3D array
-    USE param, only : zero
-    use decomp_2d, only : mytype, real_type, decomp_2d_abort
     USE MPI
     
     implicit none

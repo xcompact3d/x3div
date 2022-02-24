@@ -18,7 +18,11 @@ endif
 
 # Allow parallel make
 glassman.lo: decomp_2d.lo
+if HAVE_MKL
+fft_@FFTENGINE@.lo: glassman.lo mkl_dfti.lo
+else
 fft_@FFTENGINE@.lo: glassman.lo
+endif
 
 clean-local:
 	-rm -f *.mod

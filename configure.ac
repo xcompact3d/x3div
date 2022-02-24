@@ -138,9 +138,19 @@ fi
 #
 if test "x$Fcompiler" != "xok"; then
 echo `$FC --version 2>&1 | head -1 | grep 'ifort'` > /dev/null
-if test "" = ""; then
+if test "$?" = "0"; then
 	Fcompiler=ok
-	fc_version=""
+	fc_version="`$FC -dumpversion | cut -f1 -d.`"
+	AC_MSG_NOTICE([Intel ifort version $fc_version])
+        if test "x$enable_single" = "xyes"; then
+                FCFLAGS="-fpp"
+        else
+                FCFLAGS="-fpp -DDOUBLE_PREC"
+                if test "x$enable_single_snapshot" = "xyes"; then
+                        FCFLAGS="$FCFLAGS -DSAVE_SINGLE"
+                fi
+        fi
+        FCFLAGS="$FCFLAGS -O3 -march=native -mtune=native -DNDEBUG"
 fi
 fi
 #

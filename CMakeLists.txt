@@ -22,10 +22,6 @@ else (MPI_FOUND)
   message(STATUS "Alternatively use ccmake to manually set the include if available")
 endif (MPI_FOUND)
 
-
-set(CMAKE_Fortran_FLAGS "-cpp -funroll-loops -floop-optimize -g
--Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none")
-
 # Create a static library for the fft
 add_subdirectory(decomp2d)
 

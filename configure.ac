@@ -205,6 +205,11 @@ fi
 #
 if test -d ${srcdir}/.git; then
 	X3DVERSION="`git $(srcdir) describe --tag --long --always`"
+	# Add "-modif" if any diff
+	echo `git diff $(srcdir)` | grep index > /dev/null
+	if test "$?" = "0"; then
+		X3DVERSION="${X3DVERSION}-modif"
+	fi
 else
 	X3DVERSION=${PACKAGE_VERSION}
 fi
@@ -289,8 +294,7 @@ else
 	echo "   no unit test"
 fi
 echo
-echo "Configuration is complete."
-echo "Compile and install the code using:"
+echo "Configuration is complete. Compile and install the code using:"
 echo " make -j"
 if test "x$with_pfunit" != "xno"; then
 	echo " make -j check"

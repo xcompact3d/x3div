@@ -202,8 +202,17 @@ contains
        
   end subroutine zthomas_12
 
-  ! Thomas algorithm for a 1D vector
-  subroutine thomas1d(tt, ff, fs, fw, nn)
+  !
+  ! Thomas algorithm for a 1D vector (solve My = x with tri-diagonal M)
+  ! See comments in the subroutine prepare (x3d_operator_1d.f90)
+  !
+  ! tt, inout, vector x and y
+  ! ff, in, upper diagonal of the tri-diagonal matrix
+  ! fs, in, used during the forward step
+  ! fw, in, used during the backward step
+  ! nn, in, size of the vector
+  !
+  pure subroutine thomas1d(tt, ff, fs, fw, nn)
 
     implicit none
 

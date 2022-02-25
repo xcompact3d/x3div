@@ -142,7 +142,7 @@ contains
     real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: ux1, uy1, uz1
 
     !! LOCAL
-#ifdef DEBG
+#ifdef DEBUG
     real(mytype) avg_param
     if (nrank .eq. 0) write(*,*)'## Init int_time'
 #endif

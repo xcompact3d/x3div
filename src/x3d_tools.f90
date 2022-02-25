@@ -195,7 +195,6 @@ subroutine finalise_xcompact3d(flag)
   use x3d_operator_1d, only : x3d_operator_1d_finalize
   use x3d_derive, only : x3d_derive_finalize
   use var, only : var_finalize
-  use variables, only : nz
 
   implicit none
 
@@ -212,7 +211,7 @@ subroutine finalise_xcompact3d(flag)
   call x3d_operator_1d_finalize()
   call x3d_operator_x_data_finalize()
   call x3d_operator_y_data_finalize()
-  call x3d_operator_z_data_finalize(nz)
+  call x3d_operator_z_data_finalize()
   call var_finalize()
 
   call decomp_2d_finalize()

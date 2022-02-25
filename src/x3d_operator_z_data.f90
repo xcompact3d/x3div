@@ -133,13 +133,11 @@ contains
    !
    ! Free memory
    !
-   subroutine x3d_operator_z_data_finalize(nz)
+   subroutine x3d_operator_z_data_finalize()
 
       implicit none
 
-      integer, intent(in) :: nz
-
-      if (nz==1) return
+      if (.not.allocated(ffz)) return
 
       deallocate (ffz)
       deallocate (sfz)

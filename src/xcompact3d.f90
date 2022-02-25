@@ -40,6 +40,7 @@ program xcompact3d
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
   use mom,     only : test_du, test_dv, test_dw
+  use time_integrators, only : int_time
 
   implicit none
 
@@ -65,11 +66,7 @@ program xcompact3d
      tstart = MPI_Wtime()
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
-       ux1(i,j,k) = ux1(i,j,k) + dt * dux1(i,j,k,1)
-       uy1(i,j,k) = uy1(i,j,k) + dt * duy1(i,j,k,1)
-       uz1(i,j,k) = uz1(i,j,k) + dt * duz1(i,j,k,1)
-     enddo
+     call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
      
      !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
      !  divu3(:,:,:) = zero
@@ -82,10 +79,10 @@ program xcompact3d
      tmin = telapsed
      tmax = telapsed
 
-     !call MPI_Allreduce(telapsed, tmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, code)
-     !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
-     !call MPI_Allreduce(telapsed, tmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, code)
-     !if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
+     call MPI_Allreduce(telapsed, tmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, code)
+     if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
+     call MPI_Allreduce(telapsed, tmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, code)
+     if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_Allreduce")
      if (nrank == 0) then
         print *, "Elapse time min ", tmin, " max ", tmax
      end if

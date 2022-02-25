@@ -4,6 +4,10 @@
 
 module time_integrators
 
+  use param, only : itr, ntime, gdt
+  use variables
+  use decomp_2d, only : mytype, xsize, nrank
+
   implicit none
 
   private
@@ -14,9 +18,6 @@ contains
   subroutine intt(var1,dvar1)
 
     use MPI
-    use param    , only : itr, ntime, gdt
-    use variables
-    use decomp_2d, only : mytype, xsize
 
     implicit none
 
@@ -130,9 +131,6 @@ contains
 
   subroutine int_time(ux1, uy1, uz1, dux1, duy1, duz1)
 
-    use decomp_2d, only : mytype, xsize, nrank
-    use param, only : ntime
-
     implicit none
 
     !! input/output
@@ -142,7 +140,7 @@ contains
     real(mytype), dimension(xsize(1), xsize(2), xsize(3)) :: ux1, uy1, uz1
 
     !! LOCAL
-#ifdef DEBG
+#ifdef DEBUG
     real(mytype) avg_param
     if (nrank .eq. 0) write(*,*)'## Init int_time'
 #endif
@@ -160,14 +158,9 @@ contains
   !!      INPUTS: dux1, duy1, duz1 - the RHS(s) of the momentum equations
   !!     OUTPUTS: ux1,   uy1,  uz1 - the intermediate momentum state.
   !!       NOTES: This is integrating the MOMENTUM in time (!= velocity)
-  !!      AUTHOR: Paul Bartholomew
   !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine int_time_momentum(ux1, uy1, uz1, dux1, duy1, duz1)
-
-    use param
-    use variables
-    use decomp_2d
 
     implicit none
 

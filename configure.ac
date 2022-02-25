@@ -291,9 +291,13 @@ fi
 echo
 echo "Configuration is complete."
 echo "Compile and install the code using:"
-echo "make -j"
+echo " make -j"
 if test "x$with_pfunit" != "xno"; then
-	echo "make -j check"
+	echo " make -j check"
 fi
-echo "make -j install"
+echo " make -j install"
+echo
+echo "Please note that it is best to run configure outside of the source folder"
+echo
+echo "In case of issue, check the section \"Output variables\" in the file config.log"
 echo

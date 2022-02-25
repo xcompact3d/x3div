@@ -12,6 +12,7 @@ set(X3DFILES
             parameters.f90
             poisson.f90
             thomas.f90
+            time_integrators.f90
 	    tools.f90
             transeq.f90
             var.f90

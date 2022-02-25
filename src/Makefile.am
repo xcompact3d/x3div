@@ -1,4 +1,4 @@
-AM_FCFLAGS=-I$(top_builddir)/decomp2d
+AM_FCFLAGS=-I$(top_builddir)/decomp2d -DVERSION=\"$(X3DVERSION)\"
 
 lib_LTLIBRARIES = libx3d.la
 libx3d_la_SOURCES = \

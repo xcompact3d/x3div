@@ -200,6 +200,17 @@ fi
 #
 
 #
+# Provide the git version
+# or the one defined in AC_INIT
+#
+if test -d ${srcdir}/.git; then
+	X3DVERSION="`git $(srcdir) describe --tag --long --always`"
+else
+	X3DVERSION=${PACKAGE_VERSION}
+fi
+AC_SUBST(X3DVERSION)
+
+#
 # Combine default flags with the user ones
 #
 FCFLAGS="$FCFLAGS $user_FCFLAGS"
@@ -233,3 +244,56 @@ AC_CONFIG_FILES([\
 	verification/verif/Makefile])
 
 AC_OUTPUT
+
+
+#
+#
+# Listing at the end of configure
+#
+#
+echo
+echo
+echo "Configuration options:"
+echo
+#
+if test "x$enable_single" = "xyes"; then
+	echo "   Precision: single"
+else
+	echo "   Precision: double"
+if test "x$enable_single_snapshot" = "xyes"; then
+	echo "   Snapshop precision: single"
+else
+	echo "   Snapshot precision: double"
+fi
+fi
+#
+if test "x$enable_debug" = "xyes"; then
+	echo "   Build: debug"
+else
+	echo "   Build; production"
+fi
+#
+if test "x$with_fftw3" != "xno" -a "x$with_fftw3" != "xcheck"; then
+	echo "   FFT engine: FFTW3"
+else
+if test "x$with_mkl" != "xno" -a "x$with_mkl" != "xcheck"; then
+	echo "   FFT engine: MKL"
+else
+	echo "   FFT engine: generic"
+fi
+fi
+#
+if test "x$with_pfunit" != "xno"; then
+	echo "   unit tests activated (pFunit)"
+else
+	echo "   no unit test"
+fi
+echo
+echo "Configuration is complete."
+echo "Compile and install the code using:"
+echo "make -j"
+if test "x$with_pfunit" != "xno"; then
+	echo "make -j check"
+fi
+echo "make -j install"
+echo

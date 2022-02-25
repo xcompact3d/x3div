@@ -2,27 +2,46 @@
 AC_INIT([x3div], [alpha], [https://github.com/xcompact3d/x3div/])
 AC_LANG(Fortran)
 AC_CONFIG_MACRO_DIR([./m4])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects])
 
-AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
+#
+# Make sure flags are initialized.
+#
+AM_FCFLAGS="${AM_FCFLAGS}"
+AM_LDFLAGS="${AM_LDFLAGS}"
+FCFLAGS="${FCFLAGS}"
+LDFLAGS="${LDFLAGS}"
 
+#
 # Save the flags provided by the user
-user_FCFLAGS=$FCFLAGS
-#user_LDFLAGS=$LDFLAGS
+#
+user_FCFLAGS="$FCFLAGS"
+#user_LDFLAGS="$LDFLAGS"
 
+#
 # Check for a MPI Fortran compiler if FC is not provided
+#
 AX_PROG_FC_MPI([],[],[])
 AC_MSG_NOTICE([Compiler detected : $FC])
 
+#
 # Single precision build, off by default
-AC_ARG_ENABLE([single], AS_HELP_STRING([--enable-single], [single precision build (default is double)]))
+#
+AC_ARG_ENABLE([single], AS_HELP_STRING([--enable-single], [single precision build [default is double]]))
 
+#
 # Single precision snapshots, off by default
-AC_ARG_ENABLE([single-snapshot], AS_HELP_STRING([--enable-single-snapshot], [single precision snapshot (default is double)]))
+#
+AC_ARG_ENABLE([single-snapshot], AS_HELP_STRING([--enable-single-snapshot], [single precision snapshot for double precision build [default is double]]))
 
+#
 # Debug mode, off by default
-AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [enable debugging (default is no)]))
+#
+AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [enable debugging [default is no]]))
 
-# FFT, fftw3
+#
+# FFT engine fftw3 ?
+#
 AC_ARG_WITH(fftw3,
             [AS_HELP_STRING([--with-fftw3=PATH],[prefix directory for fftw3])],
             [if test "x$withval" = "x"; then
@@ -49,7 +68,10 @@ AC_ARG_WITH(fftw3-lib,
 		  -a "x$with_fftw3" != "xcheck"; then
 	     FFTW3_LDFLAGS="-L$with_fftw3/lib"
 	     fi])
-# FFT, mkl
+
+#
+# FFT engine intel mkl ?
+#
 AC_ARG_WITH(mkl,
             [AS_HELP_STRING([--with-mkl=PATH],[prefix directory for mkl])],
             [if test "x$withval" = "x"; then
@@ -74,29 +96,39 @@ AC_ARG_WITH(mkl-lib,
 	     MKL_LDFLAGS="-L$with_mkl_lib"],
 	    [if test "x$with_mkl" != "xno" -a "x$with_mkl" != "xyes" \
 		  -a "x$with_mkl" != "xcheck"; then
-	     MKL_LDFLAGS="-L$with_mkl/lib"
+	     MKL_LDFLAGS="-L$with_mkl/lib/intel64"
 	     fi])
-# Default FFT engine is generic
-AC_SUBST(FFTENGINE, generic)
+
+#
+# FFT engine is generic if fftw3 or mkl is not provided
+#
 if test "x$with_fftw3" != "xno" -a "x$with_fftw3" != "xcheck"; then
 	AC_MSG_NOTICE([FFT engine fftw3 was provided])
-	AS_IF([test "x$enable_single" = "xyes"],
-	      [FFTW3_LDFLAGS="$FFTW3_LDFLAGS -lfftw3f"],
-              [FFTW3_LDFLAGS="$FFTW3_LDFLAGS -lfftw3"])
 	AC_SUBST(FFTENGINE, fftw3)
 	AC_SUBST(FFTW3FCFLAGS, ${FFTW3_FCFLAGS})
 	AC_SUBST(FFTW3LDFLAGS, ${FFTW3_LDFLAGS})
-fi
-AM_CONDITIONAL(HAVE_FFTW3, [test "x$with_fftw3" != "xno" -a "x$with_fftw3" != "xcheck"])
+	if test "x$enable_single" = "xyes"; then
+		AC_SUBST(FFTW3LDADD, -lfftw3f)
+	else
+		AC_SUBST(FFTW3LDADD, -lfftw3)
+	fi
+else
 if test "x$with_mkl" != "xno" -a "x$with_mkl" != "xcheck"; then
 	AC_MSG_NOTICE([FFT engine mkl was provided])
 	AC_SUBST(FFTENGINE, mkl)
 	AC_SUBST(MKLFCFLAGS, ${MKL_FCFLAGS})
         AC_SUBST(MKLLDFLAGS, ${MKL_LDFLAGS})
+else
+	AC_MSG_NOTICE([FFT engine is generic])
+	AC_SUBST(FFTENGINE, generic)
 fi
+fi
+AM_CONDITIONAL(HAVE_FFTW3, [test "x$with_fftw3" != "xno" -a "x$with_fftw3" != "xcheck"])
 AM_CONDITIONAL(HAVE_MKL, [test "x$with_mkl" != "xno" -a "x$with_mkl" != "xcheck"])
 
+#
 # pfunit unit tests
+#
 AC_ARG_WITH(pfunit,
             [AS_HELP_STRING([--with-pfunit=PATH],[prefix directory for pfunit])],
             [if test "x$withval" = "x"; then
@@ -116,7 +148,8 @@ Fcompiler=none
 #
 # 1. gfortran ?
 #
-echo `$FC --version 2>&1 | head -1 | grep 'GNU Fortran'` > /dev/null
+if test "x$Fcompiler" != "xok"; then
+echo `$FC --version 2>&1 | head -1` | grep 'GNU Fortran' > /dev/null
 if test "$?" = "0" ; then
 	Fcompiler=ok
 	fc_version="`$FC -dumpversion | cut -f1 -d.`"
@@ -130,14 +163,16 @@ if test "$?" = "0" ; then
 		fi
         fi
 	AS_IF([test "x$enable_debug" = "xyes"],
-	      [FCFLAGS="$FCFLAGS -Og -g3 -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none -DDEBUG"],
-	      [FCFLAGS="$FCFLAGS -O3 -march=native -DNDEBUG"])
+	      [FCFLAGS="$FCFLAGS -Og -g3 -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none -DDEBUG"],
+	      [FCFLAGS="$FCFLAGS -O3 -DNDEBUG"])
+	OMPFLAG="-fopenmp"
+fi
 fi
 #
-# 2. ifort ?
+# 2. ifort classic ?
 #
 if test "x$Fcompiler" != "xok"; then
-echo `$FC --version 2>&1 | head -1 | grep 'ifort'` > /dev/null
+echo `$FC --version 2>&1 | head -1` | grep 'ifort' > /dev/null
 if test "$?" = "0"; then
 	Fcompiler=ok
 	fc_version="`$FC -dumpversion | cut -f1 -d.`"
@@ -150,7 +185,10 @@ if test "$?" = "0"; then
                         FCFLAGS="$FCFLAGS -DSAVE_SINGLE"
                 fi
         fi
-        FCFLAGS="$FCFLAGS -O3 -march=native -mtune=native -DNDEBUG"
+	AS_IF([test "x$enable_debug" = "xyes"],
+	      [FCFLAGS="$CFLAGS -g -O0 -traceback -check all -check nopointer -fpe0 -ftrapuv -DDEBUG"],
+	      [FCFLAGS="$FCFLAGS -O3 -DNDEBUG"])
+	OMPFLAG="-qopenmp"
 fi
 fi
 #
@@ -158,19 +196,33 @@ fi
 #
 
 #
-# 4+ TODO
+# 4. TODO (Cray, IBM XL, ...)
 #
 
+#
 # Combine default flags with the user ones
+#
 FCFLAGS="$FCFLAGS $user_FCFLAGS"
+#LDFLAGS="$LDFLAGS $user_LDFLAGS"
 
-# Maintener mode if a .git folder is found
+#
+# Propagate specific flag
+#
+AC_SUBST(OMPFLAG)
+
+#
+# Maintainer mode if a .git folder is found
+# ("rebuild rules" for out of date Makefiles, configure, ...)
+#
 AS_IF([test -d ${srcdir}/.git],
       [AM_MAINTAINER_MODE([enable])],
       [AM_MAINTAINER_MODE([disable])])
 
+#
+# Create libtool, needed for shared/static libraries.
+#
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
-LT_INIT([disable-static])
+LT_INIT([dlopen])
 
 AC_CONFIG_FILES([\
 	Makefile \

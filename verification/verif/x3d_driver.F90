@@ -1,18 +1,12 @@
-!---------------------------------------------------------------------------
-! This file is external to the pfunit library and is used to represent
-! information that cannot be determined at run-time.   In particular,
-! Fortran lacks reflection/introspection and therefore cannot automatically
-! collect user-defined test suites.
-!
-!
-! Typical usage is for the user to compile this file while leaving it in the
-! pFUnit installation directory.    Use "-D<_TEST_SUITES>" to specify a file
-! that contains the list of test_suites to be builtlinked and executed.
-!
-!
-! For serial runs, the user links with the FUnit library, while for parallel
-! runs the user links with FUnit _and_ pFUnit.
-!---------------------------------------------------------------------------
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
+
+!This file is adapted from https://github.com/Goddard-Fortran-Ecosystem/pFUnit/
+
+!Copyright 2005 United States Government as represented by the
+!Administrator of The National Aeronautics and Space
+!Administration. All Rights Reserved.
 
 module loader
    use FUnit, only: TestSuite
@@ -21,6 +15,20 @@ module loader
 contains
 
    function load_tests() result(suite)
+
+#define ADDULE_TEST_SUITE(m,s) use m, only: s
+#define ADD_TEST_SUITE(s) ! do nothing
+#ifdef x3dinit
+ADD_TEST_SUITE(x3dinit)
+#endif
+#ifdef x3dtest
+ADD_TEST_SUITE(x3dtest)
+#endif
+#ifdef x3dfin
+ADD_TEST_SUITE(x3dfin)
+#endif
+#undef ADD_TEST_SUITE
+#undef ADDULE_TEST_SUITE
 
       type (TestSuite) :: suite
 

@@ -6,10 +6,10 @@ xcompact3d_FCFLAGS = -I$(top_builddir)/decomp2d -I$(top_builddir)/src
 xcompact3d_LDFLAGS = -L$(top_builddir)/decomp2d -L$(top_builddir)/src
 xcompact3d_LDADD = -ldecomp2d -lx3d
 if HAVE_FFTW3
-xcompact3d_LDADD += @FFTW3LDFLAGS@
+xcompact3d_LDADD += $(FFTW3LDFLAGS) $(FFTW3LDADD)
 endif
 if HAVE_MKL
-xcompact3d_LDADD += @MKLLDFLAGS@
+xcompact3d_LDADD += $(MKLLDFLAGS)
 endif
 
 include_HEADERS = \

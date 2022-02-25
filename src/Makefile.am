@@ -4,6 +4,7 @@ lib_LTLIBRARIES = libx3d.la
 libx3d_la_SOURCES = \
 x3d_precision.f90 \
 module_param.f90 \
+time_integrators.f90 \
 tools.f90 \
 x3d_transpose.f90 \
 var.f90 \
@@ -25,6 +26,7 @@ x3d_tools.f90
 libx3d_la_LDFLAGS = -no-undefined
 
 # Allow parallel make
+time_integrators.lo: module_param.lo
 tools.lo: module_param.lo
 x3d_transpose.lo: module_param.lo
 var.lo: module_param.lo

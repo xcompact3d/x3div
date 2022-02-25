@@ -171,7 +171,7 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm, nym, nz, ph3)
 
   call var_init()
-  call x3d_operator_x_data_init(nx, nzm)
+  call x3d_operator_x_data_init(nx, nxm)
   call x3d_operator_y_data_init(ny, nym)
   call x3d_operator_z_data_init(nz, nzm)
   call x3d_operator_1d_init()

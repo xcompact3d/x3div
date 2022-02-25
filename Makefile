@@ -35,7 +35,7 @@ else ifeq ($(CMP),gcc)
   ifeq ($(BUILD),debug)
     DEFS += -DDEBUG
     FFLAGS += -g3 -Og
-    FFLAGS += -ffpe-trap=invalid,zero -fcheck=bounds -fimplicit-none
+    FFLAGS += -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none
   else
     FFLAGS += -O3 -march=native
     FFLAGS += -fopenmp -ftree-parallelize-loops=12

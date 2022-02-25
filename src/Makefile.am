@@ -20,6 +20,7 @@ x3d_filters.f90 \
 navier.f90 \
 parameters.f90 \
 bc_tgv2d.f90 \
+bc_tgv.f90 \
 case.f90 \
 transeq.f90 \
 x3d_tools.f90
@@ -39,7 +40,8 @@ x3d_filters.lo: x3d_operator_1d.lo
 navier.lo: poisson.lo x3d_staggered.lo
 parameters.lo: module_param.lo
 bc_tgv2d.lo: x3d_operator_x_data.lo x3d_operator_y_data.lo
-case.lo: bc_tgv2d.lo
+bc_tgv.lo: x3d_derive.lo
+case.lo: bc_tgv2d.lo bc_tgv.lo
 transeq.lo: x3d_derive.lo
 x3d_tools.lo: x3d_derive.lo
 

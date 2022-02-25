@@ -6,6 +6,7 @@ message(STATUS "PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
 
 set(X3DFILES 
             bc_tgv2d.f90
+	    bc_tgv.f90
             case.f90
             module_param.f90
             navier.f90

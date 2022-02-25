@@ -7,6 +7,7 @@ module case
   use param, only : itype, itype_tgv2d
   use decomp_2d, only : mytype, xsize
 
+  use bc_tgv
   use bc_tgv2d
 
   implicit none
@@ -32,6 +33,8 @@ contains
 
     implicit none
 
+    if (itype == itype_tgv) call tgv_boot()
+
     if (itype == itype_tgv2d) call tgv2d_boot()
 
   end subroutine case_boot
@@ -42,6 +45,8 @@ contains
   subroutine case_listing()
 
     implicit none
+
+    if (itype == itype_tgv) call tgv_listing()
 
     if (itype == itype_tgv2d) call tgv2d_listing()
 
@@ -57,7 +62,8 @@ contains
     ! Arguments
     real(mytype),intent(out),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1
 
-    ! Case-specific init
+    if (itype == itype_tgv) call tgv_init(ux1, uy1, uz1)
+
     if (itype == itype_tgv2d) call tgv2d_init(ux1, uy1, uz1)
 
   end subroutine case_init
@@ -112,6 +118,8 @@ contains
     real(mytype), dimension(xsize(1),xsize(2),xsize(3)), intent(in) :: ux1, uy1, uz1
     integer, intent(in) :: ndt
 
+    if (itype == itype_tgv) call tgv_postprocess(ux1, uy1, uz1, ndt)
+
     if (itype == itype_tgv2d) call tgv2d_postprocess(ux1, uy1, uz1, ndt)
 
     if ((ivisu /= 0).and.(ioutput /= 0)) then
@@ -127,6 +135,8 @@ contains
   subroutine case_finalize()
 
     implicit none
+
+    if (itype == itype_tgv) call tgv_finalize()
 
     if (itype == itype_tgv2d) call tgv2d_finalize()
 

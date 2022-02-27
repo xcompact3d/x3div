@@ -43,7 +43,7 @@ contains
     ! Local variable
     logical :: fexists
 
-    ! Default domain size is 2 pi x 2 pi x 1
+    ! Default domain size is 2 pi x 2 pi x 2 pi
     ! This should be inside input.i3d
     xlx = twopi
     yly = twopi

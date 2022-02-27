@@ -119,13 +119,13 @@ contains
        uz1(i, j, k) = zero
     enddo
 
-    ! Check initial error
+    ! Check initial TKE, dissipation and enstrophy
     call tgv_postprocess(ux1, uy1, uz1, 1)
 
   endsubroutine tgv_init
 
   !
-  ! Compare the velocity field with the analytical solution
+  ! Compute and log various statistics
   !
   subroutine tgv_postprocess(ux1, uy1, uz1, ndt)
 

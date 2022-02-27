@@ -111,17 +111,13 @@ contains
     integer :: i, j, k, ip, it
 
     ! Initial velocity
-    do k = 1, xsize(3)
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
        z = (k + xstart(3) - 2) * dz
-       do j = 1, xsize(2)
-          y = (j + xstart(2) - 2) * dy
-          do i = 1, xsize(1)
-             x = (i + xstart(1) - 2) * dx
-             ux1(i, j, k) = sin(twopi * (x / xlx)) * cos(twopi * (y / yly))
-             uy1(i, j, k) = -cos(twopi * (x / xlx)) * sin(twopi * (y / yly))
-             uz1(i, j, k) = zero
-          enddo
-       enddo
+       y = (j + xstart(2) - 2) * dy
+       x = (i + xstart(1) - 2) * dx
+       ux1(i, j, k) = sin(twopi * (x / xlx)) * cos(twopi * (y / yly))
+       uy1(i, j, k) = -cos(twopi * (x / xlx)) * sin(twopi * (y / yly))
+       uz1(i, j, k) = zero
     enddo
 
     ! Check initial error

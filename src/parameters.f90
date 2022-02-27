@@ -130,7 +130,7 @@ subroutine parameter_defaults()
   npress = 1 !! By default people only need one pressure field
   imodulo2 = 1
 
-  itype = itype_tgv2d
+  itype = itype_tgv
   ivisu = 0
   ioutput = 0
 

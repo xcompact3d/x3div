@@ -4,7 +4,7 @@
 
 module case
 
-  use param, only : itype, itype_tgv2d
+  use param, only : itype, itype_tgv, itype_tgv2d
   use decomp_2d, only : mytype, xsize
 
   use bc_tgv

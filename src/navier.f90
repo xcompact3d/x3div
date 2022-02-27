@@ -124,33 +124,33 @@ contains
     !WORK X-PENCILS
 
     
-    call derxvp(pp1,ta1,sx,x3d_op_derxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call derxvp(pp1,ta1,x3d_op_derxvp,xsize(1),nxm,xsize(2),xsize(3))
 
-    call interxvp(pgy1,tb1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
-    call interxvp(pgz1,tc1,sx,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call interxvp(pgy1,tb1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
+    call interxvp(pgz1,tc1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))
 
     call transpose_x_to_y(pp1,duxdxp2,ph2)!->NXM NY NZ
     call transpose_x_to_y(pgy1,uyp2,ph2)
     call transpose_x_to_y(pgz1,uzp2,ph2)
 
     !WORK Y-PENCILS
-    call interyvp(upi2,duxdxp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
-    call deryvp(duydypi2,uyp2,sy,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call interyvp(upi2,duxdxp2,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call deryvp(duydypi2,uyp2,x3d_op_deryvp,ppyi,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
     !! Compute sum dudx + dvdy !ph1%yst(1):ph1%yen(1),nym,ysize(3)
     do concurrent (k=1:ysize(3), j=1:nym, i=ph1%yst(1):ph1%yen(1))
       duydypi2(i,j,k) = duydypi2(i,j,k) + upi2(i,j,k)
     enddo
 
-    call interyvp(upi2,uzp2,sy,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
+    call interyvp(upi2,uzp2,x3d_op_intyvp,(ph1%yen(1)-ph1%yst(1)+1),ysize(2),nym,ysize(3))
 
     call transpose_y_to_z(duydypi2,duxydxyp3,ph3)!->NXM NYM NZ
     call transpose_y_to_z(upi2,uzp3,ph3)
 
     !WORK Z-PENCILS
-    call interzvp(pp3,duxydxyp3,sz,x3d_op_intzvp,(ph1%zen(1)-ph1%zst(1)+1),&
+    call interzvp(pp3,duxydxyp3,x3d_op_intzvp,(ph1%zen(1)-ph1%zst(1)+1),&
          (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzm)
-    call derzvp(po3,uzp3,sz,x3d_op_derzvp,(ph1%zen(1)-ph1%zst(1)+1),&
+    call derzvp(po3,uzp3,x3d_op_derzvp,(ph1%zen(1)-ph1%zst(1)+1),&
          (ph1%zen(2)-ph1%zst(2)+1),zsize(3),nzm)
 
     !! Compute sum dudx + dvdy + dwdz
@@ -208,20 +208,20 @@ contains
     real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1,py1,pz1
 
     !WORK Z-PENCILS
-    call interzpv(ppi3,pp3,sz,x3d_op_intzpv,&
+    call interzpv(ppi3,pp3,x3d_op_intzpv,&
          (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzm,zsize(3))
-    call derzpv(pgz3,pp3,sz,x3d_op_derzpv,&
+    call derzpv(pgz3,pp3,x3d_op_derzpv,&
          (ph3%zen(1)-ph3%zst(1)+1),(ph3%zen(2)-ph3%zst(2)+1),nzm,zsize(3))
 
     !WORK Y-PENCILS
     call x3d_transpose_z_to_y(pgz3,pgz2,ph3) !nxm nym nz
     call x3d_transpose_z_to_y(ppi3,pp2,ph3)
 
-    call interypv(ppi2,pp2,sy,x3d_op_intypv,&
+    call interypv(ppi2,pp2,x3d_op_intypv,&
          (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
-    call derypv(pgy2,pp2,sy,x3d_op_derypv,ppy,&
+    call derypv(pgy2,pp2,x3d_op_derypv,ppy,&
          (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
-    call interypv(pgzi2,pgz2,sy,x3d_op_intypv,&
+    call interypv(pgzi2,pgz2,x3d_op_intypv,&
          (ph3%yen(1)-ph3%yst(1)+1),nym,ysize(2),ysize(3))
 
     !WORK X-PENCILS
@@ -230,9 +230,9 @@ contains
     call x3d_transpose_y_to_x(pgy2,pgy1,ph2)
     call x3d_transpose_y_to_x(pgzi2,pgz1,ph2)
 
-    call derxpv(px1,pp1,sx,x3d_op_derxpv,nxm,xsize(1),xsize(2),xsize(3))
-    call interxpv(py1,pgy1,sx,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
-    call interxpv(pz1,pgz1,sx,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call derxpv(px1,pp1,x3d_op_derxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call interxpv(py1,pgy1,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
+    call interxpv(pz1,pgz1,x3d_op_intxpv,nxm,xsize(1),xsize(2),xsize(3))
 
     !we are in X pencils:
     if (nclx1.eq.2) then

@@ -121,15 +121,6 @@ contains
     dv3=zero
     allocate(po3, source=dv3)
 
-
-    !module derivative
-    allocate(sx(xsize(2),xsize(3)))
-    sx=zero
-    allocate(sy(ysize(1),ysize(3)))
-    sy=zero
-    allocate(sz(zsize(1),zsize(2)))
-    sz=zero
-
     !module waves
     allocate(zkz(nz/2+1))
     zkz=zero
@@ -296,11 +287,6 @@ contains
 
     deallocate(dv3)
     deallocate(po3)
-
-    !module derivative
-    deallocate(sx)
-    deallocate(sy)
-    deallocate(sz)
 
     !module waves
     deallocate(zkz)

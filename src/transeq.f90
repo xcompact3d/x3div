@@ -74,12 +74,12 @@ contains
       tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
     enddo
 
-    call derx (td1,ta1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (te1,tb1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tf1,tc1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (ta1,ux1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tb1,uy1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (tc1,uz1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (td1,ta1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (te1,tb1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tf1,tc1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (ta1,ux1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tb1,uy1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
@@ -100,12 +100,12 @@ contains
       tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
     enddo
 
-    call dery (tg2,td2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (th2,te2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (ti2,tf2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (td2,ux2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (te2,uy2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tf2,uz2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tg2,td2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (th2,te2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (ti2,tf2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (td2,ux2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (te2,uy2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tf2,uz2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
 
     ! Convective terms of y-pencil in tg2,th2,ti2
     do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
@@ -134,12 +134,12 @@ contains
       tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)
     enddo
 
-    call derz (tg3,td3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call derz (th3,te3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call derz (ti3,tf3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (td3,ux3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (te3,uy3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tf3,uz3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (tg3,td3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (th3,te3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (ti3,tf3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (td3,ux3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (te3,uy3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tf3,uz3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
     do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
@@ -152,9 +152,9 @@ contains
     if (xnu /= zero) then
 
       ! Compute diffusion in td3, te3, tf3
-      call derzz(td3,ux3,sz,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
-      call derzz(te3,uy3,sz,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
-      call derzz(tf3,uz3,sz,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
+      call derzz(td3,ux3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
+      call derzz(te3,uy3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
+      call derzz(tf3,uz3,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
 
       ! Add convective and diffusive terms of z-pencil
       do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
@@ -174,9 +174,9 @@ contains
     if (xnu /= 0) then
 
       ! Compute diffusion in ta2, tb2 and tc2
-      call deryy(ta2,ux2,sy,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
-      call deryy(tb2,uy2,sy,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
-      call deryy(tc2,uz2,sy,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+      call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+      call deryy(tb2,uy2,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
+      call deryy(tc2,uz2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
 
       ! Add convective and diffusive terms of y-pencil
       if (istret /= 0) then
@@ -212,9 +212,9 @@ contains
     if (xnu /= 0) then
 
       ! Compute diffusion in td1, te1, tf1
-      call derxx(td1,ux1,sx,x3d_op_derxx ,xsize(1),xsize(2),xsize(3))
-      call derxx(te1,uy1,sx,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
-      call derxx(tf1,uz1,sx,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
+      call derxx(td1,ux1,x3d_op_derxx ,xsize(1),xsize(2),xsize(3))
+      call derxx(te1,uy1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
+      call derxx(tf1,uz1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
 
       ! Add convective and diffusive terms of x-pencil
       do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))

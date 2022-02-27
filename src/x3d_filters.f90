@@ -15,28 +15,25 @@ module x3d_filters
   public
 
   ABSTRACT INTERFACE
-     SUBROUTINE FILTER_X(t,u,s,ff,fs,fw,nx,ny,nz,npaire)
+     SUBROUTINE FILTER_X(t,u,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
        integer, intent(in) :: nx,ny,nz,npaire
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(ny,nz):: s
        real(mytype), intent(in), dimension(nx):: ff,fs,fw
      END SUBROUTINE FILTER_X
-     SUBROUTINE FILTER_Y(t,u,s,ff,fs,fw,nx,ny,nz,npaire)
+     SUBROUTINE FILTER_Y(t,u,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
        integer, intent(in) :: nx,ny,nz,npaire
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(nx,nz):: s
        real(mytype), intent(in), dimension(ny):: ff,fs,fw
      END SUBROUTINE FILTER_Y
-     SUBROUTINE FILTER_Z(t,u,s,ff,fs,fw,nx,ny,nz,npaire)
+     SUBROUTINE FILTER_Z(t,u,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
        integer, intent(in) :: nx,ny,nz,npaire
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(nx,ny):: s
        real(mytype), intent(in), dimension(nz):: ff,fs,fw
      END SUBROUTINE FILTER_Z
   END INTERFACE

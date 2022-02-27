@@ -15,41 +15,37 @@ module x3d_derive
   public
 
   ABSTRACT INTERFACE
-     SUBROUTINE DERIVATIVE_X(t,u,s,x3dop,nx,ny,nz)
+     SUBROUTINE DERIVATIVE_X(t,u,x3dop,nx,ny,nz)
        use decomp_2d, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(ny,nz):: s
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_X
-     SUBROUTINE DERIVATIVE_Y(t,u,s,x3dop,pp,nx,ny,nz)
+     SUBROUTINE DERIVATIVE_Y(t,u,x3dop,pp,nx,ny,nz)
        use decomp_2d, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(nx,nz):: s
        real(mytype), intent(in), dimension(ny):: pp
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_Y
-     SUBROUTINE DERIVATIVE_YY(t,u,s,x3dop,nx,ny,nz)
+     SUBROUTINE DERIVATIVE_YY(t,u,x3dop,nx,ny,nz)
        use decomp_2d, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(nx,nz):: s
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_YY
-     SUBROUTINE DERIVATIVE_Z(t,u,s,x3dop,nx,ny,nz)
+     SUBROUTINE DERIVATIVE_Z(t,u,x3dop,nx,ny,nz)
        use decomp_2d, only : mytype
        use x3d_operator_1d, only : x3doperator1d
        integer, intent(in) :: nx,ny,nz
        real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
-       real(mytype), intent(out), dimension(nx,ny):: s
        type(x3doperator1d), intent(in) :: x3dop
      END SUBROUTINE DERIVATIVE_Z
   END INTERFACE
@@ -131,7 +127,7 @@ contains
 
   end subroutine x3d_derive_finalize
 
-subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   use x3d_operator_x_data
 
@@ -141,7 +137,6 @@ subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz):: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   ! Local variables
@@ -165,7 +160,7 @@ subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine derx_00
 
@@ -232,14 +227,13 @@ end subroutine derx_ij
 
 !********************************************************************
 !
-subroutine derx_11(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derx_11(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz):: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,1)
@@ -248,14 +242,13 @@ end subroutine derx_11
 
 !********************************************************************
 !
-subroutine derx_12(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derx_12(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz            
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz):: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,2)
@@ -264,14 +257,13 @@ end subroutine derx_12
 
 !********************************************************************
 !
-subroutine derx_21(tx,ux,sx,x3dop,nx,ny,nz) 
+subroutine derx_21(tx,ux,x3dop,nx,ny,nz) 
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz):: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,1)
@@ -280,14 +272,13 @@ end subroutine derx_21
 
 !********************************************************************
 !
-subroutine derx_22(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derx_22(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz):: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,2)
@@ -296,7 +287,7 @@ end subroutine derx_22
 
 !********************************************************************
 !
-subroutine dery_00(ty,uy,sy,x3dop,ppy,nx,ny,nz) 
+subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz) 
   !
   !********************************************************************
 
@@ -308,7 +299,6 @@ subroutine dery_00(ty,uy,sy,x3dop,ppy,nx,ny,nz)
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz)  :: sy
   real(mytype), intent(in), dimension(ny) :: ppy
   type(x3doperator1d), intent(in) :: x3dop
 
@@ -340,7 +330,7 @@ subroutine dery_00(ty,uy,sy,x3dop,ppy,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   ! Apply stretching if needed
   if (istret /= 0) then
@@ -445,14 +435,13 @@ end subroutine dery_ij
 
 !********************************************************************
 !
-subroutine dery_11(ty,uy,sy,x3dop,ppy,nx,ny,nz)
+subroutine dery_11(ty,uy,x3dop,ppy,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz)  :: sy
   real(mytype), intent(in), dimension(ny) :: ppy
   type(x3doperator1d), intent(in) :: x3dop
 
@@ -462,14 +451,13 @@ end subroutine dery_11
 
 !********************************************************************
 !
-subroutine dery_12(ty,uy,sy,x3dop,ppy,nx,ny,nz) 
+subroutine dery_12(ty,uy,x3dop,ppy,nx,ny,nz) 
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz)  :: sy
   real(mytype), intent(in), dimension(ny) :: ppy
   type(x3doperator1d), intent(in) :: x3dop
 
@@ -479,14 +467,13 @@ end subroutine dery_12
 
 !********************************************************************
 !
-subroutine dery_21(ty,uy,sy,x3dop,ppy,nx,ny,nz) 
+subroutine dery_21(ty,uy,x3dop,ppy,nx,ny,nz) 
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz)  :: sy
   real(mytype), intent(in), dimension(ny) :: ppy
   type(x3doperator1d), intent(in) :: x3dop
 
@@ -496,14 +483,13 @@ end subroutine dery_21
 
 !********************************************************************
 !
-subroutine dery_22(ty,uy,sy,x3dop,ppy,nx,ny,nz)
+subroutine dery_22(ty,uy,x3dop,ppy,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz)  :: sy
   real(mytype), intent(in), dimension(ny) :: ppy
   type(x3doperator1d), intent(in) :: x3dop
 
@@ -513,7 +499,7 @@ end subroutine dery_22
 
 !********************************************************************
 !
-subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
 
   use x3d_operator_z_data
 
@@ -523,7 +509,6 @@ subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   ! Local variables
@@ -559,7 +544,7 @@ subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine derz_00
 
@@ -656,14 +641,13 @@ end subroutine derz_ij
 
 !********************************************************************
 !
-subroutine derz_11(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derz_11(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,1)
@@ -672,14 +656,13 @@ end subroutine derz_11
 
 !********************************************************************
 !
-subroutine derz_12(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derz_12(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,2)
@@ -688,14 +671,13 @@ end subroutine derz_12
 
 !********************************************************************
 !
-subroutine derz_21(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derz_21(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,1)
@@ -704,14 +686,13 @@ end subroutine derz_21
 
 !********************************************************************
 !
-subroutine derz_22(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derz_22(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,2)
@@ -720,7 +701,7 @@ end subroutine derz_22
 
 !********************************************************************
 !
-subroutine derxx_00(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
 
   use x3d_operator_x_data
 
@@ -730,7 +711,6 @@ subroutine derxx_00(tx,ux,sx,x3dop,nx,ny,nz)
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   ! Local variables
@@ -815,7 +795,7 @@ subroutine derxx_00(tx,ux,sx,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine derxx_00
 
@@ -1012,14 +992,13 @@ end subroutine derxx_ij
 
 !********************************************************************
 !
-subroutine derxx_11(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derxx_11(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derxx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,1)
@@ -1028,14 +1007,13 @@ end subroutine derxx_11
 
 !********************************************************************
 !
-subroutine derxx_12(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derxx_12(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derxx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,2)
@@ -1044,14 +1022,13 @@ end subroutine derxx_12
 
 !********************************************************************
 !
-subroutine derxx_21(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derxx_21(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derxx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,1)
@@ -1060,14 +1037,13 @@ end subroutine derxx_21
 
 !********************************************************************
 !
-subroutine derxx_22(tx,ux,sx,x3dop,nx,ny,nz)
+subroutine derxx_22(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
-  real(mytype), intent(out), dimension(ny,nz) :: sx
   type(x3doperator1d), intent(in) :: x3dop
 
   call derxx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,2)
@@ -1076,7 +1052,7 @@ end subroutine derxx_22
 
 !********************************************************************
 !
-subroutine deryy_00(ty,uy,sy,x3dop,nx,ny,nz)
+subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
 
   use x3d_operator_y_data
 
@@ -1086,7 +1062,6 @@ subroutine deryy_00(ty,uy,sy,x3dop,nx,ny,nz)
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
 
   ! Local variables
@@ -1187,7 +1162,7 @@ subroutine deryy_00(ty,uy,sy,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine deryy_00
 
@@ -1429,14 +1404,13 @@ end subroutine deryy_ij
 
 !********************************************************************
 !
-subroutine deryy_11(ty,uy,sy,x3dop,nx,ny,nz)
+subroutine deryy_11(ty,uy,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
 
   call deryy_ij(ty,uy,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,1)
@@ -1445,14 +1419,13 @@ end subroutine deryy_11
 
 !********************************************************************
 !
-subroutine deryy_12(ty,uy,sy,x3dop,nx,ny,nz)
+subroutine deryy_12(ty,uy,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
 
   call deryy_ij(ty,uy,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,2)
@@ -1461,14 +1434,13 @@ end subroutine deryy_12
 
 !********************************************************************
 !
-subroutine deryy_21(ty,uy,sy,x3dop,nx,ny,nz)
+subroutine deryy_21(ty,uy,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
 
   call deryy_ij(ty,uy,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,1)
@@ -1477,14 +1449,13 @@ end subroutine deryy_21
 
 !********************************************************************
 !
-subroutine deryy_22(ty,uy,sy,x3dop,nx,ny,nz)
+subroutine deryy_22(ty,uy,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
   real(mytype), intent(in), dimension(nx,ny,nz) :: uy
-  real(mytype), intent(out), dimension(nx,nz) :: sy
   type(x3doperator1d), intent(in) :: x3dop
 
   call deryy_ij(ty,uy,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,2)
@@ -1493,7 +1464,7 @@ end subroutine deryy_22
 
 !********************************************************************
 !
-subroutine derzz_00(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
 
   use x3d_operator_z_data
 
@@ -1503,7 +1474,6 @@ subroutine derzz_00(tz,uz,sz,x3dop,nx,ny,nz)
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   ! Local variables
@@ -1603,7 +1573,7 @@ subroutine derzz_00(tz,uz,sz,x3dop,nx,ny,nz)
   enddo
 
   ! Solve tri-diagonal system
-  call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine derzz_00
 
@@ -1851,14 +1821,13 @@ end subroutine derzz_ij
 
 !********************************************************************
 !
-subroutine derzz_11(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derzz_11(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derzz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,1)
@@ -1867,14 +1836,13 @@ end subroutine derzz_11
 
 !********************************************************************
 !
-subroutine derzz_12(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derzz_12(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derzz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,2)
@@ -1883,14 +1851,13 @@ end subroutine derzz_12
 
 !********************************************************************
 !
-subroutine derzz_21(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derzz_21(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derzz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,1)
@@ -1899,14 +1866,13 @@ end subroutine derzz_21
 
 !********************************************************************
 !
-subroutine derzz_22(tz,uz,sz,x3dop,nx,ny,nz)
+subroutine derzz_22(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
   real(mytype), intent(in), dimension(nx,ny,nz) :: uz
-  real(mytype), intent(out), dimension(nx,ny) :: sz
   type(x3doperator1d), intent(in) :: x3dop
 
   call derzz_ij(tz,uz,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,2,2)

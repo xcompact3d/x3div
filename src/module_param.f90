@@ -48,9 +48,6 @@ module variables
   real(mytype), save, allocatable, dimension(:,:) :: fisy,fivy
   real(mytype), save, allocatable, dimension(:,:) :: fisz,fivz
 
-  !module derivative
-  real(mytype), save, allocatable, dimension(:,:) :: sx, sy, sz
-
   !! X3DIV
   logical :: test_mode
 

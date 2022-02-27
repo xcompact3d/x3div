@@ -131,7 +131,7 @@ contains
 
     use decomp_2d, only : mytype, real_type, decomp_2d_abort, xsize, ysize, zsize
     use param, only : half, two, xnu, dt
-    use variables, only : nx, ny, nz, sx, sy, sz, ppy
+    use variables, only : nx, ny, nz, ppy
     use var, only : ux2,uy2,uz2,ux3,uy3,uz3
     use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1
     use var, only : ta2,tb2,tc2
@@ -162,22 +162,22 @@ contains
     call x3d_transpose_y_to_z(uz2, uz3)
 
     ! Compute X derivative
-    call derx (ta1,ux1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tb1,uy1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (tc1,uz1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (ta1,ux1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tb1,uy1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
 
     ! Compute Y derivative and transpose back to X
-    call dery (ta2,ux2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tb2,uy2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tc2,uz2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (ta2,ux2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tb2,uy2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tc2,uz2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
     call x3d_transpose_y_to_x(ta2, td1)
     call x3d_transpose_y_to_x(tb2, te1)
     call x3d_transpose_y_to_x(tc2, tf1)
 
     ! Compute Z derivative and transpose back to X
-    call derz (ta3,ux3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tb3,uy3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tc3,uz3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (ta3,ux3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tb3,uy3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tc3,uz3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
     call x3d_transpose_z_to_y(ta3, ta2)
     call x3d_transpose_z_to_y(tb3, tb2)
     call x3d_transpose_z_to_y(tc3, tc2)
@@ -211,22 +211,22 @@ contains
     tke = tke / (nx*ny*nz)
 
     ! Compute X second derivative
-    call derxx(ta1,ux1,sx,x3d_op_derxx, xsize(1),xsize(2),xsize(3))
-    call derxx(tb1,uy1,sx,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
-    call derxx(tc1,uz1,sx,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
+    call derxx(ta1,ux1,x3d_op_derxx, xsize(1),xsize(2),xsize(3))
+    call derxx(tb1,uy1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
+    call derxx(tc1,uz1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
 
     ! Compute Y second derivative and transpose back to X
-    call deryy(ta2,ux2,sy,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
-    call deryy(tb2,uy2,sy,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
-    call deryy(tc2,uz2,sy,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+    call deryy(ta2,ux2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
+    call deryy(tb2,uy2,x3d_op_deryy ,ysize(1),ysize(2),ysize(3))
+    call deryy(tc2,uz2,x3d_op_deryyp,ysize(1),ysize(2),ysize(3))
     call x3d_transpose_y_to_x(ta2, td1)
     call x3d_transpose_y_to_x(tb2, te1)
     call x3d_transpose_y_to_x(tc2, tf1)
 
     ! Compute Z second derivative and transpose back to X
-    call derzz(ta3,ux3,sz,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
-    call derzz(tb3,uy3,sz,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
-    call derzz(tc3,uz3,sz,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
+    call derzz(ta3,ux3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
+    call derzz(tb3,uy3,x3d_op_derzzp,zsize(1),zsize(2),zsize(3))
+    call derzz(tc3,uz3,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
     call x3d_transpose_z_to_y(ta3, ta2)
     call x3d_transpose_z_to_y(tb3, tb2)
     call x3d_transpose_z_to_y(tc3, tc2)

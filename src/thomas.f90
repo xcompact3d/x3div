@@ -31,25 +31,24 @@ module thomas
 contains
 
   ! Thomas algorithm in X direction (periodicity)
-  pure subroutine xthomas_0(tt, ss, ff, fs, fw, perio, alfa, nx, ny, nz)
+  pure subroutine xthomas_0(tt, ff, fs, fw, perio, alfa, nx, ny, nz)
 
     implicit none
 
     integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
-    real(mytype), intent(out), dimension(ny,nz) :: ss
     real(mytype), intent(in), dimension(nx):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
 
     integer :: i, j, k
+    real(mytype) :: ss
 
     call xthomas_12(tt, ff, fs, fw, nx, ny, nz)
-    ! Optimized solver, rr is pre-determined
     do concurrent (k=1:nz, j=1:ny)
-       ss(j,k) = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
-               / (one+perio(1)-alfa*perio(nx))
+       ss = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
+          / (one+perio(1)-alfa*perio(nx))
        do i = 1, nx
-          tt(i,j,k) = tt(i,j,k) - ss(j,k)*perio(i)
+          tt(i,j,k) = tt(i,j,k) - ss*perio(i)
        enddo
     enddo
 
@@ -79,25 +78,24 @@ contains
   end subroutine xthomas_12
 
   ! Thomas algorithm in Y direction (periodicity)
-  subroutine ythomas_0(tt, ss, ff, fs, fw, perio, alfa, nx, ny, nz)
+  subroutine ythomas_0(tt, ff, fs, fw, perio, alfa, nx, ny, nz)
 
     implicit none
 
     integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
-    real(mytype), intent(out), dimension(nx,nz) :: ss
     real(mytype), intent(in), dimension(ny):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
 
     integer :: i, j, k
+    real(mytype) :: ss
 
     call ythomas_12(tt, ff, fs, fw, nx, ny, nz)
-    ! Optimized solver, rr is pre-determined
     do concurrent (k=1:nz, i=1:nx)
-       ss(i,k) = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
-               / (one+perio(1)-alfa*perio(ny))
+       ss = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
+          / (one+perio(1)-alfa*perio(ny))
        do j = 1, ny
-          tt(i,j,k) = tt(i,j,k) - ss(i,k)*perio(j)
+          tt(i,j,k) = tt(i,j,k) - ss*perio(j)
        enddo
     enddo
 
@@ -127,25 +125,24 @@ contains
   end subroutine ythomas_12
 
   ! Thomas algorithm in Z direction (periodicity)
-  subroutine zthomas_0(tt, ss, ff, fs, fw, perio, alfa, nx, ny, nz)
+  subroutine zthomas_0(tt, ff, fs, fw, perio, alfa, nx, ny, nz)
 
     implicit none
 
     integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
-    real(mytype), intent(out), dimension(nx,ny) :: ss
     real(mytype), intent(in), dimension(nz):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
 
     integer :: i, j, k
+    real(mytype) :: ss
 
     call zthomas_12(tt, ff, fs, fw, nx, ny, nz)
-    ! Optimized solver, rr is constant
     do concurrent (j=1:ny, i=1:nx)
-       ss(i,j) = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
-               / (one+perio(1)-alfa*perio(nz))
+       ss = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
+          / (one+perio(1)-alfa*perio(nz))
        do k=1,nz
-          tt(i,j,k) = tt(i,j,k) - ss(i,j)*perio(k)
+          tt(i,j,k) = tt(i,j,k) - ss*perio(k)
        enddo
     enddo
 

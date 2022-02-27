@@ -40,7 +40,7 @@ contains
       enddo
       call error_l1_l2_linf(sol, sl1, sl2, slinf)
       call cpu_time(t1)
-      call derx(output,input,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+      call derx(output,input,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
       call cpu_time(t2)
       call error_l1_l2_linf(output-sol, l1, l2, linf)
       call log("derx00p", l1/sl1, l2/sl2, linf/slinf, t2-t1)
@@ -50,7 +50,7 @@ contains
          @assertEqual(linf/slinf, zero, tolerance=2.d-6)
       endif
       call cpu_time(t1)
-      call derx(output,input,sx,x3d_op_derx,xsize(1),xsize(2),xsize(3))
+      call derx(output,input,x3d_op_derx,xsize(1),xsize(2),xsize(3))
       call cpu_time(t2)
       call error_l1_l2_linf(output-sol, l1, l2, linf)
       call log("derx00", l1/sl1, l2/sl2, linf/slinf, t2-t1)

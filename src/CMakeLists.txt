@@ -5,9 +5,10 @@ message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 message(STATUS "PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
 
 set(X3DFILES 
+            bc_tgv2d.f90
+	    bc_tgv.f90
             case.f90
             module_param.f90
-            mom.f90
             navier.f90
             parameters.f90
             poisson.f90

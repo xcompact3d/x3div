@@ -1,87 +1,145 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
 
 module case
 
-  use param
-  use decomp_2d, only : mytype
-  use variables
+  use param, only : itype, itype_tgv2d
+  use decomp_2d, only : mytype, xsize
+
+  use bc_tgv
+  use bc_tgv2d
 
   implicit none
 
   private ! All functions/subroutines private by default
-  public :: init
+  public :: case_boot, &
+            case_listing, &
+            case_init, &
+            case_bc, &
+            case_forcing, &
+            case_visu, &
+            case_postprocess, &
+            case_finalize
 
 contains
-  !##################################################################
-  subroutine init (ux1, uy1, uz1, dux1, duy1, duz1, &
-       pp3, px1, py1, pz1)
 
-    use mom, only : vel
-    use decomp_2d, only : xsize, ph1
+  !
+  ! Read case-specific parameters in the input file
+  ! Initialize case-specific IO
+  ! Allocate memory
+  !
+  subroutine case_boot()
 
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: ux1,uy1,uz1
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3),ntime) :: dux1,duy1,duz1
-    real(mytype),dimension(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress) :: pp3
-    real(mytype),dimension(xsize(1),xsize(2),xsize(3)) :: px1, py1, pz1
+    implicit none
 
-    integer :: it, is
-    integer :: i, j, k 
+    if (itype == itype_tgv) call tgv_boot()
 
-    !! Zero out the pressure field
-    do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2), i=ph1%zst(1):ph1%zen(1))
-      pp3(i,j,k,1) = zero
-    enddo
-    
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
-      px1(i,j,k) = zero
-      py1(i,j,k) = zero
-      pz1(i,j,k) = zero
-    enddo
+    if (itype == itype_tgv2d) call tgv2d_boot()
 
-    call vel(ux1, uy1, uz1)
-    
-    !! Setup old arrays
-    do it = 1, ntime
-      do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1)) 
-        dux1(i,j,k,it)=ux1(i,j,k)
-        duy1(i,j,k,it)=uy1(i,j,k)
-        duz1(i,j,k,it)=uz1(i,j,k)
-      enddo
-    enddo
+  end subroutine case_boot
 
+  !
+  ! Print case-specific parameters in the listing
+  !
+  subroutine case_listing()
 
-  end subroutine init
+    implicit none
+
+    if (itype == itype_tgv) call tgv_listing()
+
+    if (itype == itype_tgv2d) call tgv2d_listing()
+
+  end subroutine case_listing
+
+  !
+  ! Case-specific initialization
+  !
+  subroutine case_init(ux1, uy1, uz1)
+
+    implicit none
+
+    ! Arguments
+    real(mytype),intent(out),dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1
+
+    if (itype == itype_tgv) call tgv_init(ux1, uy1, uz1)
+
+    if (itype == itype_tgv2d) call tgv2d_init(ux1, uy1, uz1)
+
+  end subroutine case_init
+
+  !
+  ! Case-specific boundary conditions
+  !
+  subroutine case_bc(ux1, uy1, uz1)
+
+    implicit none
+
+    ! Arguments
+    real(mytype), intent(inout), dimension(xsize(1),xsize(2),xsize(3)) :: ux1, uy1, uz1
+
+  end subroutine case_bc
+
+  !
+  ! Add case-specific forcing term in the momentum r.h.s.
+  !
+  subroutine case_forcing(dux1, duy1, duz1)
+
+    use param, only : ntime
+
+    implicit none
+
+    ! Arguments
+    real(mytype), intent(inout), dimension(xsize(1),xsize(2),xsize(3),ntime) :: dux1, duy1, duz1
+
+  end subroutine case_forcing
+
+  !
+  ! Visualization
+  ! This is called when itime % ioutput = 0
+  !
+  subroutine case_visu()
+
+    implicit none
+
+  end subroutine case_visu
+
+  !
+  ! Case-specific post-processing
+  ! This is called at the end of each time step
+  !
+  subroutine case_postprocess(ux1, uy1, uz1, ndt)
+
+    use param, only : ivisu, ioutput
+
+    implicit none
+
+    ! Arguments
+    real(mytype), dimension(xsize(1),xsize(2),xsize(3)), intent(in) :: ux1, uy1, uz1
+    integer, intent(in) :: ndt
+
+    if (itype == itype_tgv) call tgv_postprocess(ux1, uy1, uz1, ndt)
+
+    if (itype == itype_tgv2d) call tgv2d_postprocess(ux1, uy1, uz1, ndt)
+
+    if ((ivisu /= 0).and.(ioutput /= 0)) then
+      if (mod(ndt, ioutput) == 0) call case_visu()
+    endif
+
+  end subroutine case_postprocess
+
+  !
+  ! Finalize case-specific IO
+  ! Free memory
+  !
+  subroutine case_finalize()
+
+    implicit none
+
+    if (itype == itype_tgv) call tgv_finalize()
+
+    if (itype == itype_tgv2d) call tgv2d_finalize()
+
+  end subroutine case_finalize
+
 end module case
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!! case.f90 ends here

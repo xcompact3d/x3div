@@ -1,34 +1,6 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
 
 program xcompact3d
 
@@ -39,7 +11,7 @@ program xcompact3d
   use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
-  use mom,     only : test_du, test_dv, test_dw
+  use case
   use time_integrators, only : int_time
 
   implicit none
@@ -54,16 +26,20 @@ program xcompact3d
 
   call init_xcompact3d(ndt_max)
 
+  call case_init(ux1, uy1, uz1)
+
   telapsed = 0
   tmin = telapsed
-
   ndt = 1
 
   do while(ndt < ndt_max)
+
      itr = 1 ! no inner iterations
      !call init_flowfield()
 
      tstart = MPI_Wtime()
+
+     call case_bc(ux1, uy1, uz1)
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
@@ -88,6 +64,8 @@ program xcompact3d
      end if
 
      ndt = ndt + 1
+     call case_postprocess(ux1, uy1, uz1, ndt)
+
   end do
 
   if (nrank == 0) then
@@ -96,6 +74,7 @@ program xcompact3d
      print *, "Compute rate (min-max)[dt/s]: ", ndt / tmin, ndt /  tmax
   end if
 
+  call case_finalize()
   call finalise_xcompact3d(.true.)
 
 end program xcompact3d

@@ -13,7 +13,7 @@ contains
    subroutine verif_derx_00()
 
       use decomp_2d   , only : mytype, xsize
-      use x3dprecision, only : pi, twopi
+      use x3d_precision, only : pi, twopi
       use param       , only : zero,two, dx
       use var
       use variables
@@ -40,11 +40,8 @@ contains
       enddo
       call error_l1_l2_linf(sol, sl1, sl2, slinf)
       call cpu_time(t1)
-      call derx(output,input,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+      call derx(output,input,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
       call cpu_time(t2)
-      !do i = 1, xsize(1)
-      !  write(*,*) 'Derx1 ', i, output(i,1,1), sol(i,1,1)
-      !enddo
       call error_l1_l2_linf(output-sol, l1, l2, linf)
       call log("derx00p", l1/sl1, l2/sl2, linf/slinf, t2-t1)
       if (check_error) then
@@ -53,11 +50,8 @@ contains
          @assertEqual(linf/slinf, zero, tolerance=2.d-6)
       endif
       call cpu_time(t1)
-      call derx(output,input,di1,sx,x3d_op_derx,xsize(1),xsize(2),xsize(3))
+      call derx(output,input,sx,x3d_op_derx,xsize(1),xsize(2),xsize(3))
       call cpu_time(t2)
-      !do i = 1, xsize(1)
-      !  write(*,*) 'Derx0 ', i, output(i,1,1), sol(i,1,1)
-      !enddo
       call error_l1_l2_linf(output-sol, l1, l2, linf)
       call log("derx00", l1/sl1, l2/sl2, linf/slinf, t2-t1)
       if (check_error) then

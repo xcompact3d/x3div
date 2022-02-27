@@ -1,34 +1,7 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
+
 module navier
 
   implicit none
@@ -42,7 +15,6 @@ module navier
 contains
   !############################################################################
   !!  SUBROUTINE: solve_poisson
-  !!      AUTHOR: Paul Bartholomew
   !! DESCRIPTION: Takes the intermediate momentum field as input,
   !!              computes div and solves pressure-Poisson equation.
   !############################################################################
@@ -81,7 +53,6 @@ contains
   !field
   ! input : px,py,pz
   ! output : ux,uy,uz
-  !written by SL 2018
   !############################################################################
   subroutine cor_vel (ux,uy,uz,px,py,pz)
 
@@ -110,7 +81,6 @@ contains
   !Calculation of div u* for nlock=1 and of div u^{n+1} for nlock=2
   ! input : ux1,uy1,uz1,ep1 (on velocity mesh)
   ! output : pp3 (on pressure mesh)
-  !written by SL 2018
   !############################################################################
   subroutine divergence (pp3,ux1,uy1,uz1,nlock)
 
@@ -188,28 +158,21 @@ contains
        pp3(i,j,k) = pp3(i,j,k) + po3(i,j,k)
     enddo
 
-    if (nlock==2) then
-       do concurrent (k=1:nzm, j=ph1%zst(2):ph1%zen(2),i=ph1%zst(1):ph1%zen(1))
-          pp3(i,j,k)=pp3(i,j,k)-pp3(ph1%zst(1),ph1%zst(2),nzm)
-       enddo
-    endif
-
     tmax = maxval(abs(pp3))
     tmoy = sum(abs(pp3)) / nvect3
 
-    if (test_mode) then
-       call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
-       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-       call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
-       if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
-       if ((nrank==0).and.(nlock.gt.0)) then
-          if (nlock==2) then
-             print *,'DIV U  max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-          else
-             print *,'DIV U* max mean=',real(tmax1,4),real(tmoy1/real(nproc),4)
-          endif
+    call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
+    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+    call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)
+    if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
+
+    if ((nrank==0).and.(nlock.gt.0)) then
+       if (nlock==2) then
+          print *,'DIV U  max mean=', tmax1, tmoy1
+       else
+          print *,'DIV U* max mean=', tmax1, tmoy1
        endif
-    end if
+    endif
 
     return
   end subroutine divergence
@@ -224,7 +187,6 @@ contains
   !
   ! input: pp3 - pressure field (on pressure mesh)
   ! output: px1, py1, pz1 - pressure gradients (on velocity mesh)
-  !written by SL 2018
   !############################################################################
   subroutine gradp(px1,py1,pz1,pp3)
 

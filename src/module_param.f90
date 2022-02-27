@@ -1,34 +1,7 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
+
 module variables
   !USE param
   !USE var
@@ -55,7 +28,7 @@ module variables
   integer :: nx,ny,nz,numscalar,p_row,p_col,nxm,nym,nzm,spinup_time
   integer :: nstat=1,nvisu=1,nprobe=1,nlength=1
 
-  real(mytype),allocatable,dimension(:) :: sc,uset,cp,ri,group
+  real(mytype), save, allocatable, dimension(:) :: sc,uset,cp,ri,group
   real(mytype) :: nu0nu, cnu
 
 #ifndef DOUBLE_PREC
@@ -71,14 +44,12 @@ module variables
   !module filter
   real(mytype),dimension(200) :: idata
 
-  real(mytype),allocatable,dimension(:,:) :: fisx,fivx
-  real(mytype),allocatable,dimension(:,:) :: fisy,fivy
-  real(mytype),allocatable,dimension(:,:) :: fisz,fivz
+  real(mytype), save, allocatable, dimension(:,:) :: fisx,fivx
+  real(mytype), save, allocatable, dimension(:,:) :: fisy,fivy
+  real(mytype), save, allocatable, dimension(:,:) :: fisz,fivz
 
-
-  real(mytype), save, allocatable, dimension(:,:) :: sx,vx
-  real(mytype), save, allocatable, dimension(:,:) :: sy,vy
-  real(mytype), save, allocatable, dimension(:,:) :: sz,vz
+  !module derivative
+  real(mytype), save, allocatable, dimension(:,:) :: sx, sy, sz
 
   !! X3DIV
   logical :: test_mode
@@ -119,18 +90,18 @@ module param
   !and false otherwise
   logical :: nclx,ncly,nclz
 
-  integer :: itype
-  integer, parameter :: &
-       itype_user = 0, &
-       itype_lockexch = 1, &
-       itype_tgv = 2, &
-       itype_channel = 3, &
-       itype_hill = 4, &
-       itype_cyl = 5, &
-       itype_dbg = 6, &
-       itype_mixlayer = 7, &
-       itype_jet = 8, &
-       itype_tbl = 9
+  integer, parameter :: itype_user = 0
+  integer, parameter :: itype_lockexch = 1
+  integer, parameter :: itype_tgv = 2
+  integer, parameter :: itype_channel = 3
+  integer, parameter :: itype_hill = 4
+  integer, parameter :: itype_cyl = 5
+  integer, parameter :: itype_dbg = 6
+  integer, parameter :: itype_mixlayer = 7
+  integer, parameter :: itype_jet = 8
+  integer, parameter :: itype_tbl = 9
+  integer, parameter :: itype_tgv2d = 10
+  integer, save :: itype
 
   integer :: cont_phi,itr,itime,itest,iprocessing
   integer :: ifft,istret,iforc_entree,iturb

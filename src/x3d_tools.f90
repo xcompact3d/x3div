@@ -1,35 +1,7 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
-! FUNCTION DEFINITION
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
+
 !##################################################################
 function rl(complexnumber)
 
@@ -114,6 +86,7 @@ subroutine init_xcompact3d(ndt_max)
   use x3d_operator_z_data, only : x3d_operator_z_data_init
   use x3d_operator_1d, only : x3d_operator_1d_init
   use x3d_derive, only : x3d_derive_init
+  use parameters
   use case
 
   use var
@@ -183,6 +156,9 @@ subroutine init_xcompact3d(ndt_max)
   enddo
 
   call parameter()
+  call case_boot()
+  call listing()
+  call case_listing()
 
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
   call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
@@ -195,35 +171,16 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm, nym, nz, ph3)
 
   call var_init()
-  call x3d_operator_x_data_init()
-  call x3d_operator_y_data_init()
-  call x3d_operator_z_data_init()
+  call x3d_operator_x_data_init(nx, nxm)
+  call x3d_operator_y_data_init(ny, nym)
+  call x3d_operator_z_data_init(nz, nzm)
   call x3d_operator_1d_init()
   call x3d_derive_init()
 
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
-  call init_flowfield()
-
 endsubroutine init_xcompact3d
-!########################################################################
-!########################################################################
-subroutine init_flowfield()
-  
-  use case
-  use var
-
-  use param, only: zero, itime
-
-  implicit none
-
-  call init(ux1,uy1,uz1,dux1,duy1,duz1,pp3,px1,py1,pz1)
-  itime = 0
-
-  !divu3(:,:,:) = zero
-
-end subroutine
 !########################################################################
 !########################################################################
 subroutine finalise_xcompact3d(flag)

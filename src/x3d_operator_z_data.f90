@@ -1,39 +1,10 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
 
 module x3d_operator_z_data
 
    use decomp_2d, only: mytype
-   use param, only: zero
 
    implicit none
 
@@ -83,16 +54,16 @@ contains
    !
    ! Allocate memory and prepare arrays
    !
-   subroutine x3d_operator_z_data_init()
-
-      use variables, only: nz, nzm
+   subroutine x3d_operator_z_data_init(nz, nzm)
 
       implicit none
+
+      integer, intent(in) :: nz, nzm
 
       if (nz==1) return
 
       allocate (ffz(nz))
-      ffz = zero
+      ffz = 0._mytype
       allocate (sfz, source=ffz)
       allocate (fsz, source=ffz)
       allocate (fwz, source=ffz)
@@ -121,7 +92,7 @@ contains
       allocate (swzpS, source=ffz)
 
       allocate (cfz6(nzm))
-      cfz6 = zero
+      cfz6 = 0._mytype
       allocate (ccz6, source=cfz6)
       allocate (cbz6, source=cfz6)
       allocate (cfzp6, source=cfz6)
@@ -164,11 +135,9 @@ contains
    !
    subroutine x3d_operator_z_data_finalize()
 
-      use variables, only : nz
-
       implicit none
 
-      if (nz==1) return
+      if (.not.allocated(ffz)) return
 
       deallocate (ffz)
       deallocate (sfz)

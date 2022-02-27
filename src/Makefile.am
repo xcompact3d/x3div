@@ -42,8 +42,8 @@ parameters.lo: module_param.lo
 bc_tgv2d.lo: x3d_operator_x_data.lo x3d_operator_y_data.lo
 bc_tgv.lo: x3d_derive.lo
 case.lo: bc_tgv2d.lo bc_tgv.lo
-transeq.lo: x3d_derive.lo
-x3d_tools.lo: x3d_derive.lo
+transeq.lo: x3d_derive.lo case.lo
+x3d_tools.lo: x3d_derive.lo case.lo
 
 clean-local:
 	-rm -f *.mod

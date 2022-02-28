@@ -167,8 +167,8 @@ contains
        do k=nz-1,1,-1
           tt(i,j,k) = (tt(i,j,k)-ff(k)*tt(i,j,k+1)) * fw(k)
        enddo
-    enddo 
-       
+    enddo
+
   end subroutine zthomas_12
 
   !

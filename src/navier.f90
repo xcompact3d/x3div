@@ -115,7 +115,7 @@ contains
 
     nvect3=(ph1%zen(1)-ph1%zst(1)+1)*(ph1%zen(2)-ph1%zst(2)+1)*nzm
 
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))    
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
        ta1(i,j,k) = ux1(i,j,k)
        tb1(i,j,k) = uy1(i,j,k)
        tc1(i,j,k) = uz1(i,j,k)
@@ -123,7 +123,7 @@ contains
 
     !WORK X-PENCILS
 
-    
+
     call derxvp(pp1,ta1,x3d_op_derxvp,xsize(1),nxm,xsize(2),xsize(3))
 
     call interxvp(pgy1,tb1,x3d_op_intxvp,xsize(1),nxm,xsize(2),xsize(3))

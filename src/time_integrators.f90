@@ -33,7 +33,7 @@ contains
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
       var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
     enddo
-    
+
     !if (iimplicit.ge.1) then
     !   !>>> (semi)implicit Y diffusion
 
@@ -121,11 +121,11 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!
   !!  SUBROUTINE: int_time
-  !! DESCRIPTION: 
-  !!      INPUTS: 
+  !! DESCRIPTION:
+  !!      INPUTS:
   !!     OUTPUTS:
-  !!       NOTES: 
-  !!      AUTHOR:  
+  !!       NOTES:
+  !!      AUTHOR:
   !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

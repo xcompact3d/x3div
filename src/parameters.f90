@@ -39,7 +39,7 @@ subroutine parameter()
      p_row = nproc
      p_col = 1
   endif
-  
+
   !! Set Scalar BCs same as fluid (may be overridden) [DEFAULT]
   nclxS1 = nclx1; nclxSn = nclxn
   nclyS1 = ncly1; nclySn = nclyn
@@ -126,7 +126,7 @@ subroutine parameter_defaults()
   nclx1 = 0; nclxn = 0
   ncly1 = 0; nclyn = 0
   nclz1 = 0; nclzn = 0
-  
+
   npress = 1 !! By default people only need one pressure field
   imodulo2 = 1
 

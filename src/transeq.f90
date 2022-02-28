@@ -67,7 +67,7 @@ contains
 
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
-    
+
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
       ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
       tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
@@ -93,7 +93,7 @@ contains
     call x3d_transpose_x_to_y(uz1,uz2)
 
     !WORK Y-PENCILS
-    
+
     do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
       td2(i,j,k) = ux2(i,j,k) * uy2(i,j,k)
       te2(i,j,k) = uy2(i,j,k) * uy2(i,j,k)
@@ -122,7 +122,7 @@ contains
         ti2(i,j,k) = ti2(i,j,k) - pp4y(j)*tf2(i,j,k)
       enddo
     endif
-    
+
     call x3d_transpose_y_to_z(ux2,ux3)
     call x3d_transpose_y_to_z(uy2,uy3)
     call x3d_transpose_y_to_z(uz2,uz3)
@@ -146,7 +146,7 @@ contains
       ta3(i,j,k) = -half*(tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k))
       tb3(i,j,k) = -half*(th3(i,j,k) + uz3(i,j,k) * te3(i,j,k))
       tc3(i,j,k) = -half*(ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k))
-    enddo 
+    enddo
 
     ! If needed, compute and add diffusion
     if (xnu /= zero) then
@@ -181,10 +181,10 @@ contains
       ! Add convective and diffusive terms of y-pencil
       if (istret /= 0) then
         ! In this case, a part of the y-diffusive term was added before
-        do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))                                         
-          tg2(i,j,k) = tg2(i,j,k) + xnu*ta2(i,j,k)*pp2y(j)                                               
-          th2(i,j,k) = th2(i,j,k) + xnu*tb2(i,j,k)*pp2y(j)                                               
-          ti2(i,j,k) = ti2(i,j,k) + xnu*tc2(i,j,k)*pp2y(j)                                               
+        do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+          tg2(i,j,k) = tg2(i,j,k) + xnu*ta2(i,j,k)*pp2y(j)
+          th2(i,j,k) = th2(i,j,k) + xnu*tb2(i,j,k)*pp2y(j)
+          ti2(i,j,k) = ti2(i,j,k) + xnu*tc2(i,j,k)*pp2y(j)
         enddo
       else
         do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))

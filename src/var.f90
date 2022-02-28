@@ -7,7 +7,7 @@ module var
   use decomp_2d, only : mytype
 
   implicit none
-  
+
   ! define all major arrays here
   real(mytype), save, allocatable, dimension(:,:,:) :: ux1, ux2, ux3, po3, dv3
   real(mytype), save, allocatable, dimension(:,:,:,:) :: pp3

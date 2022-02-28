@@ -51,7 +51,7 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_x_to_y
-  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
+  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of
   !!              single core calculation
   !############################################################################
   subroutine x3d_transpose_x_to_y_real(data_in, data_out, decomp)
@@ -72,7 +72,7 @@ contains
       do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2), i=1:decomp%xsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_x_to_y(data_in,data_out,decomp)
     endif
 
@@ -96,7 +96,7 @@ contains
       do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2), i=1:decomp%xsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_x_to_y(data_in,data_out,decomp)
     endif
 
@@ -105,7 +105,7 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_y_to_z
-  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
+  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of
   !!              single core calculation
   !############################################################################
   subroutine x3d_transpose_y_to_z_real(data_in, data_out, decomp)
@@ -126,7 +126,7 @@ contains
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_y_to_z(data_in,data_out,decomp)
     endif
 
@@ -150,7 +150,7 @@ contains
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_y_to_z(data_in,data_out,decomp)
     endif
 
@@ -159,7 +159,7 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_z_to_y
-  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
+  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of
   !!              single core calculation
   !############################################################################
   subroutine x3d_transpose_z_to_y_real(data_in, data_out, decomp)
@@ -180,7 +180,7 @@ contains
       do concurrent (k=1:decomp%zsz(3), j=1:decomp%zsz(2), i=1:decomp%zsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_z_to_y(data_in,data_out,decomp)
     endif
 
@@ -204,7 +204,7 @@ contains
       do concurrent (k=1:decomp%zsz(3), j=1:decomp%zsz(2), i=1:decomp%zsz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_z_to_y(data_in,data_out,decomp)
     endif
 
@@ -213,11 +213,11 @@ contains
 
   !############################################################################
   !!  SUBROUTINE: x3d_transpose_y_to_z
-  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of 
+  !! DESCRIPTION: Wrapper around decomp2d_transpose to avoid MPI in case of
   !!              single core calculation
   !############################################################################
   subroutine x3d_transpose_y_to_x_real(data_in, data_out, decomp)
-    
+
     use decomp_2d, only : transpose_y_to_x
 
     implicit none
@@ -234,14 +234,14 @@ contains
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_y_to_x(data_in,data_out,decomp)
     endif
 
   end subroutine x3d_transpose_y_to_x_real
   !############################################################################
   subroutine x3d_transpose_y_to_x_cplx(data_in, data_out, decomp)
-    
+
     use decomp_2d, only : transpose_y_to_x
 
     implicit none
@@ -258,7 +258,7 @@ contains
       do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
         data_out(i,j,k) = data_in(i,j,k)
       enddo
-    else 
+    else
       call transpose_y_to_x(data_in,data_out,decomp)
     endif
 

@@ -7,7 +7,7 @@ program xcompact3d
   use MPI
 
   use var
-  use decomp_2d, only : nrank, xsize, real_type, decomp_2d_warning 
+  use decomp_2d, only : nrank, xsize, real_type, decomp_2d_warning
   use param,   only : dt, zero, itr
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
@@ -43,7 +43,7 @@ program xcompact3d
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
-     
+
      !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
      !  divu3(:,:,:) = zero
      !enddo

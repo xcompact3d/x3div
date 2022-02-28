@@ -33,7 +33,7 @@
 
 module x3d_operator_1d
 
-  use decomp_2d, only: mytype
+  use decomp_2d, only: mytype, nrank
 
   implicit none
 

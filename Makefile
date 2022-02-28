@@ -33,8 +33,8 @@ FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
 FFLAGS = -cpp -O3 -march=native
-FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-#FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
+#FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
+FFLAGS = -cpp -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc70,managed,lineinfo -acc -target=gpu
 endif
 
 

@@ -447,7 +447,6 @@ subroutine interyvp(ty,uy,x3dop,nx,ny,nym,nz)
                   + biciy6*(uy(i,5,k)+uy(i,2,k)) &
                   + ciciy6*(uy(i,6,k)+uy(i,1,k)) &
                   + diciy6*(uy(i,7,k)+uy(i,ny,k))
-        enddo
         do concurrent (j=4:ny-4)
            buffer(j) = aiciy6*(uy(i,j+1,k)+uy(i,j,k)) &
                      + biciy6*(uy(i,j+2,k)+uy(i,j-1,k)) &
@@ -555,7 +554,6 @@ subroutine deryvp(ty,uy,x3dop,ppyi,nx,ny,nym,nz)
                   + bciy6*(uy(i,3,k)-uy(i,ny,k))
         buffer(2) = aciy6*(uy(i,3,k)-uy(i,2,k)) &
                   + bciy6*(uy(i,4,k)-uy(i,1,k))
-        enddo
         do concurrent (j=3:ny-2)
            buffer(j) = aciy6*(uy(i,j+1,k)-uy(i,j,k)) &
                      + bciy6*(uy(i,j+2,k)-uy(i,j-1,k))
@@ -672,7 +670,7 @@ subroutine interypv(ty,uy,x3dop,nx,nym,ny,nz)
                      + diciy6*(uy(i,3,k)+uy(i,ny-4,k))
 
         ! Solve tri-diagonal system
-        call thomas1d(ty, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, ny)
+        call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, ny)
         do concurrent (j=1:ny)
            ty(i,j,k) = buffer(j)
         enddo

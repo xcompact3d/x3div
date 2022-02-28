@@ -784,6 +784,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nx) :: buffer
 
   do concurrent (k=1:nz, j=1:ny)
 
@@ -1038,6 +1039,7 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(ny) :: buffer
 
   ! Compute r.h.s.
   do concurrent (k=1:nz, i=1:nx)
@@ -1506,6 +1508,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nz) :: buffer
 
   if (nz==1) then
     do concurrent(k=1:nz, j=1:ny, i=1:nx)

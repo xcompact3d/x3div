@@ -72,10 +72,11 @@ contains
     use decomp_2d , only : alloc_x, alloc_y, alloc_z
     use decomp_2d , only : xsize, ysize, zsize, ph1, ph3
     use decomp_2d , only : nrank
+    use MPI
 
     implicit none
 
-    integer :: i, j , k
+    integer :: i, j , k, ierr
 
 #ifdef DEBUG
     if (nrank == 0) write(*,*) '# var_init start'
@@ -89,6 +90,7 @@ contains
 
 
     !X PENCILS
+    write(*,*) '## Alloc ux1'
     call alloc_x(ux1, opt_global=.true.) !global indices
     ux1 = zero
     allocate(uy1, uz1, px1, py1, pz1, source=ux1)
@@ -112,25 +114,82 @@ contains
     allocate(dpdxz1(xsize(1),xsize(2)))
     dpdxz1=zero
     allocate(dpdxzn, dpdyz1, dpdyzn, source=dpdxz1)
-
+    write(*,*) 'Allocate X pencil OK'
     !Y PENCILS
+    write(*,*) 'Allocate Y pencil nrank ',nrank
     call alloc_y(ux2)
     ux2=zero
-    allocate(uy2, uz2, ta2, tb2, tc2, td2, te2, tf2, tg2, th2, ti2, tj2, source=ux2)
+    write(*,*) 'Allocate ux2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    !allocate(uy2, uz2, ta2, tb2, tc2, td2, te2, tf2, tg2, th2, ti2, tj2, source=ux2)
+    allocate(uy2, source=ux2)
+    write(*,*) 'Allocate uy2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(uz2, source=ux2)
+    write(*,*) 'Allocate uz2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(ta2, source=ux2)
+    write(*,*) 'Allocate ta2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(tb2, source=ux2)
+    write(*,*) 'Allocate tb2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(tc2, source=ux2)
+    write(*,*) 'Allocate tc2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(td2, source=ux2)
+    write(*,*) 'Allocate td2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(te2, source=ux2)
+    write(*,*) 'Allocate te2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(tf2, source=ux2)
+    write(*,*) 'Allocate tf2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(tg2, source=ux2)
+    write(*,*) 'Allocate tg2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(th2, source=ux2)
+    write(*,*) 'Allocate th2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    allocate(ti2, source=ux2)
+    write(*,*) 'Allocate ti2 Y ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    !allocate(tj2, source=ux2)
+    !write(*,*) 'Allocate tj2 Y ok nrank ', nrank
+    !call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     allocate(pp2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
+    write(*,*) 'Allocate others pp2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     pp2=zero
     allocate(pgz2, source=pp2)
+    write(*,*) 'Allocate others pgz2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     allocate(ppi2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
+    write(*,*) 'Allocate others ppi2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     ppi2=zero
     allocate(pgy2, pgzi2, source=ppi2)
+    write(*,*) 'Allocate others pgy2 ok nrank ',nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     allocate(duxdxp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
+    write(*,*) 'Allocate others duxdxp2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     duxdxp2=zero
     allocate(uyp2, uzp2, source=duxdxp2)
+    write(*,*) 'Allocate others yp2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     allocate(upi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
+    write(*,*) 'Allocate others upi2 ok'
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
     upi2=zero
     allocate(duydypi2, source=upi2)
+    write(*,*) 'Allocate others duydypi2 ok nrank ', nrank
+    call MPI_BARRIER(MPI_COMM_WORLD, ierr)
+    write(*,*) 'Allocate Y pencil'
 
     !Z PENCILS
+    write(*,*) 'Allocate Z pencil'
     call alloc_z(ux3)
     ux3=zero
     allocate(uy3, uz3, ta3, tb3, tc3, td3, te3, tf3, tg3, th3, ti3, source=ux3)
@@ -148,9 +207,11 @@ contains
     call alloc_z(dv3, ph1, .true.)
     dv3=zero
     allocate(po3, source=dv3)
+    write(*,*) 'Allocate Z pencil OK'
 
 
     !module derivative
+    write(*,*) 'Allocate Derivative'
     allocate(sx(xsize(2),xsize(3)))
     sx=zero
     allocate(vx, source=sx)
@@ -162,8 +223,10 @@ contains
     allocate(sz(zsize(1),zsize(2)))
     sz=zero
     allocate(vz, source=sz)
+    write(*,*) 'Allocate Derivative ok'
 
     !module waves
+    write(*,*) 'Allocate Waves'
     allocate(zkz(nz/2+1))
     zkz=zero
     allocate(zk2, ezs, source=zkz)
@@ -175,8 +238,10 @@ contains
     allocate(xkx(nx))
     xkx=zero
     allocate(xk2, exs, source=xkx)
+    write(*,*) 'Allocate Waves OK'
 
     !module mesh
+    write(*,*) 'Allocate Mesh'
     allocate(ppy(ny))
     ppy=zero
     allocate(pp2y, pp4y, ppyi, pp2yi, pp4yi, source=ppy)
@@ -212,7 +277,9 @@ contains
        zp(k)=real(k-1,mytype)*dz
        zpi(k)=(real(k,mytype)-half)*dz
     enddo
+    write(*,*) 'Allocate Mesh OK'
     !
+    write(*,*) 'Allocate Time Scheme'
     adt=zero
     bdt=zero
     cdt=zero
@@ -229,12 +296,16 @@ contains
 
        ntime = 1
     endif
+    write(*,*) 'Allocate Time Scheme OK'
     allocate(dux1(xsize(1),xsize(2),xsize(3),ntime))
     dux1=zero
+    write(*,*) 'Allocate dux1'
     allocate(duy1, duz1, source=dux1)
 
+    write(*,*) 'Allocate divu3'
     call alloc_z(divu3, opt_global=.true.) !global indices
     divu3=zero
+    write(*,*) 'Allocate divu3 OK'
 
 #ifdef DEBUG
     if (nrank ==  0) write(*,*) '# var_init done'
@@ -295,7 +366,7 @@ contains
     deallocate(tg2)
     deallocate(th2)
     deallocate(ti2)
-    deallocate(tj2)
+    !deallocate(tj2)
     deallocate(pgz2)
     deallocate(pp2)
     deallocate(ppi2)

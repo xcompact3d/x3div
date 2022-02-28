@@ -17,6 +17,7 @@ add_subdirectory(decomp2d)
 add_subdirectory(src)
 
 include(GNUInstallDirs)
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
 install(TARGETS xcompact3d
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )

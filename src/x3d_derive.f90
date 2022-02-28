@@ -1441,7 +1441,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                + dskz*(uz(i,j,8)-uz(i,j,4 ) &
                       -uz(i,j,4)+uz(i,j,nz))
      do concurrent (k=5:nz-4)
-        tz(i,j,k) = askz*(uz(i,j,k+1)-uz(i,j,k  ) &
+        buffer(k) = askz*(uz(i,j,k+1)-uz(i,j,k  ) &
                          -uz(i,j,k  )+uz(i,j,k-1)) &
                   + bskz*(uz(i,j,k+2)-uz(i,j,k  ) &
                          -uz(i,j,k  )+uz(i,j,k-2)) &

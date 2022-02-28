@@ -219,7 +219,7 @@ contains
     real(mytype) :: ss
 
     call thomas1d_12(tt, ff, fs, fw, nn)
-    ss = (tt(1)-alfa*tt(nn)) / (one + perio(1) - alfa*tt(nn))
+    ss = (tt(1)-alfa*tt(nn)) / (one + perio(1) - alfa*perio(nn))
     do k = 1, nn
       tt(k) = tt(k) - ss*perio(k)
     enddo

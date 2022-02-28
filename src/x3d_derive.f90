@@ -8,7 +8,7 @@ module x3d_derive
   use x3d_operator_1d, only : x3doperator1d
   use param
   use thomas
-  
+
   implicit none
 
   ! Make everything public unless declared private
@@ -244,7 +244,7 @@ subroutine derx_11(tx,ux,x3dop,nx,ny,nz)
   type(x3doperator1d), intent(in) :: x3dop
 
   call derx_ij(tx,ux,x3dop%f,x3dop%s,x3dop%w,nx,ny,nz,x3dop%npaire,1,1)
-  
+
 end subroutine derx_11
 
 !********************************************************************
@@ -253,7 +253,7 @@ subroutine derx_12(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
-  integer, intent(in) :: nx, ny, nz            
+  integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
   real(mytype), intent(in), dimension(nx,ny,nz) :: ux
   type(x3doperator1d), intent(in) :: x3dop
@@ -264,7 +264,7 @@ end subroutine derx_12
 
 !********************************************************************
 !
-subroutine derx_21(tx,ux,x3dop,nx,ny,nz) 
+subroutine derx_21(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
@@ -294,7 +294,7 @@ end subroutine derx_22
 
 !********************************************************************
 !
-subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz) 
+subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
   !
   !********************************************************************
 
@@ -436,7 +436,7 @@ end subroutine dery_11
 
 !********************************************************************
 !
-subroutine dery_12(ty,uy,x3dop,ppy,nx,ny,nz) 
+subroutine dery_12(ty,uy,x3dop,ppy,nx,ny,nz)
 
   implicit none
 
@@ -452,7 +452,7 @@ end subroutine dery_12
 
 !********************************************************************
 !
-subroutine dery_21(ty,uy,x3dop,ppy,nx,ny,nz) 
+subroutine dery_21(ty,uy,x3dop,ppy,nx,ny,nz)
 
   implicit none
 

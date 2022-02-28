@@ -6,7 +6,7 @@ module x3d_precision
 
   use, intrinsic :: iso_fortran_env, only : real32, real64
   use decomp_2d, only : mytype
-  
+
   implicit none
 
 #ifdef DOUBLE_PREC

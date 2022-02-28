@@ -25,7 +25,7 @@ contains
   subroutine error_L1_L2_Linf_xsize(err, l1, l2, linf)
 
     implicit none
-      
+
     real(mytype),intent(in),dimension(xsize(1),xsize(2),xsize(3)) :: err
     real(mytype),intent(out) :: l1, l2, linf
 
@@ -39,9 +39,9 @@ contains
 
     ! Compute L1, L2 and Linf norm of given 3D array
     USE MPI
-    
+
     implicit none
-      
+
     real(mytype),intent(in),dimension(n1,n2,n3) :: err
     real(mytype),intent(out) :: l1, l2, linf
     integer, intent(in) :: n1, n2, n3, ntot

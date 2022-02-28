@@ -75,7 +75,7 @@ contains
         open(newunit=tgv_iounit, file=tgv_file, action='write', status='replace')
       else
         open(newunit=tgv_iounit, file=tgv_file, action='write', status='new')
-      endif    
+      endif
 
     endif
 
@@ -100,7 +100,7 @@ contains
   !
   subroutine tgv_init(ux1, uy1, uz1)
 
-    implicit none 
+    implicit none
 
     ! Arguments
     real(mytype),intent(out),dimension(xsize(1),xsize(2),xsize(3)) :: ux1,uy1,uz1

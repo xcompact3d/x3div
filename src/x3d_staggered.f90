@@ -8,7 +8,7 @@ module x3d_staggered
   use x3d_operator_1d, only : x3doperator1d
   use param
   use thomas
-  
+
   implicit none
 
   ! Make everything public unless declared private

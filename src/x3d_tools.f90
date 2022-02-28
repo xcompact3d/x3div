@@ -52,10 +52,10 @@ end function cx
 ! SUBROUTINE DEFINITION
 !##################################################################
 subroutine boot_xcompact3d()
-  
+
   use MPI
   use decomp_2d, only : nrank, nproc, decomp_2d_abort
-  
+
   implicit none
 
   integer :: code
@@ -118,7 +118,7 @@ subroutine init_xcompact3d(ndt_max)
   p_row = 0; p_col = 0
   !trun = 5.0
   ndt_max = 5
-  test_mode = .false. 
+  test_mode = .false.
   do arg = 1, nargin
      call get_command_argument(arg, InputFN, FNLength, status)
      read(InputFN, *, iostat=status) DecInd

@@ -10,7 +10,7 @@ module decomp_2d_poisson
                         decomp_info_finalize
   use decomp_2d_fft, only : decomp_2d_fft_init, &
                             decomp_2d_fft_3d,   &
-                            decomp_2d_fft_finalize 
+                            decomp_2d_fft_finalize
   use x3d_transpose
   use param
   use variables
@@ -45,8 +45,8 @@ module decomp_2d_poisson
   complex(mytype), save, allocatable, dimension(:,:,:) :: kxyz
   !wave numbers for stretching in a pentadiagonal matrice
   complex(mytype), save, allocatable, dimension(:,:,:,:) :: a,a2,a3
-  ! work arrays, 
-  ! naming convention: cw (complex); rw (real); 
+  ! work arrays,
+  ! naming convention: cw (complex); rw (real);
   !                    1 = X-pencil; 2 = Y-pencil; 3 = Z-pencil
   real(mytype), allocatable, dimension(:,:,:) :: rw1,rw1b,rw2,rw2b,rw3
   complex(mytype), allocatable, dimension(:,:,:) :: cw1,cw1b,cw2,cw22,cw2b,cw2c
@@ -77,7 +77,7 @@ contains
     implicit none
 
     integer :: nx, ny, nz, i
-    
+
     real(mytype) :: rl, iy
     external  rl, iy
 
@@ -117,7 +117,7 @@ contains
     if (bcy==1) ny=ny-1
     if (bcz==1) nz=nz-1
 
-#ifdef DEBUG 
+#ifdef DEBUG
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init start'
 #endif
 
@@ -132,14 +132,14 @@ contains
     bz = zero
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
-#ifdef DEBUG 
+#ifdef DEBUG
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init'
 #endif
 
     call decomp_info_init(nx, ny, nz, ph)
     call decomp_info_init(nx, ny, nz/2+1, sp)
 
-#ifdef DEBUG 
+#ifdef DEBUG
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init ok'
 #endif
 
@@ -206,7 +206,7 @@ contains
             ph%yst(3):ph%yen(3)))
        rw2 = zero
        allocate(rw2b, source=rw2)
-       if (bcz==1) then  
+       if (bcz==1) then
           allocate(rw3(ph%zsz(1),ph%zsz(2),ph%zsz(3)))
           rw3 = zero
        end if
@@ -214,17 +214,17 @@ contains
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
        a = zero
        allocate(a2, source=a)
-       allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))      
+       allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))
        a3 = zero
     end if
 
-#ifdef DEBUG 
+#ifdef DEBUG
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init before waves'
 #endif
 
     call waves()
 
-#ifdef DEBUG 
+#ifdef DEBUG
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init end'
 #endif
 
@@ -311,7 +311,7 @@ contains
        fft_initialised = .true.
     end if
 
-    ! compute r2c transform 
+    ! compute r2c transform
     call decomp_2d_fft_3d(rhs,cw1)
 
     ! normalisation
@@ -394,7 +394,7 @@ contains
 
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d_fft, only : PHYSICAL_IN_Z
-    
+
     implicit none
 
     real(mytype), dimension(:,:,:), intent(INOUT) :: rhs
@@ -437,7 +437,7 @@ contains
        fft_initialised = .true.
     end if
 
-    ! compute r2c transform 
+    ! compute r2c transform
     call decomp_2d_fft_3d(rhs,cw1)
 
     ! normalisation
@@ -531,13 +531,13 @@ contains
              tmp1 = rl(kxyz(i,j,k))
              tmp2 = iy(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
-             if ((abs(tmp1) < epsilon).and.(abs(tmp2) < epsilon)) then    
+             if ((abs(tmp1) < epsilon).and.(abs(tmp2) < epsilon)) then
                 cw1b(i,j,k)=cx(zero, zero)
              end if
              if ((abs(tmp1) < epsilon).and.(abs(tmp2) >= epsilon)) then
                 cw1b(i,j,k)=cx(zero, iy(cw1b(i,j,k)) / (-tmp2))
              end if
-             if ((abs(tmp1) >= epsilon).and.(abs(tmp2) < epsilon)) then    
+             if ((abs(tmp1) >= epsilon).and.(abs(tmp2) < epsilon)) then
                 cw1b(i,j,k)=cx(rl(cw1b(i,j,k)) / (-tmp1), zero)
              end if
              if ((abs(tmp1) >= epsilon).and.(abs(tmp2) >= epsilon)) then
@@ -557,7 +557,7 @@ contains
     do k = sp%xst(3), sp%xen(3)
        do j = sp%xst(2), sp%xen(2)
           cw1(1,j,k) = cw1b(1,j,k)
-          do i = 2, nx 
+          do i = 2, nx
              tmp1 = rl(cw1b(i,j,k))
              tmp2 = iy(cw1b(i,j,k))
              tmp3 = rl(cw1b(nx-i+2,j,k))
@@ -710,7 +710,7 @@ contains
     !
     !***********************************************************
 
-    use x3d_operator_x_data 
+    use x3d_operator_x_data
     use x3d_operator_y_data
     use x3d_operator_z_data
     use param
@@ -721,7 +721,7 @@ contains
     implicit none
 
     integer :: i,j,k
-    real(mytype) :: w,wp,w1,w1p 
+    real(mytype) :: w,wp,w1,w1p
     complex(mytype) :: xyzk
     complex(mytype) :: ytt,xtt,ztt,yt1,xt1,yt2,xt2
     complex(mytype) :: xtt1,ytt1,ztt1,zt1,zt2,tmp1,tmp2,tmp3
@@ -771,7 +771,7 @@ contains
           xkx(i) = cx_one_one * nxm * wp / xlx
           exs(i) = cx_one_one * nxm * w / xlx
           xk2(i) = cx_one_one * (nxm * wp / xlx)**2
-!      
+!
        enddo
        xkx(1) = zero
        exs(1) = zero
@@ -789,7 +789,7 @@ contains
           if (istret /= 0) yky(j) = cx_one_one * (ny * wp)
           eys(j) = cx_one_one * (ny * w / yly)
           yk2(j) = cx_one_one * (ny * wp / yly)**2
-!      
+!
        enddo
        do j = ny/2 + 2, ny
           yky(j) = yky(ny-j+2)
@@ -806,7 +806,7 @@ contains
           if (istret /= 0) yky(j) = cx_one_one * (nym * wp)
           eys(j)=cx_one_one * (nym * w / yly)
           yk2(j)=cx_one_one * (nym * wp / yly)**2
-!      
+!
        enddo
        yky(1) = zero
        eys(1) = zero
@@ -896,7 +896,7 @@ contains
 !
                    rlexs = rl(exs(i)) * dx
 !
-                   xtt_rl = two * &  
+                   xtt_rl = two * &
   (bicix6 * cos(rlexs * onepfive) + cicix6 * cos(rlexs * twopfive) + dicix6 * cos(rlexs * threepfive))
 !
                    ytt_rl = two * &
@@ -934,7 +934,7 @@ contains
 !
                 rleys = rl(eys(j)) * dy
 !
-                do i = sp%xst(1), sp%xen(1)  
+                do i = sp%xst(1), sp%xen(1)
 !
                    rlexs = rl(exs(i)) * dx
 !

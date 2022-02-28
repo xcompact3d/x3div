@@ -12,9 +12,3 @@ if(${CMAKE_Fortran_COMPILER_VERSION} VERSION_GREATER_EQUAL 10.3)
   # See https://github.com/xcompact3d/x3div/pull/20#discussion_r814948614
 endif()
 target_compile_options(decomp2d PRIVATE ${gfortran_flags})
-
-install(TARGETS decomp2d
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)

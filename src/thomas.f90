@@ -27,6 +27,11 @@ module thomas
     module procedure zthomas_12
   end interface zthomas
 
+  interface thomas1d
+    module procedure thomas1d_0
+    module procedure thomas1d_12
+  end interface thomas1d
+
 
 contains
 
@@ -181,7 +186,7 @@ contains
   ! fw, in, used during the backward step
   ! nn, in, size of the vector
   !
-  pure subroutine thomas1d(tt, ff, fs, fw, nn)
+  pure subroutine thomas1d_12(tt, ff, fs, fw, nn)
 
     implicit none
 
@@ -199,6 +204,26 @@ contains
        tt(k) = (tt(k)-ff(k)*tt(k+1)) * fw(k)
     enddo
 
-  end subroutine thomas1d
+  end subroutine thomas1d_12
+
+  pure subroutine thomas1d_0(tt, ff, fs, fw, perio, alfa, nn)
+
+    implicit none
+
+    integer, intent(in) :: nn
+    real(mytype), intent(inout), dimension(nn) :: tt
+    real(mytype), intent(in), dimension(nn) :: ff, fs, fw, perio
+    real(mytype), intent(in) :: alfa
+
+    integer :: k
+    real(mytype) :: ss
+
+    call thomas1d_12(tt, ff, fs, fw, nn)
+    ss = (tt(1)-alfa*tt(nn)) / (one + perio(1) - alfa*tt(nn))
+    do k = 1, nn
+      tt(k) = tt(k) - ss*perio(nn)
+    enddo
+
+  end subroutine thomas1d_0
 
 end module thomas

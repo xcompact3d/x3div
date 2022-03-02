@@ -64,8 +64,6 @@ contains
   !
   subroutine x3d_derive_init()
 
-    use param, only : nclx1, ncly1, nclz1, nclxn, nclyn, nclzn
-
     implicit none
 
     ! Velocity
@@ -107,42 +105,44 @@ contains
     if (nclz1.eq.2.and.nclzn.eq.2) derzz => derzz_22
 
     ! Scalars
-    ! First derivative
-    if (nclxS1.eq.0.and.nclxSn.eq.0) derxS => derx_00
-    if (nclxS1.eq.1.and.nclxSn.eq.1) derxS => derx_11
-    if (nclxS1.eq.1.and.nclxSn.eq.2) derxS => derx_12
-    if (nclxS1.eq.2.and.nclxSn.eq.1) derxS => derx_21
-    if (nclxS1.eq.2.and.nclxSn.eq.2) derxS => derx_22
-    !
-    if (nclyS1.eq.0.and.nclySn.eq.0) deryS => dery_00
-    if (nclyS1.eq.1.and.nclySn.eq.1) deryS => dery_11
-    if (nclyS1.eq.1.and.nclySn.eq.2) deryS => dery_12
-    if (nclyS1.eq.2.and.nclySn.eq.1) deryS => dery_21
-    if (nclyS1.eq.2.and.nclySn.eq.2) deryS => dery_22
-    !
-    if (nclzS1.eq.0.and.nclzSn.eq.0) derzS => derz_00
-    if (nclzS1.eq.1.and.nclzSn.eq.1) derzS => derz_11
-    if (nclzS1.eq.1.and.nclzSn.eq.2) derzS => derz_12
-    if (nclzS1.eq.2.and.nclzSn.eq.1) derzS => derz_21
-    if (nclzS1.eq.2.and.nclzSn.eq.2) derzS => derz_22
-    ! Second derivative
-    if (nclxS1.eq.0.and.nclxSn.eq.0) derxxS => derxx_00
-    if (nclxS1.eq.1.and.nclxSn.eq.1) derxxS => derxx_11
-    if (nclxS1.eq.1.and.nclxSn.eq.2) derxxS => derxx_12
-    if (nclxS1.eq.2.and.nclxSn.eq.1) derxxS => derxx_21
-    if (nclxS1.eq.2.and.nclxSn.eq.2) derxxS => derxx_22
-    !
-    if (nclyS1.eq.0.and.nclySn.eq.0) deryyS => deryy_00
-    if (nclyS1.eq.1.and.nclySn.eq.1) deryyS => deryy_11
-    if (nclyS1.eq.1.and.nclySn.eq.2) deryyS => deryy_12
-    if (nclyS1.eq.2.and.nclySn.eq.1) deryyS => deryy_21
-    if (nclyS1.eq.2.and.nclySn.eq.2) deryyS => deryy_22
-    !
-    if (nclzS1.eq.0.and.nclzSn.eq.0) derzzS => derzz_00
-    if (nclzS1.eq.1.and.nclzSn.eq.1) derzzS => derzz_11
-    if (nclzS1.eq.1.and.nclzSn.eq.2) derzzS => derzz_12
-    if (nclzS1.eq.2.and.nclzSn.eq.1) derzzS => derzz_21
-    if (nclzS1.eq.2.and.nclzSn.eq.2) derzzS => derzz_22
+    if (iscalar.ne.0) then
+      ! First derivative
+      if (nclxS1.eq.0.and.nclxSn.eq.0) derxS => derx_00
+      if (nclxS1.eq.1.and.nclxSn.eq.1) derxS => derx_11
+      if (nclxS1.eq.1.and.nclxSn.eq.2) derxS => derx_12
+      if (nclxS1.eq.2.and.nclxSn.eq.1) derxS => derx_21
+      if (nclxS1.eq.2.and.nclxSn.eq.2) derxS => derx_22
+      !
+      if (nclyS1.eq.0.and.nclySn.eq.0) deryS => dery_00
+      if (nclyS1.eq.1.and.nclySn.eq.1) deryS => dery_11
+      if (nclyS1.eq.1.and.nclySn.eq.2) deryS => dery_12
+      if (nclyS1.eq.2.and.nclySn.eq.1) deryS => dery_21
+      if (nclyS1.eq.2.and.nclySn.eq.2) deryS => dery_22
+      !
+      if (nclzS1.eq.0.and.nclzSn.eq.0) derzS => derz_00
+      if (nclzS1.eq.1.and.nclzSn.eq.1) derzS => derz_11
+      if (nclzS1.eq.1.and.nclzSn.eq.2) derzS => derz_12
+      if (nclzS1.eq.2.and.nclzSn.eq.1) derzS => derz_21
+      if (nclzS1.eq.2.and.nclzSn.eq.2) derzS => derz_22
+      ! Second derivative
+      if (nclxS1.eq.0.and.nclxSn.eq.0) derxxS => derxx_00
+      if (nclxS1.eq.1.and.nclxSn.eq.1) derxxS => derxx_11
+      if (nclxS1.eq.1.and.nclxSn.eq.2) derxxS => derxx_12
+      if (nclxS1.eq.2.and.nclxSn.eq.1) derxxS => derxx_21
+      if (nclxS1.eq.2.and.nclxSn.eq.2) derxxS => derxx_22
+      !
+      if (nclyS1.eq.0.and.nclySn.eq.0) deryyS => deryy_00
+      if (nclyS1.eq.1.and.nclySn.eq.1) deryyS => deryy_11
+      if (nclyS1.eq.1.and.nclySn.eq.2) deryyS => deryy_12
+      if (nclyS1.eq.2.and.nclySn.eq.1) deryyS => deryy_21
+      if (nclyS1.eq.2.and.nclySn.eq.2) deryyS => deryy_22
+      !
+      if (nclzS1.eq.0.and.nclzSn.eq.0) derzzS => derzz_00
+      if (nclzS1.eq.1.and.nclzSn.eq.1) derzzS => derzz_11
+      if (nclzS1.eq.1.and.nclzSn.eq.2) derzzS => derzz_12
+      if (nclzS1.eq.2.and.nclzSn.eq.1) derzzS => derzz_21
+      if (nclzS1.eq.2.and.nclzSn.eq.2) derzzS => derzz_22
+    endif
 
   end subroutine x3d_derive_init
 
@@ -164,14 +164,16 @@ contains
     nullify(derzz)
 
     ! Scalars
-    ! First derivative
-    nullify(derxS)
-    nullify(deryS)
-    nullify(derzS)
-    ! Second derivative
-    nullify(derxxS)
-    nullify(deryyS)
-    nullify(derzzS)
+    if (iscalar.ne.0) then
+      ! First derivative
+      nullify(derxS)
+      nullify(deryS)
+      nullify(derzS)
+      ! Second derivative
+      nullify(derxxS)
+      nullify(deryyS)
+      nullify(derzzS)
+    endif
 
   end subroutine x3d_derive_finalize
 

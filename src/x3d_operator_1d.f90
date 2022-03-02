@@ -32,6 +32,10 @@ module x3d_operator_1d
   type(x3doperator1d), save, public :: x3d_op_derx, x3d_op_derxp
   type(x3doperator1d), save, public :: x3d_op_dery, x3d_op_deryp
   type(x3doperator1d), save, public :: x3d_op_derz, x3d_op_derzp
+  ! First derivative for scalars
+  type(x3doperator1d), save, public :: x3d_op_derxS, x3d_op_derxpS
+  type(x3doperator1d), save, public :: x3d_op_deryS, x3d_op_derypS
+  type(x3doperator1d), save, public :: x3d_op_derzS, x3d_op_derzpS
 
   ! First derivative from velocity grid => pressure grid
   type(x3doperator1d), save, public :: x3d_op_derxvp, x3d_op_deryvp, x3d_op_derzvp
@@ -49,6 +53,10 @@ module x3d_operator_1d
   type(x3doperator1d), save, public :: x3d_op_derxx, x3d_op_derxxp
   type(x3doperator1d), save, public :: x3d_op_deryy, x3d_op_deryyp
   type(x3doperator1d), save, public :: x3d_op_derzz, x3d_op_derzzp
+  ! Derivative for scalars
+  type(x3doperator1d), save, public :: x3d_op_derxxS, x3d_op_derxxpS
+  type(x3doperator1d), save, public :: x3d_op_deryyS, x3d_op_deryypS
+  type(x3doperator1d), save, public :: x3d_op_derzzS, x3d_op_derzzpS
 
   ! Make everything private unless declared public
   private
@@ -67,9 +75,10 @@ contains
     use x3d_operator_x_data
     use x3d_operator_y_data
     use x3d_operator_z_data
-    use param, only: dx, dx2, nclx, nclx1, nclxn, &
-                     dy, dy2, ncly, ncly1, nclyn, &
-                     dz, dz2, nclz, nclz1, nclzn
+    use param, only: dx, dx2, nclx, nclx1, nclxn, nclxS1, nclxSn, &
+                     dy, dy2, ncly, ncly1, nclyn, nclyS1, nclySn, &
+                     dz, dz2, nclz, nclz1, nclzn, nclzS1, nclzSn, &
+                     iscalar
 
     implicit none
 
@@ -77,6 +86,8 @@ contains
       if (nrank == 0) write (*, *) '# x3d_operator_1d_init start'
 #endif
 
+      ! First derivative
+      ! Velocity
       call first_deriv_exp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
                             cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, dx, nx, nclx1, nclxn)
       call first_deriv_imp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
@@ -94,7 +105,23 @@ contains
                                cfnz, dfnz, alfamz, afmz, alfakz, afkz, bfkz, &
                                ffz, fsz, fwz, ffzp, fszp, fwzp, dz, nz, nclz1, nclzn)
       endif
+      ! Scalars
+      if (iscalar.ne.0) then
+        call first_deriv_imp_(alfa1x, af1x, bf1x, cf1x, df1x, alfa2x, af2x, alfanx, afnx, bfnx, &
+                              cfnx, dfnx, alfamx, afmx, alfaix, afix, bfix, &
+                              ffxS, fsxS, fwxS, ffxpS, fsxpS, fwxpS, dx, nx, nclxS1, nclxSn)
+        call first_deriv_imp_(alfa1y, af1y, bf1y, cf1y, df1y, alfa2y, af2y, alfany, afny, bfny, &
+                              cfny, dfny, alfamy, afmy, alfajy, afjy, bfjy, &
+                              ffyS, fsyS, fwyS, ffypS, fsypS, fwypS, dy, ny, nclyS1, nclySn)
+        if (nz /= 1) then
+           call first_deriv_imp_(alfa1z, af1z, bf1z, cf1z, df1z, alfa2z, af2z, alfanz, afnz, bfnz, &
+                                 cfnz, dfnz, alfamz, afmz, alfakz, afkz, bfkz, &
+                                 ffzS, fszS, fwzS, ffzpS, fszpS, fwzpS, dz, nz, nclzS1, nclzSn)
+        endif
+      endif
 
+      ! Second derivative
+      ! Velocity
       call second_deriv_exp_(alsa1x, as1x, bs1x, &
                              cs1x, ds1x, alsa2x, as2x, alsanx, asnx, bsnx, csnx, dsnx, alsamx, &
                              asmx, alsa3x, as3x, bs3x, alsatx, astx, bstx, &
@@ -136,6 +163,33 @@ contains
                                 alsakz, askz, bskz, cskz, dskz, &
                                 sfz, ssz, swz, sfzp, sszp, swzp, dz2, nz, nclz1, nclzn)
       endif
+      ! Scalars
+      if (iscalar.ne.0) then
+        call second_deriv_imp_(alsa1x, as1x, bs1x, &
+                               cs1x, ds1x, alsa2x, as2x, alsanx, asnx, bsnx, csnx, dsnx, alsamx, &
+                               asmx, alsa3x, as3x, bs3x, alsatx, astx, bstx, &
+                               alsa4x, as4x, bs4x, cs4x, &
+                               alsattx, asttx, bsttx, csttx, &
+                               alsaix, asix, bsix, csix, dsix, &
+                               sfxS, ssxS, swxS, sfxpS, ssxpS, swxpS, dx2, nx, nclxS1, nclxSn)
+        call second_deriv_imp_(alsa1y, as1y, bs1y, &
+                               cs1y, ds1y, alsa2y, as2y, alsany, asny, bsny, csny, dsny, alsamy, &
+                               asmy, alsa3y, as3y, bs3y, alsaty, asty, bsty, &
+                               alsa4y, as4y, bs4y, cs4y, &
+                               alsatty, astty, bstty, cstty, &
+                               alsajy, asjy, bsjy, csjy, dsjy, &
+                               sfyS, ssyS, swyS, sfypS, ssypS, swypS, dy2, ny, nclyS1, nclySn)
+        if (nz /= 1) then
+           call second_deriv_imp_(alsa1z, as1z, bs1z, &
+                                  cs1z, ds1z, alsa2z, as2z, alsanz, asnz, bsnz, csnz, dsnz, alsamz, &
+                                  asmz, alsa3z, as3z, bs3z, alsatz, astz, bstz, &
+                                  alsa4z, as4z, bs4z, cs4z, &
+                                  alsattz, asttz, bsttz, csttz, &
+                                  alsakz, askz, bskz, cskz, dskz, &
+                                  sfzS, sszS, swzS, sfzpS, sszpS, swzpS, dz2, nz, nclzS1, nclzSn)
+        endif
+      endif
+
 
       call interpol_exp_(dx, nxm, nx, nclx1, nclxn, &
                          alcaix6, acix6, bcix6, &
@@ -176,17 +230,29 @@ contains
                             cisip6z, ciwip6z, cisi6z, ciwi6z)
      endif
 
-    ! derx operators for the velocity
+    ! derx operators for the velocity and scalars
     call init(x3d_op_derx,  ffx,  fsx,  fwx,  nx, nclx, alfaix, 0)
     call init(x3d_op_derxp, ffxp, fsxp, fwxp, nx, nclx, alfaix, 1)
+    if (iscalar.ne.0) then
+      call init(x3d_op_derxS,  ffxS,  fsxS,  fwxS,  nx, nclx, alfaix, 0)
+      call init(x3d_op_derxpS, ffxpS, fsxpS, fwxpS, nx, nclx, alfaix, 1)
+    endif
 
-    ! dery operators for the velocity
+    ! dery operators for the velocity and scalars
     call init(x3d_op_dery,  ffy,  fsy,  fwy,  ny, ncly, alfajy, 0)
     call init(x3d_op_deryp, ffyp, fsyp, fwyp, ny, ncly, alfajy, 1)
+    if (iscalar.ne.0) then
+      call init(x3d_op_deryS,  ffyS,  fsyS,  fwyS,  ny, ncly, alfajy, 0)
+      call init(x3d_op_derypS, ffypS, fsypS, fwypS, ny, ncly, alfajy, 1)
+    endif
 
-    ! derz operators for the velocity
+    ! derz operators for the velocity and scalars
     call init(x3d_op_derz,  ffz,  fsz,  fwz,  nz, nclz, alfakz, 0)
     call init(x3d_op_derzp, ffzp, fszp, fwzp, nz, nclz, alfakz, 1)
+    if (iscalar.ne.0) then
+      call init(x3d_op_derzS,  ffzS,  fszS,  fwzS,  nz, nclz, alfakz, 0)
+      call init(x3d_op_derzpS, ffzpS, fszpS, fwzpS, nz, nclz, alfakz, 1)
+    endif
 
     ! Staggered derivative velocity => pressure
     call init(x3d_op_derxvp, cfx6, csx6, cwx6, nxm, nclx, alcaix6, 1)
@@ -239,6 +305,14 @@ contains
     call init(x3d_op_deryyp, sfyp, ssyp, swyp, ny, ncly, alsajy, 1)
     call init(x3d_op_derzz, sfz, ssz, swz, nz, nclz, alsakz, 0)
     call init(x3d_op_derzzp, sfzp, sszp, swzp, nz, nclz, alsakz, 1)
+    if (iscalar.ne.0) then
+      call init(x3d_op_derxxS, sfxS, ssxS, swxS, nx, nclx, alsaix, 0)
+      call init(x3d_op_derxxpS, sfxpS, ssxpS, swxpS, nx, nclx, alsaix, 1)
+      call init(x3d_op_deryyS, sfyS, ssyS, swyS, ny, ncly, alsajy, 0)
+      call init(x3d_op_deryypS, sfypS, ssypS, swypS, ny, ncly, alsajy, 1)
+      call init(x3d_op_derzzS, sfzS, sszS, swzS, nz, nclz, alsakz, 0)
+      call init(x3d_op_derzzpS, sfzpS, sszpS, swzpS, nz, nclz, alsakz, 1)
+    endif
 
 #ifdef DEBUG
       if (nrank == 0) write (*, *) '# x3d_operator_1d_init done'
@@ -251,16 +325,30 @@ contains
   !
   subroutine x3d_operator_1d_finalize()
 
+    use param, only : iscalar
+
     implicit none
 
     call finalize(x3d_op_derx)
     call finalize(x3d_op_derxp)
+    if (iscalar.ne.0) then
+      call finalize(x3d_op_derxS)
+      call finalize(x3d_op_derxpS)
+    endif
 
     call finalize(x3d_op_dery)
     call finalize(x3d_op_deryp)
+    if (iscalar.ne.0) then
+      call finalize(x3d_op_deryS)
+      call finalize(x3d_op_derypS)
+    endif
 
     call finalize(x3d_op_derz)
     call finalize(x3d_op_derzp)
+    if (iscalar.ne.0) then
+      call finalize(x3d_op_derzS)
+      call finalize(x3d_op_derzpS)
+    endif
 
     call finalize(x3d_op_derxvp)
     call finalize(x3d_op_deryvp)
@@ -284,6 +372,14 @@ contains
     call finalize(x3d_op_deryyp)
     call finalize(x3d_op_derzz)
     call finalize(x3d_op_derzzp)
+    if (iscalar.ne.0) then
+      call finalize(x3d_op_derxxS)
+      call finalize(x3d_op_derxxpS)
+      call finalize(x3d_op_deryyS)
+      call finalize(x3d_op_deryypS)
+      call finalize(x3d_op_derzzS)
+      call finalize(x3d_op_derzzpS)
+    endif
 
   end subroutine x3d_operator_1d_finalize
 

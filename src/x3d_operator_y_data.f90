@@ -39,8 +39,8 @@ module x3d_operator_y_data
    real(mytype), allocatable, dimension(:) :: fiffy, fifcy, fifby, fisfy, fiscy, fisby, fifsy, fifwy, fissy, fiswy
    real(mytype), allocatable, dimension(:) :: fiffyp, fifsyp, fifwyp, fisfyp, fissyp, fiswyp
 
-   real(mytype), allocatable, dimension(:) :: ffyS, sfyS, fsyS, fwyS, ssyS, swyS
-   real(mytype), allocatable, dimension(:) :: ffypS, sfypS, fsypS, fwypS, ssypS, swypS
+   real(mytype), target, allocatable, dimension(:) :: ffyS, sfyS, fsyS, fwyS, ssyS, swyS
+   real(mytype), target, allocatable, dimension(:) :: ffypS, sfypS, fsypS, fwypS, ssypS, swypS
 
    real(mytype), target, allocatable, dimension(:) :: cfy6, ccy6, cby6, cfyp6, csyp6, cwyp6, csy6
    real(mytype), target, allocatable, dimension(:) :: cwy6, cify6, cicy6, ciby6, cifyp6, cisyp6, &

@@ -39,8 +39,8 @@ module x3d_operator_x_data
    real(mytype), allocatable, dimension(:) :: fiffx, fifcx, fifbx, fisfx, fiscx, fisbx, fifsx, fifwx, fissx, fiswx
    real(mytype), allocatable, dimension(:) :: fiffxp, fifsxp, fifwxp, fisfxp, fissxp, fiswxp
    !
-   real(mytype), allocatable, dimension(:) :: ffxS, sfxS, fsxS, fwxS, ssxS, swxS
-   real(mytype), allocatable, dimension(:) :: ffxpS, sfxpS, fsxpS, fwxpS, ssxpS, swxpS
+   real(mytype), target, allocatable, dimension(:) :: ffxS, sfxS, fsxS, fwxS, ssxS, swxS
+   real(mytype), target, allocatable, dimension(:) :: ffxpS, sfxpS, fsxpS, fwxpS, ssxpS, swxpS
    !
    real(mytype), target, allocatable, dimension(:) :: cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
                                                       cwxp6, csx6, cwx6, cifx6, cicx6, cisx6

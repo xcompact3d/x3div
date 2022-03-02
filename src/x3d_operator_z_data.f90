@@ -39,8 +39,8 @@ module x3d_operator_z_data
    real(mytype), allocatable, dimension(:) :: fiffz, fifcz, fifbz, fisfz, fiscz, fisbz, fifsz, fifwz, fissz, fiswz
    real(mytype), allocatable, dimension(:) :: fiffzp, fifszp, fifwzp, fisfzp, fisszp, fiswzp
 
-   real(mytype), allocatable, dimension(:) :: ffzS, sfzS, fszS, fwzS, sszS, swzS
-   real(mytype), allocatable, dimension(:) :: ffzpS, sfzpS, fszpS, fwzpS, sszpS, swzpS
+   real(mytype), target, allocatable, dimension(:) :: ffzS, sfzS, fszS, fwzS, sszS, swzS
+   real(mytype), target, allocatable, dimension(:) :: ffzpS, sfzpS, fszpS, fwzpS, sszpS, swzpS
 
    real(mytype), target, allocatable, dimension(:) :: cfz6, ccz6, cbz6, cfzp6, cszp6, cwzp6, csz6
    real(mytype), target, allocatable, dimension(:) :: cwz6, cifz6, cicz6, cibz6, cifzp6, ciszp6, &

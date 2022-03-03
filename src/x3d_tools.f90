@@ -195,25 +195,19 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm, ny, nz, ph2)
   call decomp_info_init(nxm, nym, nz, ph3)
 
-  write(*,*) 'var_init'
   call var_init()
-  write(*,*) 'var_xinit'
   call x3d_operator_x_data_init()
-  write(*,*) 'var_yinit'
   call x3d_operator_y_data_init()
-  write(*,*) 'var_zinit'
   call x3d_operator_z_data_init()
-  write(*,*) 'var_1dinit'
   call x3d_operator_1d_init()
-  write(*,*) 'var_derive_init'
   call x3d_derive_init()
 
-  write(*,*) 'poisson_init'
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
-  write(*,*) 'flowfield_init'
   call init_flowfield()
+  write(*,*) 'End init_xcompact3d'
+ 
 
 endsubroutine init_xcompact3d
 !########################################################################

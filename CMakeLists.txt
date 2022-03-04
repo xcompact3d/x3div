@@ -286,5 +286,6 @@ endif()
 
 # Folder for unit tests
 if (PFUNIT_FOUND)
-  add_subdirectory(verification)
+  add_subdirectory(tests)
 endif()
+

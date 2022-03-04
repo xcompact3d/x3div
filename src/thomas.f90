@@ -188,6 +188,8 @@ contains
   !
   pure subroutine thomas1d_12(tt, ff, fs, fw, nn)
 
+    !$acc routine seq
+
     implicit none
 
     integer, intent(in) :: nn
@@ -207,6 +209,8 @@ contains
   end subroutine thomas1d_12
 
   pure subroutine thomas1d_0(tt, ff, fs, fw, perio, alfa, nn)
+
+    !$acc routine seq
 
     implicit none
 

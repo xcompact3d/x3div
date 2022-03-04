@@ -26,6 +26,8 @@ subroutine derxvp(tx,ux,x3dop,nx,nxm,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
   real(mytype), intent(out), dimension(nxm,ny,nz) :: tx
@@ -111,6 +113,8 @@ subroutine interxvp(tx,ux,x3dop,nx,nxm,ny,nz)
   use x3d_operator_x_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
@@ -226,6 +230,8 @@ subroutine derxpv(tx,ux,x3dop,nxm,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -297,6 +303,8 @@ subroutine interxpv(tx,ux,x3dop,nxm,nx,ny,nz)
   use x3d_operator_x_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, nxm, ny, nz
@@ -420,6 +428,8 @@ subroutine interyvp(ty,uy,x3dop,nx,ny,nym,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
   real(mytype), intent(out), dimension(nx,nym,nz) :: ty
@@ -534,6 +544,8 @@ subroutine deryvp(ty,uy,x3dop,ppyi,nx,ny,nym,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
   real(mytype), intent(out), dimension(nx,nym,nz) :: ty
@@ -618,6 +630,8 @@ subroutine interypv(ty,uy,x3dop,nx,nym,ny,nz)
   USE x3d_operator_y_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
@@ -741,6 +755,8 @@ subroutine derypv(ty,uy,x3dop,ppy,nx,nym,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nym, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -823,6 +839,8 @@ subroutine derzvp(tz,uz,x3dop,nx,ny,nz,nzm)
   USE x3d_operator_z_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, nzm
@@ -916,6 +934,8 @@ subroutine interzvp(tz,uz,x3dop,nx,ny,nz,nzm)
   USE x3d_operator_z_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, nzm
@@ -1038,6 +1058,8 @@ subroutine derzpv(tz,uz,x3dop,nx,ny,nzm,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, nzm, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -1116,6 +1138,8 @@ subroutine interzpv(tz,uz,x3dop,nx,ny,nzm,nz)
   USE x3d_operator_z_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, nzm

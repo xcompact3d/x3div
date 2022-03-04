@@ -21,3 +21,6 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
 install(TARGETS xcompact3d
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
+
+# Build tests
+add_subdirectory(tests)

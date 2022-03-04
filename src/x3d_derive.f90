@@ -183,6 +183,8 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -224,6 +226,8 @@ subroutine derx_ij(tx,ux,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
   use x3d_operator_x_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
@@ -352,6 +356,8 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -402,6 +408,8 @@ subroutine dery_ij(ty,uy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
   use x3d_operator_y_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
@@ -540,6 +548,8 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -588,6 +598,8 @@ subroutine derz_ij(tz,uz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
   use x3d_operator_z_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
@@ -722,6 +734,8 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -825,6 +839,8 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
   use x3d_operator_x_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
@@ -1081,6 +1097,8 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -1184,6 +1202,8 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
   use x3d_operator_y_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
@@ -1439,6 +1459,8 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -1549,6 +1571,8 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
   use x3d_operator_z_data
 
   implicit none
+
+  !$acc routine(thomas1d_0, thomas1d_12) seq
 
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln

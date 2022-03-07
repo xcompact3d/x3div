@@ -30,6 +30,12 @@ module var
   real(mytype), save, allocatable, dimension(:,:,:) :: pgz3,ppi3,duxydxyp3,uzp3
 
 
+  interface var_zero
+     module procedure var1_zero
+     module procedure var2_zero
+     module procedure var3_zero
+  end interface var_zero
+  
 contains
 
 
@@ -62,76 +68,78 @@ contains
 
     !X PENCILS
     call alloc_x(ux1)
-    ux1 = zero
+    call var_zero(ux1)
     allocate(uy1, uz1, px1, py1, pz1, source=ux1)
 
     call alloc_x(ta1)
-    ta1 = zero
+    call var_zero(ta1)
     allocate(tb1, tc1, td1, te1, tf1, tg1, th1, ti1, source=ta1)
 
     allocate(pp1(nxm,xsize(2),xsize(3)))
-    pp1 = zero
+    call var_zero(pp1)
     allocate(pgy1, source=pp1)
     allocate(pgz1, source=pp1)
 
     !pre_correc 2d array
     allocate(dpdyx1(xsize(2),xsize(3)))
-    dpdyx1=zero
+    call var_zero(dpdyx1)
     allocate(dpdyxn, dpdzx1, dpdzxn, source=dpdyx1)
     allocate(dpdxy1(xsize(1),xsize(3)))
-    dpdxy1=zero
+    call var_zero(dpdxy1)
     allocate(dpdxyn, dpdzy1, dpdzyn, source=dpdxy1)
     allocate(dpdxz1(xsize(1),xsize(2)))
-    dpdxz1=zero
+    call var_zero(dpdxz1)
     allocate(dpdxzn, dpdyz1, dpdyzn, source=dpdxz1)
 
     !Y PENCILS
     call alloc_y(ux2)
-    ux2=zero
+    call var_zero(ux2)
     allocate(uy2, uz2, ta2, tb2, tc2, td2, te2, tf2, tg2, th2, ti2, tj2, source=ux2)
     allocate(pp2(ph3%yst(1):ph3%yen(1),nym,ysize(3)))
-    pp2=zero
+    call var_zero(pp2)
     allocate(pgz2, source=pp2)
     allocate(ppi2(ph3%yst(1):ph3%yen(1),ysize(2),ysize(3)))
-    ppi2=zero
+    call var_zero(ppi2)
     allocate(pgy2, pgzi2, source=ppi2)
     allocate(duxdxp2(ph1%yst(1):ph1%yen(1),ysize(2),ysize(3)))
-    duxdxp2=zero
+    call var_zero(duxdxp2)
     allocate(uyp2, uzp2, source=duxdxp2)
     allocate(upi2(ph1%yst(1):ph1%yen(1),nym,ysize(3)))
-    upi2=zero
+    call var_zero(upi2)
     allocate(duydypi2, source=upi2)
 
     !Z PENCILS
     call alloc_z(ux3)
-    ux3=zero
+    call var_zero(ux3)
     allocate(uy3, uz3, ta3, tb3, tc3, td3, te3, tf3, tg3, th3, ti3, source=ux3)
     allocate(ppi3(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),zsize(3)))
-    ppi3=zero
+    call var_zero(ppi3)
     allocate(pgz3, source=ppi3)
 
     allocate(duxydxyp3(ph1%zst(1):ph1%zen(1),ph1%zst(2):ph1%zen(2),zsize(3)))
-    duxydxyp3=zero
+    call var_zero(duxydxyp3)
     allocate(uzp3, source=duxydxyp3)
 
     allocate(pp3(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress))
-    pp3=zero
+    do i = 1, npress
+       call var_zero(pp3(:,:,:,i))
+    end do
 
     call alloc_z(dv3, ph1, .true.)
-    dv3=zero
+    call var_zero(dv3)
     allocate(po3, source=dv3)
 
     !module waves
     allocate(zkz(nz/2+1))
-    zkz=zero
+    zkz = zero
     allocate(zk2, ezs, source=zkz)
 
     allocate(yky(ny))
-    yky=zero
+    yky = zero
     allocate(yk2, eys, source=yky)
 
     allocate(xkx(nx))
-    xkx=zero
+    xkx = zero
     allocate(xk2, exs, source=xkx)
 
     !module mesh
@@ -199,6 +207,73 @@ contains
 #endif
 
   end subroutine var_init
+
+  !
+  ! Zero a 1D array in parallel (ensure any first touch initialisation is performed)
+  !
+  subroutine var1_zero(v)
+
+    use param, only : zero
+
+    implicit none
+    
+    real(mytype), dimension(:), intent(inout) :: v
+
+    integer :: i
+    integer :: ni
+
+    ni = size(v, 1)
+
+    do concurrent (i = 1:ni)
+       v(i) = zero
+    end do
+    
+  end subroutine var1_zero
+  !
+  ! Zero a 2D array in parallel (ensure any first touch initialisation is performed)
+  !
+  subroutine var2_zero(v)
+
+    use param, only : zero
+
+    implicit none
+    
+    real(mytype), dimension(:,:), intent(inout) :: v
+
+    integer :: i, j
+    integer :: ni, nj
+
+    nj = size(v, 2)
+    ni = size(v, 1)
+
+    do concurrent (j = 1:nj, i = 1:ni)
+       v(i, j) = zero
+    end do
+    
+  end subroutine var2_zero
+  !
+  ! Zero a 3D array in parallel (ensure any first touch initialisation is performed)
+  !
+  subroutine var3_zero(v)
+
+    use param, only : zero
+
+    implicit none
+    
+    real(mytype), dimension(:,:,:), intent(inout) :: v
+
+    integer :: i, j, k
+    integer :: ni, nj, nk
+
+    nk = size(v, 3)
+    nj = size(v, 2)
+    ni = size(v, 1)
+
+    do concurrent (k = 1:nk, j = 1:nj, i = 1:ni)
+       v(i, j, k) = zero
+    end do
+    
+  end subroutine var3_zero
 
   !
   ! Free memory

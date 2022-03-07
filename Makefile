@@ -13,7 +13,7 @@ DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 LCL = local# local,lad,sdu,archer
 IVER = 17# 15,16,17,18
 CMP = nvhpc# intel,gcc,nvhpc
-FFT = cufft# generic,fftw3,mkl,cufft
+FFT = fftw3# generic,fftw3,mkl,cufft
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
@@ -33,7 +33,7 @@ FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
 #FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-FFLAGS = -cpp -O3 -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc70,managed,lineinfo -acc -target=gpu
+FFLAGS = -cpp -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cudalib=nccl
 endif
 
 
@@ -52,7 +52,7 @@ SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/time_inte
 ifeq ($(FFT),fftw3)
   #FFTW3_PATH=/usr
   #FFTW3_PATH=/usr/lib64
-  FFTW3_PATH=/usr/local/Cellar/fftw/3.3.7_1
+  FFTW3_PATH=/scratch21/eb/gpu/software/FFTW/3.3.10-gompi-2021b
   INC=-I$(FFTW3_PATH)/include
   LIBFFT=-L$(FFTW3_PATH) -lfftw3 -lfftw3f
 else ifeq ($(FFT),fftw3_f03)

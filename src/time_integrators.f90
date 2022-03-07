@@ -17,6 +17,7 @@ contains
     use param    , only : itr, ntime, gdt
     use variables
     use decomp_2d, only : mytype, xsize
+    use nvtx
 
     implicit none
 
@@ -26,12 +27,40 @@ contains
 
     !! LOCAL
     integer :: i,j,k
+    integer :: imax,jmax,kmax
+    imax = xsize(1)
+    jmax = xsize(2)
+    kmax = xsize(3)
 
 
     ! for the moment we just use euler
+    !call nvtxStartRange("Do concurr 256")
+    !!$acc kernels vector_length(256)
+    !do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    !  var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
+    !enddo
+    !!$acc end kernel
+    !call nvtxEndRange
+    
+    call nvtxStartRange("time loop collapse")
+    !$acc parallel loop gang vector collapse(3)
+    do k=1,xsize(3)
+    do j=1,xsize(2)
+    do i=1,xsize(1)
+      var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
+    enddo
+    enddo
+    enddo
+    !$acc end parallel loop
+    call nvtxEndRange
+    
+    call nvtxStartRange("time loop orig")
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
       var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
     enddo
+    call nvtxEndRange
+    
+    
     
     !if (iimplicit.ge.1) then
     !   !>>> (semi)implicit Y diffusion

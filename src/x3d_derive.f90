@@ -1246,8 +1246,8 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uy(i,1,k)+uy(i,4,k)) &
                         + dsjy*(uy(i,5,k)-uy(i,1,k) &
                                -uy(i,1,k)+uy(i,5,k))
-           do concurrent (i=1:nx)
            enddo
+           do concurrent (i=1:nx)
               ty(i,2,k) = asjy*(uy(i,3,k)-uy(i,2,k) &
                                -uy(i,2,k)+uy(i,1,k)) &
                         + bsjy*(uy(i,4,k)-uy(i,2,k) &
@@ -1256,8 +1256,8 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uy(i,2,k)+uy(i,3,k)) &
                         + dsjy*(uy(i,6,k)-uy(i,2,k) &
                                -uy(i,2,k)+uy(i,4,k))
-           do concurrent (i=1:nx)
            enddo
+           do concurrent (i=1:nx)
               ty(i,3,k) = asjy*(uy(i,4,k)-uy(i,3,k) &
                                -uy(i,3,k)+uy(i,2,k)) &
                         + bsjy*(uy(i,5,k)-uy(i,3,k) &
@@ -1266,8 +1266,8 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uy(i,3,k)+uy(i,2,k)) &
                         + dsjy*(uy(i,7,k)-uy(i,3,k) &
                                -uy(i,3,k)+uy(i,3,k))
-           do concurrent (i=1:nx)
            enddo
+           do concurrent (i=1:nx)
               ty(i,4,k) = asjy*(uy(i,5,k)-uy(i,4,k) &
                                -uy(i,4,k)+uy(i,3,k)) &
                         + bsjy*(uy(i,6,k)-uy(i,4,k) &

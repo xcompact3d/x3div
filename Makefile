@@ -33,7 +33,7 @@ FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
 #FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-FFLAGS = -cpp -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cudalib=nccl
+FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=nccl
 endif
 
 

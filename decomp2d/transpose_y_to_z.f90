@@ -33,7 +33,7 @@
 #endif
     
     integer :: s1,s2,s3,d1,d2,d3
-    integer :: ierror
+    integer :: ierror, istat
 
     if (present(opt_decomp)) then
        decomp = opt_decomp
@@ -139,75 +139,6 @@
   end subroutine transpose_y_to_z_real
 
 
-  subroutine transpose_y_to_z_real_start(handle, src, dst, sbuf, rbuf, &
-       opt_decomp)
-
-    implicit none
-    
-    integer :: handle
-    real(mytype), dimension(:,:,:) :: src, dst, sbuf, rbuf
-    TYPE(DECOMP_INFO), intent(IN), optional :: opt_decomp
-
-    TYPE(DECOMP_INFO) :: decomp
-
-    integer :: s1,s2,s3
-    integer :: ierror
-
-    if (present(opt_decomp)) then
-       decomp = opt_decomp
-    else
-       decomp = decomp_main
-    end if
-    
-    s1 = SIZE(src,1)
-    s2 = SIZE(src,2)
-    s3 = SIZE(src,3)
-
-    ! rearrange source array as send buffer
-    call mem_split_yz_real(src, s1, s2, s3, sbuf, dims(2), &
-         decomp%y2dist, decomp)
-
-#ifdef EVEN
-    call MPI_IALLTOALL(sbuf, decomp%y2count, real_type, &
-         rbuf, decomp%z2count, real_type, &
-         DECOMP_2D_COMM_ROW, handle, ierror)
-#else
-    call MPI_IALLTOALLV(sbuf, decomp%y2cnts, decomp%y2disp, real_type, &
-         rbuf, decomp%z2cnts, decomp%z2disp, real_type, &
-         DECOMP_2D_COMM_ROW, handle, ierror)
-#endif
-
-    return
-  end subroutine transpose_y_to_z_real_start
-
-
-  subroutine transpose_y_to_z_real_wait(handle, src, dst, sbuf, rbuf, &
-       opt_decomp)
-
-    implicit none
-    
-    integer :: handle
-    real(mytype), dimension(:,:,:) :: src, dst, sbuf, rbuf
-    TYPE(DECOMP_INFO), intent(IN), optional :: opt_decomp
-
-    TYPE(DECOMP_INFO) :: decomp
-
-    integer :: ierror
-
-    if (present(opt_decomp)) then
-       decomp = opt_decomp
-    else
-       decomp = decomp_main
-    end if
-
-    call MPI_WAIT(handle, MPI_STATUS_IGNORE, ierror)
-
-    dst = rbuf
-
-    return
-  end subroutine transpose_y_to_z_real_wait
-
-
   subroutine transpose_y_to_z_complex(src, dst, opt_decomp)
 
     implicit none
@@ -215,7 +146,7 @@
     complex(mytype), dimension(:,:,:), intent(IN) :: src
     complex(mytype), dimension(:,:,:), intent(OUT) :: dst
     TYPE(DECOMP_INFO), intent(IN), optional :: opt_decomp
-
+    
     TYPE(DECOMP_INFO) :: decomp
 
 #if defined(_GPU)
@@ -230,7 +161,7 @@
 #endif
     
     integer :: s1,s2,s3,d1,d2,d3
-    integer :: ierror
+    integer :: ierror, istat
 
     if (present(opt_decomp)) then
        decomp = opt_decomp
@@ -288,19 +219,9 @@
 #else
 
 #if defined(_GPU)
-#if defined(_NCCL)
-    nccl_stat = ncclGroupStart()
-    do row_rank_id = 0, (row_comm_size - 1)
-        nccl_stat = ncclSend( 2*(work1_c_d( decomp%y2disp(row_rank_id))+1 ), 2*(decomp%y2cnts(row_rank_id)), ncclDouble, local_to_global_row(row_rank_id+1), nccl_comm_2decomp, cuda_stream_2decomp)
-        nccl_stat = ncclRecv( 2*(work2_c_d( decomp%z2disp(row_rank_id))+1 ), 2*(decomp%z2cnts(row_rank_id)), ncclDouble, local_to_global_row(row_rank_id+1), nccl_comm_2decomp, cuda_stream_2decomp)
-    end do
-    nccl_stat = ncclGroupEnd()
-    cuda_stat = cudaStreamSynchronize(cuda_stream_2decomp)
-#else
     call MPI_ALLTOALLV(work1_c_d, decomp%y2cnts, decomp%y2disp, &
          complex_type, work2_c_d, decomp%z2cnts, decomp%z2disp, &
          complex_type, DECOMP_2D_COMM_ROW, ierror)
-#endif
 #else
     call MPI_ALLTOALLV(work1_c, decomp%y2cnts, decomp%y2disp, &
          complex_type, dst, decomp%z2cnts, decomp%z2disp, &
@@ -334,78 +255,6 @@
 
     return
   end subroutine transpose_y_to_z_complex
-
-
-  subroutine transpose_y_to_z_complex_start(handle, src, dst, sbuf, &
-       rbuf, opt_decomp)
-
-    implicit none
-    
-    integer :: handle
-    complex(mytype), dimension(:,:,:) :: src, dst, sbuf, rbuf
-    TYPE(DECOMP_INFO), intent(IN), optional :: opt_decomp
-
-    TYPE(DECOMP_INFO) :: decomp
-
-    integer :: s1,s2,s3
-    integer :: ierror
-
-    if (present(opt_decomp)) then
-       decomp = opt_decomp
-    else
-       decomp = decomp_main
-    end if
-    
-    s1 = SIZE(src,1)
-    s2 = SIZE(src,2)
-    s3 = SIZE(src,3)
-
-    ! rearrange source array as send buffer
-    call mem_split_yz_complex(src, s1, s2, s3, sbuf, dims(2), &
-         decomp%y2dist, decomp)
-
-#ifdef EVEN
-    call MPI_IALLTOALL(sbuf, decomp%y2count, &
-         complex_type, rbuf, decomp%z2count, &
-         complex_type, DECOMP_2D_COMM_ROW, handle, ierror)
-#else
-    call MPI_IALLTOALLV(sbuf, decomp%y2cnts, decomp%y2disp, &
-         complex_type, rbuf,decomp%z2cnts, decomp%z2disp, &
-         complex_type, DECOMP_2D_COMM_ROW, handle, ierror)
-#endif
-
-    return
-  end subroutine transpose_y_to_z_complex_start
-
-
-  subroutine transpose_y_to_z_complex_wait(handle, src, dst, sbuf, &
-       rbuf, opt_decomp)
-
-    implicit none
-    
-    integer :: handle
-    complex(mytype), dimension(:,:,:) :: src, dst, sbuf, rbuf
-    TYPE(DECOMP_INFO), intent(IN), optional :: opt_decomp
-
-    TYPE(DECOMP_INFO) :: decomp
-
-    integer :: ierror
-
-    if (present(opt_decomp)) then
-       decomp = opt_decomp
-    else
-       decomp = decomp_main
-    end if
-
-    call MPI_WAIT(handle, MPI_STATUS_IGNORE, ierror)
-
-    dst = rbuf
-
-    return
-  end subroutine transpose_y_to_z_complex_wait
-
-
-  ! pack/unpack ALLTOALL(V) buffers
 
   subroutine mem_split_yz_real(in,n1,n2,n3,out,iproc,dist,decomp)
 

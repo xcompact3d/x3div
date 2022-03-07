@@ -187,13 +187,6 @@ module decomp_2d
   public :: decomp_2d_init, decomp_2d_finalize, &
        transpose_x_to_y, transpose_y_to_z, &
        transpose_z_to_y, transpose_y_to_x, &
-#ifdef OCC
-       transpose_x_to_y_start, transpose_y_to_z_start, &
-       transpose_z_to_y_start, transpose_y_to_x_start, &
-       transpose_x_to_y_wait, transpose_y_to_z_wait, &
-       transpose_z_to_y_wait, transpose_y_to_x_wait, &
-       transpose_test, &
-#endif
        decomp_info_init, decomp_info_finalize, partition, &
        init_coarser_mesh_statS,fine_to_coarseS,&
        init_coarser_mesh_statV,fine_to_coarseV,&
@@ -239,48 +232,6 @@ module decomp_2d
      module procedure transpose_y_to_x_real
      module procedure transpose_y_to_x_complex
   end interface transpose_y_to_x
-
-#ifdef OCC
-  interface transpose_x_to_y_start
-     module procedure transpose_x_to_y_real_start
-     module procedure transpose_x_to_y_complex_start
-  end interface transpose_x_to_y_start
-
-  interface transpose_y_to_z_start
-     module procedure transpose_y_to_z_real_start
-     module procedure transpose_y_to_z_complex_start
-  end interface transpose_y_to_z_start
-
-  interface transpose_z_to_y_start
-     module procedure transpose_z_to_y_real_start
-     module procedure transpose_z_to_y_complex_start
-  end interface transpose_z_to_y_start
-
-  interface transpose_y_to_x_start
-     module procedure transpose_y_to_x_real_start
-     module procedure transpose_y_to_x_complex_start
-  end interface transpose_y_to_x_start
-
-  interface transpose_x_to_y_wait
-     module procedure transpose_x_to_y_real_wait
-     module procedure transpose_x_to_y_complex_wait
-  end interface transpose_x_to_y_wait
-
-  interface transpose_y_to_z_wait
-     module procedure transpose_y_to_z_real_wait
-     module procedure transpose_y_to_z_complex_wait
-  end interface transpose_y_to_z_wait
-
-  interface transpose_z_to_y_wait
-     module procedure transpose_z_to_y_real_wait
-     module procedure transpose_z_to_y_complex_wait
-  end interface transpose_z_to_y_wait
-
-  interface transpose_y_to_x_wait
-     module procedure transpose_y_to_x_real_wait
-     module procedure transpose_y_to_x_complex_wait
-  end interface transpose_y_to_x_wait
-#endif
 
   interface update_halo
      module procedure update_halo_real
@@ -663,13 +614,27 @@ contains
 #if defined(_GPU)
        if (allocated(work1_r_d)) deallocate(work1_r_d)
        if (allocated(work2_r_d)) deallocate(work2_r_d)
+       if (allocated(work1_c_d)) deallocate(work1_c_d)
+       if (allocated(work2_c_d)) deallocate(work2_c_d)
        allocate(work1_r_d(buf_size), STAT=status)
        if (status /= 0) then
           errorcode = 2
           call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
                'Out of memory when allocating 2DECOMP workspace')
        end if
+       allocate(work1_c_d(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
        allocate(work2_r_d(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
+       allocate(work2_c_d(buf_size), STAT=status)
        if (status /= 0) then
           errorcode = 2
           call decomp_2d_abort(__FILE__, __LINE__, errorcode, &

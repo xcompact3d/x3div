@@ -62,6 +62,12 @@ contains
     integer :: is
 #endif
 
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "# visu_init start"
+    endif
+#endif
+    
     ! Create folder if needed
     ! XXX: Is this needed for ADIOS2?
     if (nrank==0) then
@@ -71,27 +77,27 @@ contains
       end if
     end if
 
-    ! HDD usage of visu module
-    if (nrank==0) then
-      noutput = (ilast - ifirst +1)/ioutput
+    ! ! HDD usage of visu module
+    ! if (nrank==0) then
+    !   noutput = (ilast - ifirst +1)/ioutput
 
-      nsnapout = 4
-      if (iscalar.ne.0) nsnapout = nsnapout + numscalar
+    !   nsnapout = 4
+    !   if (iscalar.ne.0) nsnapout = nsnapout + numscalar
 
-      memout = prec * nsnapout * noutput
-      if (output2D.eq.0) then
-        memout = memout * xszV(1) * yszV(2) * zszV(3)
-      else if (output2D.eq.1) then
-        memout = memout *           yszV(2) * zszV(3)
-      else if (output2D.eq.2) then
-        memout = memout * xszV(1)           * zszV(3)
-      else if (output2D.eq.3) then
-        memout = memout * xszV(1) * yszV(2)
-      endif
-      write(*,*)'==========================================================='
-      write(*,*)'Visu module requires ',real(memout*1e-9,4),'GB'
-      write(*,*)'==========================================================='
-    end if
+    !   memout = prec * nsnapout * noutput
+    !   if (output2D.eq.0) then
+    !     memout = memout * xszV(1) * yszV(2) * zszV(3)
+    !   else if (output2D.eq.1) then
+    !     memout = memout *           yszV(2) * zszV(3)
+    !   else if (output2D.eq.2) then
+    !     memout = memout * xszV(1)           * zszV(3)
+    !   else if (output2D.eq.3) then
+    !     memout = memout * xszV(1) * yszV(2)
+    !   endif
+    !   write(*,*)'==========================================================='
+    !   write(*,*)'Visu module requires ',real(memout*1e-9,4),'GB'
+    !   write(*,*)'==========================================================='
+    ! end if
 
     ! Safety check
     if (output2D < 0 .or. output2D > 3 &
@@ -137,6 +143,12 @@ contains
     call adios2_open(engine_write_real_coarse, io_write_real_coarse, trim(outfile), adios2_mode_write, ierror)
 #endif
 
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "# visu_init end"
+    endif
+#endif
+
   end subroutine visu_init
 
   !
@@ -165,10 +177,9 @@ contains
   ! Write a snapshot
   !
   ! subroutine write_snapshot(rho1, ux1, uy1, uz1, pp3, phi1, ep1, itime, num)
-  subroutine write_snapshot(ux1, uy1, uz1, ep1, itime, num)
+  subroutine write_snapshot(ux1, uy1, uz1, itime, num)
 
-    use decomp_2d, only : transpose_z_to_y, transpose_y_to_x
-    use decomp_2d, only : mytype, xsize, ysize, zsize
+    use decomp_2d, only : mytype, xsize
     use decomp_2d, only : nrank
 
     use param, only : iscalar, ioutput
@@ -189,7 +200,7 @@ contains
 
     !! inputs
     real(mytype), dimension(xsize(1), xsize(2), xsize(3)), intent(in) :: ux1, uy1, uz1
-    real(mytype), dimension(xsize(1), xsize(2), xsize(3)), intent(in) :: ep1
+    ! real(mytype), dimension(xsize(1), xsize(2), xsize(3)), intent(in) :: ep1
     ! real(mytype), dimension(xsize(1), xsize(2), xsize(3), nrhotime), intent(in) :: rho1
     ! real(mytype), dimension(ph3%zst(1):ph3%zen(1),ph3%zst(2):ph3%zen(2),nzmsize,npress), intent(in) :: pp3
     ! real(mytype), dimension(xsize(1), xsize(2), xsize(3), numscalar), intent(in) :: phi1
@@ -201,6 +212,12 @@ contains
     integer :: ierr
     character(len=30) :: scname
 
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "# write_snapshot start"
+    endif
+#endif
+    
     ! Update log file
     if (nrank.eq.0) then
       call cpu_time(tstart)
@@ -228,6 +245,7 @@ contains
     if (use_xdmf) call write_xdmf_header(".", "snapshot", trim(num))
 
     ! Write velocity
+    print *, "HOLA"
     call write_field(ux1, ".", "ux", trim(num))
     call write_field(uy1, ".", "uy", trim(num))
     call write_field(uz1, ".", "uz", trim(num))
@@ -262,6 +280,12 @@ contains
     !     call write_field(phi1(:,:,:,is), ".", trim(scname), trim(num), .true.)
     !   enddo
     ! endif
+
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "# write_snapshot end"
+    endif
+#endif
 
   end subroutine write_snapshot
 
@@ -341,6 +365,12 @@ contains
     integer :: i,k
     real(mytype) :: xp(xszV(1)), zp(zszV(3))
 
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "## write_xdmf_header start"
+    end if
+#endif
+    
     if (nrank.eq.0) then
       OPEN(newunit=ioxdmf,file="./data/"//pathname//"/"//filename//'-'//num//'.xdmf')
 
@@ -427,6 +457,12 @@ contains
       write(ioxdmf,*)'        <Topology Reference="/Xdmf/Domain/Topology[1]"/>'
       write(ioxdmf,*)'        <Geometry Reference="/Xdmf/Domain/Geometry[1]"/>'
     endif
+
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "## write_xdmf_header end"
+    end if
+#endif
   end subroutine write_xdmf_header
 
   !
@@ -472,6 +508,12 @@ contains
     real(mytype), dimension(xsize(1),xsize(2),xsize(3)) :: local_array
 
     integer :: ierr
+
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "## write_field -- ", filename, " -- start"
+    endif
+#endif
 
     if (use_xdmf) then
        if (nrank.eq.0) then
@@ -535,6 +577,12 @@ contains
     else
        call decomp_2d_write_plane(1,local_array,output2D,-1,"./data/"//pathname//'/'//filename//'-'//num//'.bin')
     endif
+
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "## write_field -- ", filename, " -- end"
+    endif
+#endif
 
   end subroutine write_field
 

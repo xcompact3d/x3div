@@ -8,12 +8,13 @@ program xcompact3d
 
   use var
   use decomp_2d, only : nrank, xsize, real_type, decomp_2d_warning
-  use param,   only : dt, zero, itr
+  use param,   only : dt, zero, itr, itime, ioutput
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
   use case
   use time_integrators, only : int_time
-
+  use visu, only : write_snapshot
+  
   implicit none
 
   double precision :: tstart, tend, telapsed, tmin, tmax
@@ -21,6 +22,7 @@ program xcompact3d
   integer :: i, j, k
   integer :: ndt, ndt_max
   integer :: code
+  character(len=32) :: num
 
   call boot_xcompact3d()
 
@@ -32,6 +34,12 @@ program xcompact3d
   tmin = telapsed
   ndt = 1
 
+  ioutput = 5
+  print *, "=== WARNING ==="
+  print *, " Writing with ioutput=",ioutput,", edit xcompact3d.f90 and recompile to change"
+  print *, "=== WARNING ==="
+  
+  itime = 0
   do while(ndt < ndt_max)
 
      itr = 1 ! no inner iterations
@@ -63,7 +71,12 @@ program xcompact3d
         print *, "Elapse time min ", tmin, " max ", tmax
      end if
 
+     !! End of timestep
+     itime = itime + 1
      ndt = ndt + 1
+     if (mod(itime,ioutput) == 0) then
+        call write_snapshot(ux1, uy1, uz1, itime, num)
+     endif
      call case_postprocess(ux1, uy1, uz1, ndt)
 
   end do

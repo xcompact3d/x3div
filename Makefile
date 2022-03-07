@@ -20,6 +20,8 @@ LDFLAGS ?= # user can set default linker flags
 FFLAGS = $(FCFLAGS)
 LFLAGS = $(LDFLAGS)
 
+NTHREADS ?= 1 # gfortran requires number of threads specified at compile time...
+
 #######CMP settings###########
 ifeq ($(CMP),intel)
   FC = mpiifort
@@ -38,7 +40,7 @@ else ifeq ($(CMP),gcc)
     FFLAGS += -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none
   else
     FFLAGS += -O3 -march=native
-    FFLAGS += -fopenmp -ftree-parallelize-loops=12
+    FFLAGS += -fopenmp -ftree-parallelize-loops=$(NTHREADS)
     LFLAGS += -fopenmp
   endif
 else ifeq ($(CMP),nagfor)

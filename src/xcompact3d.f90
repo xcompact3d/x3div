@@ -13,7 +13,7 @@ program xcompact3d
   use navier,  only : solve_poisson, cor_vel
   use case
   use time_integrators, only : int_time
-  use visu, only : write_snapshot
+  use visu, only : write_snapshot, end_snapshot
   
   implicit none
 
@@ -32,7 +32,7 @@ program xcompact3d
 
   telapsed = 0
   tmin = telapsed
-  ndt = 1
+  ndt = 0
 
   ioutput = 5
   print *, "=== WARNING ==="
@@ -76,6 +76,7 @@ program xcompact3d
      ndt = ndt + 1
      if (mod(itime,ioutput) == 0) then
         call write_snapshot(ux1, uy1, uz1, itime, num)
+        call end_snapshot(itime, num)
      endif
      call case_postprocess(ux1, uy1, uz1, ndt)
 

@@ -559,7 +559,7 @@ contains
       real(mytype), intent(in) :: d
       integer, intent(in) :: n, ncl1, ncln
       real(mytype), dimension(n), intent(out) :: ff, fs, fw, ffp, fsp, fwp
-      real(mytype), intent(out) :: alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
+      real(mytype), intent(in) :: alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
                                    cfn, dfn, alfam, afm, alfai, afi, bfi
       integer :: i
       real(mytype), dimension(n) :: fb, fc
@@ -792,7 +792,7 @@ contains
       real(mytype), intent(in) :: d2
       integer, intent(in) :: n, ncl1, ncln
       real(mytype), dimension(n), intent(out) :: sf, ss, sw, sfp, ssp, swp
-      real(mytype), intent(out) :: alsa1, as1, bs1, &
+      real(mytype), intent(in) :: alsa1, as1, bs1, &
                                    cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
                                    asm, alsa3, as3, bs3, alsat, ast, bst, &
                                    alsa4, as4, bs4, cs4, &

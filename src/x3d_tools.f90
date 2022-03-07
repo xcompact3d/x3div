@@ -91,6 +91,8 @@ subroutine init_xcompact3d(ndt_max)
 
   use var
 
+  use visu, only : visu_init
+  
   use variables, only : nx, ny, nz, nxm, nym, nzm
   use variables, only : p_row, p_col
   use variables, only : test_mode
@@ -180,6 +182,8 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
+  call visu_init()
+  
 endsubroutine init_xcompact3d
 !########################################################################
 !########################################################################
@@ -196,6 +200,8 @@ subroutine finalise_xcompact3d(flag)
   use x3d_derive, only : x3d_derive_finalize
   use var, only : var_finalize
 
+  use visu, only : visu_finalise
+  
   implicit none
 
   logical, intent(in) :: flag
@@ -214,9 +220,11 @@ subroutine finalise_xcompact3d(flag)
   call x3d_operator_z_data_finalize()
   call var_finalize()
 
+  call visu_finalise()
+
   call decomp_2d_finalize()
   if (flag) then
     CALL MPI_FINALIZE(ierr)
   endif
-
+  
 endsubroutine finalise_xcompact3d

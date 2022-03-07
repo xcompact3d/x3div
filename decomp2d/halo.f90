@@ -39,7 +39,7 @@
 
     data_type = real_type
 
-#include "halo_common.inc"
+#include "halo_common.f90"
 
     return
   end subroutine update_halo_real
@@ -72,7 +72,7 @@
 
     data_type = complex_type
 
-#include "halo_common.inc"
+#include "halo_common.f90"
 
     return
   end subroutine update_halo_complex

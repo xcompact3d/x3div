@@ -37,7 +37,7 @@ module decomp_2d_fft
 
   ! common code used for all engines, including global variables, 
   ! generic interface definitions and several subroutines
-#include "fft_common.inc"
+#include "fft_common.f90"
 
   ! Return a cuFFT plan for multiple 1D FFTs in X direction
   subroutine plan_1m_x(plan1, decomp, cufft_type)
@@ -72,8 +72,6 @@ module decomp_2d_fft
     integer*8, intent(OUT) :: plan1
     TYPE(DECOMP_INFO), intent(IN) :: decomp
     integer, intent(IN) :: cufft_type
-
-    complex(mytype), allocatable, dimension(:,:) :: a1
 
     ! Due to memory pattern of 3D arrays, 1D FFTs along Y have to be
     ! done one Z-plane at a time. So plan for 2D data sets here.

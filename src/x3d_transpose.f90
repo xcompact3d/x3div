@@ -39,8 +39,8 @@ module x3d_transpose
 
   implicit none
 
-  private        ! Make everything private unless declared public
-
+  ! Make everything private unless declared public
+  private
 
   public ::  x3d_transpose_x_to_y, &
              x3d_transpose_y_to_z, &

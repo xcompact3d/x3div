@@ -245,7 +245,6 @@ contains
     if (use_xdmf) call write_xdmf_header(".", "snapshot", trim(num))
 
     ! Write velocity
-    print *, "HOLA"
     call write_field(ux1, ".", "ux", trim(num))
     call write_field(uy1, ".", "uy", trim(num))
     call write_field(uz1, ".", "uz", trim(num))
@@ -303,6 +302,12 @@ contains
     character(len=32) :: fmt2, fmt3, fmt4
     integer :: is
     integer :: ierr
+
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "# end_snapshot start"
+    endif
+#endif
     
     ! Write XDMF footer
     if (use_xdmf) call write_xdmf_footer()
@@ -344,6 +349,12 @@ contains
       write(*,'(" Time for writing snapshots (s): ",F12.8)') tend-tstart
     endif
 
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "# end_snapshot end"
+    endif
+#endif
+
   end subroutine end_snapshot
 
   !
@@ -374,7 +385,7 @@ contains
     if (nrank.eq.0) then
       OPEN(newunit=ioxdmf,file="./data/"//pathname//"/"//filename//'-'//num//'.xdmf')
 
-      write(ioxdmf,'(A22)')'<?xml version="1.0" ?>'
+      write(ioxdmf,'(A)')'<?xml version="1.0" ?>'
       write(ioxdmf,*)'<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>'
       write(ioxdmf,*)'<Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">'
       write(ioxdmf,*)'<Domain>'
@@ -475,13 +486,25 @@ contains
 
     implicit none
 
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "## write_xdmf_footer start"
+    endif
+#endif
+    
     if (nrank.eq.0) then
       write(ioxdmf,'(/)')
-      write(ioxdmf,*)'    </Grid>'
-      write(ioxdmf,*)'</Domain>'
-      write(ioxdmf,'(A7)')'</Xdmf>'
+      write(ioxdmf,*) '    </Grid>'
+      write(ioxdmf,*) '</Domain>'
+      write(ioxdmf,'(A)') '</Xdmf>'
       close(ioxdmf)
     endif
+
+#ifdef DEBUG
+    if (nrank == 0) then
+       print *, "## write_xdmf_footer end"
+    endif
+#endif
 
   end subroutine write_xdmf_footer
 

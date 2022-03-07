@@ -47,6 +47,8 @@ else ifeq ($(CMP),nagfor)
 else ifeq ($(CMP),cray)
   FC = ftn
   FFLAGS += -eF -g -O3 -N 1023
+  FFLAGS += -h omp -h thread_do_concurrent
+  LFLAGS += -h omp -h thread_do_concurrent
 else ifeq ($(CMP),nvhpc)
   FC = mpif90
   FFLAGS += -cpp -O3 -march=native

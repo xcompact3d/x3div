@@ -201,7 +201,7 @@ if (format==PHYSICAL_IN_X) then
 call c2c_1m_z(in_c,1,sp)       
 #else
 allocate(wk1(sp%zsz(1),sp%zsz(2),sp%zsz(3)))
-do concurrent (k=1:ph%zsz(3), j=1:ph%zsz(2), i=1:ph%zsz(1))
+do concurrent (k=1:sp%zsz(3), j=1:sp%zsz(2), i=1:sp%zsz(1))
 wk1(i,j,k) = in_c(i,j,k)
 end do
 call c2c_1m_z(wk1,1,sp)
@@ -230,7 +230,7 @@ else if (format==PHYSICAL_IN_Z) then
 call c2c_1m_x(in_c,1,sp)
 #else
 allocate(wk1(sp%xsz(1),sp%xsz(2),sp%xsz(3)))
-do concurrent (k=1:ph%xsz(3), j=1:ph%xsz(2), i=1:ph%xsz(1))
+do concurrent (k=1:sp%xsz(3), j=1:sp%xsz(2), i=1:sp%xsz(1))
 wk1(i,j,k) = in_c(i,j,k)
 end do
 call c2c_1m_x(wk1,1,sp)

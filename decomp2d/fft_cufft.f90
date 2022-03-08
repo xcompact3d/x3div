@@ -33,7 +33,7 @@ module decomp_2d_fft
   ! For r2c/c2r transforms:
   !     use plan(0,j) for r2c transforms;
   !     use plan(2,j) for c2r transforms;
-  integer*8, save :: plan(-1:2,3)
+  integer*4, save :: plan(-1:2,3)
 
   ! common code used for all engines, including global variables, 
   ! generic interface definitions and several subroutines
@@ -41,10 +41,10 @@ module decomp_2d_fft
 
   ! Return a cuFFT plan for multiple 1D FFTs in X direction
   subroutine plan_1m_x(plan1, decomp, cufft_type)
-
+    use cufft
     implicit none
 
-    integer*8, intent(OUT) :: plan1
+    integer*4, intent(OUT) :: plan1
     TYPE(DECOMP_INFO), intent(IN) :: decomp
     integer, intent(IN) :: cufft_type
 
@@ -53,7 +53,7 @@ module decomp_2d_fft
     integer, pointer :: null_fptr
     call c_f_pointer( c_null_ptr, null_fptr )
    
-    call cufftCreate(plan1)
+    istat = cufftCreate(plan1)
     istat = cufftSetAutoAllocation(plan1,0)
     istat = cufftMakePlanMany(plan1,1,                           &
                               decomp%xsz(1),null_fptr,1,         &
@@ -69,7 +69,7 @@ module decomp_2d_fft
 
     implicit none
 
-    integer*8, intent(OUT) :: plan1
+    integer*4, intent(OUT) :: plan1
     TYPE(DECOMP_INFO), intent(IN) :: decomp
     integer, intent(IN) :: cufft_type
 
@@ -96,7 +96,7 @@ module decomp_2d_fft
 
     implicit none
 
-    integer*8, intent(OUT) :: plan1
+    integer*4, intent(OUT) :: plan1
     TYPE(DECOMP_INFO), intent(IN) :: decomp
     integer, intent(IN) :: cufft_type
 
@@ -236,13 +236,17 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
-    integer*8, intent(IN) :: plan1
+    integer*4, intent(IN) :: plan1
     integer :: istat
 
 #ifdef DOUBLE_PREC
+    !$acc host_data use_device(inout)
     istat = cufftExecZ2Z(plan1, inout, inout,isign)
+    !$acc end host_data
 #else
+    !$acc host_data use_device(inout)
     istat = cufftExecC2C(plan1, inout, inout,isign)
+    !$acc end host_data
 #endif
 
     return
@@ -256,7 +260,7 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
-    integer*8, intent(IN) :: plan1
+    integer*4, intent(IN) :: plan1
     integer :: istat
 
     integer :: k, s3
@@ -265,9 +269,13 @@ module decomp_2d_fft
     s3 = size(inout,3)
     do k=1,s3
 #ifdef DOUBLE_PREC
+       !$acc host_data use_device(inout)
        istat = cufftExecZ2Z(plan1, inout(:,:,k), inout(:,:,k),isign)
+       !$acc end host_data
 #else
+       !$acc host_data use_device(inout)
        istat = cufftExecC2C(plan1, inout(:,:,k), inout(:,:,k),isign)
+       !$acc end host_data
 #endif
     end do
 
@@ -281,13 +289,17 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
-    integer*8, intent(IN) :: plan1
+    integer*4, intent(IN) :: plan1
     integer :: istat
 
 #ifdef DOUBLE_PREC
+    !$acc host_data use_device(inout)
     istat = cufftExecZ2Z(plan1, inout, inout,isign)
+    !$acc end host_data
 #else
+    !$acc host_data use_device(inout)
     istat = cufftExecC2C(plan1, inout, inout,isign)
+    !$acc end host_data
 #endif
 
     return
@@ -304,9 +316,13 @@ module decomp_2d_fft
 
 
 #ifdef DOUBLE_PREC
+    !$acc host_data use_device(input,output)
     istat =  cufftExecD2Z(plan(0,1), input, output)
+    !$acc end host_data
 #else
+    !$acc host_data use_device(input,output)
     istat =  cufftExecR2C(plan(0,1), input, output)
+    !$acc end host_data
 #endif    
 
     return
@@ -323,9 +339,13 @@ module decomp_2d_fft
     integer :: istat
 
 #ifdef DOUBLE_PREC
+    !$acc host_data use_device(input,output)
     istat = cufftExecD2Z(plan(0,3), input, output)
+    !$acc end host_data
 #else
+    !$acc host_data use_device(input,output)
     istat = cufftExecR2C(plan(0,3), input, output)
+    !$acc end host_data
 #endif
 
     return
@@ -342,9 +362,13 @@ module decomp_2d_fft
     integer :: istat
 
 #ifdef DOUBLE_PREC
+    !$acc host_data use_device(input,output)
     istat = cufftExecZ2D(plan(2,1), input, output)
+    !$acc end host_data
 #else
+    !$acc host_data use_device(input,output)
     istat = cufftExecC2R(plan(2,1), input, output)
+    !$acc end host_data
 #endif
 
     return
@@ -361,9 +385,13 @@ module decomp_2d_fft
     integer :: istat
 
 #ifdef DOUBLE_PREC
+    !$acc host_data use_device(input,output)
     istat = cufftExecZ2D(plan(2,3), input, output)
+    !$acc end host_data
 #else
+    !$acc host_data use_device(input,output)
     istat = cufftExecC2R(plan(2,3), input, output)
+    !$acc end host_data
 #endif
 
     return

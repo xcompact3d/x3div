@@ -13,7 +13,7 @@ DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 LCL = local# local,lad,sdu,archer
 IVER = 17# 15,16,17,18
 CMP = nvhpc# intel,gcc,nvhpc
-FFT = fftw3# generic,fftw3,mkl,cufft
+FFT = cufft# generic,fftw3,mkl,cufft
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
@@ -33,7 +33,8 @@ FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
 FC = mpif90
 #FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=nccl
+FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
+#FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda 
 endif
 
 
@@ -70,12 +71,12 @@ else ifeq ($(FFT),mkl)
 	INC=-I$(MKLROOT)/include
 else ifeq ($(FFT),cufft)
   CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
-  INC=-I$(CUFFT_PATH)/include
-  LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
+  INC=-I/scratch21/eb/gpu/software/NVHPC/22.1/Linux_x86_64/22.1/compilers/include
+  #LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
 endif
 
 #######OPTIONS settings###########
-OPT = -I$(SRCDIR) -I$(DECOMPDIR) $(FFLAGS)
+OPT = -I$(SRCDIR) -I$(DECOMPDIR) 
 LINKOPT = $(FFLAGS) -lnvhpcwrapnvtx
 #-----------------------------------------------------------------------
 # Normally no need to change anything below

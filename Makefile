@@ -47,11 +47,13 @@ else ifeq ($(CMP),nagfor)
 else ifeq ($(CMP),cray)
   FC = ftn
   FFLAGS += -eF -g -O3 -N 1023
+  FFLAGS += -h omp -h thread_do_concurrent
+  LFLAGS += -h omp -h thread_do_concurrent
 else ifeq ($(CMP),nvhpc)
   FC = mpif90
   FFLAGS += -cpp -O3 -march=native
   FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-#  FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
+  FFLAGS = -cpp -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc70,managed,lineinfo,deepcopy -acc -target=gpu -traceback -O3 -Minstrument -g
   LFLAGS += -acc -lnvhpcwrapnvtx
 endif
 
@@ -68,9 +70,9 @@ SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/time_inte
 ifeq ($(FFT),fftw3)
   #FFTW3_PATH=/usr
   #FFTW3_PATH=/usr/lib64
-  FFTW3_PATH=/usr/local/Cellar/fftw/3.3.7_1
+  FFTW3_PATH=/opt/software/builder/developers/libraries/fftw/3.3.8/1/gcc-10.2.0-openmpi-4.0.5
   INC=-I$(FFTW3_PATH)/include
-  LIBFFT=-L$(FFTW3_PATH) -lfftw3 -lfftw3f
+  LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
 else ifeq ($(FFT),fftw3_f03)
   FFTW3_PATH=/usr                                #ubuntu # apt install libfftw3-dev
   #FFTW3_PATH=/usr/lib64                         #fedora # dnf install fftw fftw-devel

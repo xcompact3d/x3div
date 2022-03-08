@@ -193,9 +193,18 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(nx) :: buffer
+  real(mytype), dimension(nx) :: buffer, ff, ss, ww, pp
+  real(mytype) :: alfa
 
-  do concurrent (k=1:nz, j=1:ny)
+  do concurrent (i=1:nx)
+     ff(i) = x3dop%f(i)
+     ss(i) = x3dop%s(i)
+     ww(i) = x3dop%w(i)
+     pp(i) = x3dop%periodic(i)
+  end do
+  alfa = x3dop%alfa
+
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
      ! Compute r.h.s.
      buffer(1) = afix*(ux(2,j,k)-ux(nx,j,k)) &
                + bfix*(ux(3,j,k)-ux(nx-1,j,k))
@@ -211,8 +220,8 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
                 + bfix*(ux(2,j,k)-ux(nx-2,j,k))
 
      ! Solve tri-diagonal system
-     call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx)
-     do concurrent(i=1:nx)
+     call thomas1d(buffer, ff, ss, ww, pp, alfa, nx)
+     do concurrent (i=1:nx)
         tx(i,j,k) = buffer(i)
      enddo
   enddo
@@ -239,7 +248,7 @@ subroutine derx_ij(tx,ux,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
   integer :: i, j, k
   real(mytype), dimension(nx) :: buffer
 
-  do concurrent (k=1:nz, j=1:ny)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
@@ -367,9 +376,16 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(ny) :: buffer
+  real(mytype), dimension(ny) :: buffer, ff, ss, ww, pp
 
-  do concurrent (k=1:nz, i=1:nx)
+  do concurrent (j=1:ny)
+     ff(j) = x3dop%f(j)
+     ss(j) = x3dop%s(j)
+     ww(j) = x3dop%w(j)
+     pp(j) = x3dop%periodic(j)
+  end do
+
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
      ! Compute r.h.s.
      buffer(1) = afjy*(uy(i,2,k)-uy(i,ny,k)) &
                + bfjy*(uy(i,3,k)-uy(i,ny-1,k))
@@ -385,7 +401,7 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
                 + bfjy*(uy(i,2,k)-uy(i,ny-2,k))
 
      ! Solve tri-diagonal system
-     call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, ny)
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, ny)
 
      ! Apply stretching if needed
      if (istret /= 0) then
@@ -421,7 +437,7 @@ subroutine dery_ij(ty,uy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
   integer :: i, j, k
   real(mytype), dimension(ny) :: buffer
 
-  do concurrent (k=1:nz, i=1:nx)
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
 
      ! Compute r.h.s.
      if (ncl1==1) then
@@ -558,7 +574,7 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(nz) :: buffer
+  real(mytype), dimension(nz) :: buffer, ff, ss, ww, pp
 
   if (nz==1) then
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
@@ -567,7 +583,14 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
      return
   endif
 
-  do concurrent (j=1:ny, i=1:nx)
+  do concurrent (k=1:nz)
+     ff(k) = x3dop%f(k)
+     ss(k) = x3dop%s(k)
+     ww(k) = x3dop%w(k)
+     if (allocated(x3dop%periodic)) pp(k) = x3dop%periodic(k)
+  end do
+
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
      ! Compute r.h.s.
      buffer(1) = afkz*(uz(i,j,2)-uz(i,j,nz  )) &
                + bfkz*(uz(i,j,3)-uz(i,j,nz-1))
@@ -583,7 +606,7 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
                 + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
 
      ! Solve tri-diagonal system
-     call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nz)
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, nz)
      do concurrent (k=1:nz)
         tz(i,j,k) = buffer(k)
      enddo
@@ -618,7 +641,7 @@ subroutine derz_ij(tz,uz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
      return
   endif
 
-  do concurrent (j=1:ny, i=1:nx)
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
@@ -744,10 +767,17 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(nx) :: buffer
+  real(mytype), dimension(nx) :: buffer, ff, ss, ww, pp
+
+  do concurrent (i=1:nx)
+     ff(i) = x3dop%f(i)
+     ss(i) = x3dop%s(i)
+     ww(i) = x3dop%w(i)
+     if (allocated(x3dop%periodic)) pp(i) = x3dop%periodic(i)
+  end do
 
   ! Compute r.h.s.
-  do concurrent (k=1:nz, j=1:ny)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
      buffer(1) = asix*(ux(2,j,k)-ux(1   ,j,k) &
                       -ux(1,j,k)+ux(nx  ,j,k)) &
                + bsix*(ux(3,j,k)-ux(1   ,j,k) &
@@ -824,7 +854,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                          -ux(nx,j,k)+ux(nx-4,j,k))
 
      ! Solve tri-diagonal system
-     call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx)
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, nx)
      do concurrent (i=1:nx)
         tx(i,j,k) = buffer(i)
      enddo
@@ -852,7 +882,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
   integer :: i, j, k
   real(mytype), dimension(nx) :: buffer
 
-  do concurrent (k=1:nz, j=1:ny)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
 
      ! Compute r.h.s.
      if (ncl1==1) then
@@ -1107,10 +1137,17 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(ny) :: buffer
+  real(mytype), dimension(ny) :: buffer, ff, ss, ww, pp
+
+  do concurrent (j=1:ny)
+     ff(j) = x3dop%f(j)
+     ss(j) = x3dop%s(j)
+     ww(j) = x3dop%w(j)
+     if (allocated(x3dop%periodic)) pp(j) = x3dop%periodic(j)
+  end do
 
   ! Compute r.h.s.
-  do concurrent (k=1:nz, i=1:nx)
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
      buffer(1) = asjy*(uy(i,2,k)-uy(i,1,k) &
                       -uy(i,1,k)+uy(i,ny,k)) &
                + bsjy*(uy(i,3,k)-uy(i,1,k) &
@@ -1187,7 +1224,7 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
                          -uy(i,ny,k)+uy(i,ny-4,k))
 
      ! Solve tri-diagonal system
-     call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, ny)
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, ny)
      do concurrent (j=1:ny)
         ty(i,j,k) = buffer(j)
      enddo
@@ -1215,7 +1252,7 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
   integer :: i, j, k
   real(mytype), dimension(ny) :: buffer
 
-  do concurrent (k=1:nz, i=1:nx)
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
@@ -1469,7 +1506,14 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(nz) :: buffer
+  real(mytype), dimension(nz) :: buffer, ff, ss, ww, pp
+
+  do concurrent (k=1:nz)
+     ff(k) = x3dop%f(k)
+     ss(k) = x3dop%s(k)
+     ww(k) = x3dop%w(k)
+     if (allocated(x3dop%periodic)) pp(k) = x3dop%periodic(k)
+  end do
 
   if (nz==1) then
     do concurrent(k=1:nz, j=1:ny, i=1:nx)
@@ -1478,7 +1522,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
     return
   endif
 
-  do concurrent (j=1:ny, i=1:nx)
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
      ! Compute r.h.s.
      buffer(1) = askz*(uz(i,j,2)-uz(i,j,1   ) &
                       -uz(i,j,1)+uz(i,j,nz  )) &
@@ -1556,7 +1600,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                          -uz(i,j,nz)+uz(i,j,nz-4))
 
      ! Solve tri-diagonal system
-     call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nz)
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, nz)
      do concurrent (k=1:nz)
         tz(i,j,k) = buffer(k)
      enddo
@@ -1590,7 +1634,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
     enddo
   endif
 
-  do concurrent (j=1:ny, i=1:nx)
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then

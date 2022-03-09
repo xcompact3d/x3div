@@ -734,9 +734,26 @@ contains
     real(mytype) :: ytt_rl,xtt_rl,ztt_rl,yt1_rl,xt1_rl,zt1_rl
     real(mytype) :: xtt1_rl,ytt1_rl,ztt1_rl
 
-    complex(mytype) :: cx
-    real(mytype) :: rl, iy
-    external cx, rl, iy
+    interface
+       pure function cx(realpart,imaginarypart)
+          use decomp_2d, only : mytype
+          implicit none
+          complex(mytype) :: cx
+          real(mytype), intent(in) :: realpart, imaginarypart
+       end function cx
+       pure function rl(complexnumber)
+          use decomp_2d, only : mytype
+          implicit none
+          complex(mytype), intent(in) :: complexnumber
+          real(mytype) :: rl
+       end function rl
+       pure function iy(complexnumber)
+          use decomp_2d, only : mytype
+          implicit none
+          complex(mytype), intent(in) :: complexnumber
+          real(mytype) :: iy
+       end function iy
+    end interface
 
     xkx = zero
     xk2 = zero

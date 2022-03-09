@@ -193,6 +193,7 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+#if 1
   real(mytype), dimension(nx) :: buffer
 
   ! This is working (with deepcopy)
@@ -221,8 +222,9 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
   enddo
   enddo
   !$acc end parallel loop
+#else
+  real(mytype), dimension(nx) :: buffer
 
-#ifdef 0
   ! This is broken (with deepcopy)
   do concurrent (k=1:nz, j=1:ny) local(buffer)
     ! Compute r.h.s.

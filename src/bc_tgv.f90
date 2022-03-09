@@ -25,6 +25,8 @@ module bc_tgv
             tgv_listing, &
             tgv_init, &
             tgv_postprocess, &
+            tgv_visu_init, &
+            tgv_visu, &
             tgv_finalize
 
 contains
@@ -129,7 +131,7 @@ contains
   !
   subroutine tgv_postprocess(ux1, uy1, uz1, ndt)
 
-    use decomp_2d, only : mytype, real_type, decomp_2d_abort, xsize, ysize, zsize
+    use decomp_2d, only : decomp_2d_abort, ysize, zsize
     use param, only : half, two, xnu, dt
     use variables, only : nx, ny, nz, ppy
     use var, only : ux2,uy2,uz2,ux3,uy3,uz3
@@ -254,6 +256,96 @@ contains
 
   end subroutine tgv_postprocess
 
+  !
+  ! Register variables for visualization
+  !
+  subroutine tgv_visu_init()
+
+#ifdef ADIOS2
+    use decomp_2d_io, only : adios2_register_variable
+    use visu, only : io_write_real_coarse
+#endif
+
+    implicit none
+
+#ifdef ADIOS2
+    call adios2_register_variable(io_write_real_coarse, "critq", 1, 2)
+#endif
+
+  end subroutine tgv_visu_init
+
+  !
+  ! Output case-specific variables
+  !
+  subroutine tgv_visu(ux1, uy1, uz1, num)
+
+    use decomp_2d, only : ysize, zsize
+    use variables, only : ppy
+    use param, only : half
+    use var, only : ux2,uy2,uz2,ux3,uy3,uz3
+    use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1
+    use var, only : ta2,tb2,tc2
+    use var, only : ta3,tb3,tc3
+    use x3d_derive
+    use x3d_transpose
+    use x3d_operator_1d
+    use visu, only : write_field
+
+    implicit none
+
+    ! Arguments
+    real(mytype), dimension(xsize(1),xsize(2),xsize(3)), intent(in) :: ux1, uy1, uz1
+    character(len=32), intent(in) :: num
+
+    ! Local variable
+    integer :: i, j, k
+    real(mytype), dimension(xsize(1),xsize(2),xsize(3)) :: array
+
+    ! This is needed to compute derivatives
+    call x3d_transpose_x_to_y(ux1, ux2)
+    call x3d_transpose_x_to_y(uy1, uy2)
+    call x3d_transpose_x_to_y(uz1, uz2)
+    call x3d_transpose_y_to_z(ux2, ux3)
+    call x3d_transpose_y_to_z(uy2, uy3)
+    call x3d_transpose_y_to_z(uz2, uz3)
+
+    ! Compute X derivative
+    call derx (ta1,ux1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tb1,uy1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+
+    ! Compute Y derivative and transpose back to X
+    call dery (ta2,ux2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tb2,uy2,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tc2,uz2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call x3d_transpose_y_to_x(ta2, td1)
+    call x3d_transpose_y_to_x(tb2, te1)
+    call x3d_transpose_y_to_x(tc2, tf1)
+
+    ! Compute Z derivative and transpose back to X
+    call derz (ta3,ux3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tb3,uy3,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tc3,uz3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call x3d_transpose_z_to_y(ta3, ta2)
+    call x3d_transpose_z_to_y(tb3, tb2)
+    call x3d_transpose_z_to_y(tc3, tc2)
+    call x3d_transpose_y_to_x(ta2, tg1)
+    call x3d_transpose_y_to_x(tb2, th1)
+    call x3d_transpose_y_to_x(tc2, ti1)
+    !du/dx=ta1   du/dy=td1   du/dz=tg1
+    !dv/dx=tb1   dv/dy=te1   dv/dz=th1
+    !dw/dx=tc1   dw/dy=tf1   dw/dz=ti1
+
+    ! Compute Q criterion and write it
+    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      array(i,j,k) = - half*(ta1(i,j,k)**2+te1(i,j,k)**2+ti1(i,j,k)**2) &
+                     - td1(i,j,k)*tb1(i,j,k)&
+                     - tg1(i,j,k)*tc1(i,j,k)&
+                     - th1(i,j,k)*tf1(i,j,k)
+    enddo
+    call write_field(array, ".", "critq", trim(num))
+
+  end subroutine tgv_visu
   !
   ! Finalize case-specific IO
   !

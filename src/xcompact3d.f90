@@ -74,11 +74,9 @@ program xcompact3d
      !! End of timestep
      itime = itime + 1
      ndt = ndt + 1
-     if (mod(itime,ioutput) == 0) then
-        call write_snapshot(ux1, uy1, uz1, itime, num)
-        call end_snapshot(itime, num)
-     endif
-     call case_postprocess(ux1, uy1, uz1, ndt)
+     if (mod(itime,ioutput) == 0) call write_snapshot(ux1, uy1, uz1, itime, num)
+     call case_postprocess(ux1, uy1, uz1, itime, num)
+     if (mod(itime,ioutput) == 0) call end_snapshot(itime, num)
 
   end do
 

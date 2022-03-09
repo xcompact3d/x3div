@@ -183,6 +183,7 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm,nym,nzm,phG)
 
   call visu_init()
+  call case_visu_init()
   
 endsubroutine init_xcompact3d
 !########################################################################

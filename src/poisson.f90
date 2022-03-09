@@ -738,18 +738,21 @@ contains
        pure function cx(realpart,imaginarypart)
           use decomp_2d, only : mytype
           implicit none
+          !$acc routine seq
           complex(mytype) :: cx
           real(mytype), intent(in) :: realpart, imaginarypart
        end function cx
        pure function rl(complexnumber)
           use decomp_2d, only : mytype
           implicit none
+          !$acc routine seq
           complex(mytype), intent(in) :: complexnumber
           real(mytype) :: rl
        end function rl
        pure function iy(complexnumber)
           use decomp_2d, only : mytype
           implicit none
+          !$acc routine seq
           complex(mytype), intent(in) :: complexnumber
           real(mytype) :: iy
        end function iy

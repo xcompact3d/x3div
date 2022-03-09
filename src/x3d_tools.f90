@@ -9,6 +9,8 @@ pure function rl(complexnumber)
 
   implicit none
 
+  !$acc routine seq
+
   real(mytype) :: rl
   complex(mytype), intent(in) :: complexnumber
 
@@ -24,6 +26,8 @@ pure function iy(complexnumber)
 
   implicit none
 
+  !$acc routine seq
+
   real(mytype) :: iy
   complex(mytype), intent(in) :: complexnumber
 
@@ -38,6 +42,8 @@ pure function cx(realpart,imaginarypart)
   use decomp_2d, only : mytype
 
   implicit none
+
+  !$acc routine seq
 
   complex(mytype) :: cx
   real(mytype), intent(in) :: realpart, imaginarypart

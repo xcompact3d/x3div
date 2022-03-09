@@ -32,10 +32,12 @@ module var
 
   interface var_zero
      module procedure var1_zero
+     module procedure cvar1_zero
      module procedure var2_zero
      module procedure var3_zero
+     module procedure var4_zero
   end interface var_zero
-  
+ 
 contains
 
 
@@ -121,9 +123,7 @@ contains
     allocate(uzp3, source=duxydxyp3)
 
     allocate(pp3(ph1%zst(1):ph1%zen(1), ph1%zst(2):ph1%zen(2), nzm, npress))
-    do i = 1, npress
-       call var_zero(pp3(:,:,:,i))
-    end do
+    call var_zero(pp3)
 
     call alloc_z(dv3, ph1, .true.)
     call var_zero(dv3)
@@ -131,34 +131,34 @@ contains
 
     !module waves
     allocate(zkz(nz/2+1))
-    zkz = zero
+    call var_zero(zkz)
     allocate(zk2, ezs, source=zkz)
 
     allocate(yky(ny))
-    yky = zero
+    call var_zero(yky)
     allocate(yk2, eys, source=yky)
 
     allocate(xkx(nx))
-    xkx = zero
+    call var_zero(xkx)
     allocate(xk2, exs, source=xkx)
 
     !module mesh
     allocate(ppy(ny))
-    ppy=zero
+    call var_zero(ppy)
     allocate(pp2y, pp4y, ppyi, pp2yi, pp4yi, source=ppy)
 
     allocate(xp(nx))
-    xp=zero
+    call var_zero(xp)
     allocate(xpi, source=xp)
 
     allocate(yp, ypi, del, source=ppy)
 
     allocate(zp(nz))
-    zp=zero
+    call var_zero(zp)
     allocate(zpi, source=zp)
 
     allocate(yeta(ny))
-    yeta=zero
+    call var_zero(yeta)
     allocate(yetai, source=yeta)
 
     ! x-position
@@ -179,10 +179,10 @@ contains
        zpi(k)=(real(k,mytype)-half)*dz
     enddo
     !
-    adt=zero
-    bdt=zero
-    cdt=zero
-    gdt=zero
+    call var_zero(adt)
+    call var_zero(bdt)
+    call var_zero(cdt)
+    call var_zero(gdt)
 
     if (itimescheme.eq.1) then ! Euler
 
@@ -196,7 +196,7 @@ contains
        ntime = 1
     endif
     allocate(dux1(xsize(1),xsize(2),xsize(3),ntime))
-    dux1=zero
+    call var_zero(dux1)
     allocate(duy1, duz1, source=dux1)
 
     call alloc_z(divu3, opt_global=.true.) !global indices
@@ -229,6 +229,24 @@ contains
     end do
     
   end subroutine var1_zero
+  subroutine cvar1_zero(v)
+
+    use param, only : zero
+
+    implicit none
+
+    complex(mytype), dimension(:), intent(inout) :: v
+
+    integer :: i
+    integer :: ni
+
+    ni = size(v, 1)
+
+    do concurrent (i = 1:ni)
+       v(i) = cmplx(zero, zero, kind=mytype)
+    end do
+
+  end subroutine cvar1_zero
   !
   ! Zero a 2D array in parallel (ensure any first touch initialisation is performed)
   !
@@ -274,6 +292,30 @@ contains
     end do
     
   end subroutine var3_zero
+  !
+  ! Zero a 4D array in parallel (ensure any first touch initialisation is performed)
+  !
+  subroutine var4_zero(v)
+
+    use param, only : zero
+
+    implicit none
+
+    real(mytype), dimension(:,:,:,:), intent(inout) :: v
+
+    integer :: i, j, k, l
+    integer :: ni, nj, nk, nl
+
+    nl = size(v, 4)
+    nk = size(v, 3)
+    nj = size(v, 2)
+    ni = size(v, 1)
+
+    do concurrent (l = 1:nl, k = 1:nk, j = 1:nj, i = 1:ni)
+       v(i, j, k, l) = zero
+    end do
+
+  end subroutine var4_zero
 
   !
   ! Free memory

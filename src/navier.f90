@@ -53,6 +53,7 @@ contains
     USE decomp_2d_poisson, ONLY : poisson
     USE variables, ONLY : nzm
     USE param, ONLY : npress
+    use nvtx
 
     implicit none
 
@@ -68,11 +69,17 @@ contains
 
     nlock = 1 !! Corresponds to computing div(u*)
 
+    call nvtxStartRange("divergence")
     CALL divergence(pp3(:,:,:,1),ux1,uy1,uz1,nlock)
+    call nvtxEndRange
     !
+    call nvtxStartRange("poisson_000")
     CALL poisson(pp3(:,:,:,1))
+    call nvtxEndRange
     !
+    call nvtxStartRange("gradp")
     CALL gradp(px1,py1,pz1,pp3(:,:,:,1))
+    call nvtxEndRange
 
   END SUBROUTINE solve_poisson
   !############################################################################
@@ -194,10 +201,12 @@ contains
        enddo
     endif
 
-    tmax = maxval(abs(pp3))
-    tmoy = sum(abs(pp3)) / nvect3
 
     if (test_mode) then
+       !$acc kernels
+       tmax = maxval(abs(pp3(:,:,:)))
+       tmoy = sum(abs(pp3(:,:,:))) / nvect3
+       !$acc end kernels
        call MPI_REDUCE(tmax,tmax1,1,real_type,MPI_MAX,0,MPI_COMM_WORLD,code)
        if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_REDUCE")
        call MPI_REDUCE(tmoy,tmoy1,1,real_type,MPI_SUM,0,MPI_COMM_WORLD,code)

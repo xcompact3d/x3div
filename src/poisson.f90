@@ -309,6 +309,7 @@ contains
     use x3d_operator_z_data
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d_fft, only : PHYSICAL_IN_Z
+    use nvtx
 
     ! right-hand-side of Poisson as input
     ! solution of Poisson as output
@@ -342,8 +343,20 @@ contains
     end if
 
     ! compute r2c transform 
+    call nvtxStartRange("call decomp_fft_r2c")
     call decomp_2d_fft_3d(rhs,cw1)
+    call nvtxEndRange
+    !do k = sp%xst(3), sp%xen(3)
+    !   do j = sp%xst(2), sp%xen(2)
+    !      do i = sp%xst(1), sp%xen(1)
+    !         if (abs(cw1(i,j,k)) > 1.0e-4) then
+    !            write(*,*) 'After r2c', i, j, k, cw1(i,j,k)
+    !         end if
+    !      end do
+    !   end do
+    !end do
 
+    call nvtxStartRange("call normalisation")
     do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
       ! POST PROCESSING IN Z
       cw1_tmp = cw1(i,j,k)
@@ -407,9 +420,12 @@ contains
       cw1(i,j,k) = cw1_tmp
 
     end do
+    call nvtxEndRange
 
     ! compute c2r transform
+    call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)
+    call nvtxEndRange
 
     !   call decomp_2d_fft_finalize
 

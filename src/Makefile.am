@@ -32,7 +32,10 @@ tools.lo: module_param.lo
 x3d_transpose.lo: module_param.lo
 var.lo: module_param.lo
 thomas.lo: module_param.lo
-x3d_operator_1d.f90: module_param.lo x3d_operator_x_data.lo x3d_operator_y_data.lo x3d_operator_z_data.lo
+x3d_operator_x_data.lo: module_param.lo
+x3d_operator_y_data.lo: module_param.lo
+x3d_operator_z_data.lo: module_param.lo
+x3d_operator_1d.lo: module_param.lo x3d_operator_x_data.lo x3d_operator_y_data.lo x3d_operator_z_data.lo
 poisson.lo: x3d_operator_x_data.lo x3d_operator_y_data.lo x3d_operator_z_data.lo
 x3d_derive.lo: x3d_operator_1d.lo
 x3d_staggered.lo: x3d_operator_1d.lo

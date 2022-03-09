@@ -30,14 +30,6 @@ module var
   real(mytype), save, allocatable, dimension(:,:,:) :: pgz3,ppi3,duxydxyp3,uzp3
 
 
-  interface var_zero
-     module procedure var1_zero
-     module procedure cvar1_zero
-     module procedure var2_zero
-     module procedure var3_zero
-     module procedure var4_zero
-  end interface var_zero
- 
 contains
 
 
@@ -52,6 +44,7 @@ contains
     use decomp_2d , only : alloc_x, alloc_y, alloc_z
     use decomp_2d , only : xsize, ysize, zsize, ph1, ph3
     use decomp_2d , only : nrank
+    use par_init, only : var_zero
 
     implicit none
 
@@ -207,115 +200,6 @@ contains
 #endif
 
   end subroutine var_init
-
-  !
-  ! Zero a 1D array in parallel (ensure any first touch initialisation is performed)
-  !
-  subroutine var1_zero(v)
-
-    use param, only : zero
-
-    implicit none
-    
-    real(mytype), dimension(:), intent(inout) :: v
-
-    integer :: i
-    integer :: ni
-
-    ni = size(v, 1)
-
-    do concurrent (i = 1:ni)
-       v(i) = zero
-    end do
-    
-  end subroutine var1_zero
-  subroutine cvar1_zero(v)
-
-    use param, only : zero
-
-    implicit none
-
-    complex(mytype), dimension(:), intent(inout) :: v
-
-    integer :: i
-    integer :: ni
-
-    ni = size(v, 1)
-
-    do concurrent (i = 1:ni)
-       v(i) = cmplx(zero, zero, kind=mytype)
-    end do
-
-  end subroutine cvar1_zero
-  !
-  ! Zero a 2D array in parallel (ensure any first touch initialisation is performed)
-  !
-  subroutine var2_zero(v)
-
-    use param, only : zero
-
-    implicit none
-    
-    real(mytype), dimension(:,:), intent(inout) :: v
-
-    integer :: i, j
-    integer :: ni, nj
-
-    nj = size(v, 2)
-    ni = size(v, 1)
-
-    do concurrent (j = 1:nj, i = 1:ni)
-       v(i, j) = zero
-    end do
-    
-  end subroutine var2_zero
-  !
-  ! Zero a 3D array in parallel (ensure any first touch initialisation is performed)
-  !
-  subroutine var3_zero(v)
-
-    use param, only : zero
-
-    implicit none
-    
-    real(mytype), dimension(:,:,:), intent(inout) :: v
-
-    integer :: i, j, k
-    integer :: ni, nj, nk
-
-    nk = size(v, 3)
-    nj = size(v, 2)
-    ni = size(v, 1)
-
-    do concurrent (k = 1:nk, j = 1:nj, i = 1:ni)
-       v(i, j, k) = zero
-    end do
-    
-  end subroutine var3_zero
-  !
-  ! Zero a 4D array in parallel (ensure any first touch initialisation is performed)
-  !
-  subroutine var4_zero(v)
-
-    use param, only : zero
-
-    implicit none
-
-    real(mytype), dimension(:,:,:,:), intent(inout) :: v
-
-    integer :: i, j, k, l
-    integer :: ni, nj, nk, nl
-
-    nl = size(v, 4)
-    nk = size(v, 3)
-    nj = size(v, 2)
-    ni = size(v, 1)
-
-    do concurrent (l = 1:nl, k = 1:nk, j = 1:nj, i = 1:ni)
-       v(i, j, k, l) = zero
-    end do
-
-  end subroutine var4_zero
 
   !
   ! Free memory

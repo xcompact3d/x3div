@@ -5,6 +5,7 @@
 module x3d_operator_y_data
 
    use decomp_2d, only: mytype
+   use par_init, only : var_zero
 
    implicit none
 
@@ -61,7 +62,7 @@ contains
       integer, intent(in) :: ny, nym
 
       allocate (ffy(ny))
-      ffy = 0._mytype
+      call var_zero(ffy)
       allocate (sfy, source=ffy)
       allocate (fsy, source=ffy)
       allocate (fwy, source=ffy)
@@ -90,7 +91,7 @@ contains
       allocate (swypS, source=ffy)
 
       allocate (cfy6(nym))
-      cfy6 = 0._mytype
+      call var_zero(cfy6)
       allocate (ccy6, source=cfy6)
       allocate (cby6, source=cfy6)
       allocate (cfyp6, source=cfy6)

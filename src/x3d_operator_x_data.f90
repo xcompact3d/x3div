@@ -5,6 +5,7 @@
 module x3d_operator_x_data
 
    use decomp_2d, only: mytype
+   use par_init, only : var_zero
 
    implicit none
 
@@ -61,7 +62,7 @@ contains
       integer, intent(in) :: nx, nxm
 
       allocate (ffx(nx))
-      ffx = 0._mytype
+      call var_zero(ffx)
       allocate (sfx, source=ffx)
       allocate (fsx, source=ffx)
       allocate (fwx, source=ffx)
@@ -90,7 +91,7 @@ contains
       allocate (swxpS, source=ffx)
 
       allocate (cfx6(nxm))
-      cfx6 = 0._mytype
+      call var_zero(cfx6)
       allocate (ccx6, source=cfx6)
       allocate (cbx6, source=cfx6)
       allocate (cfxp6, source=cfx6)

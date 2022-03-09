@@ -193,38 +193,59 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
-  real(mytype), dimension(nx) :: buffer, ff, ss, ww, pp
-  real(mytype) :: alfa
+  real(mytype), dimension(nx) :: buffer
 
-  do concurrent (i=1:nx)
-     ff(i) = x3dop%f(i)
-     ss(i) = x3dop%s(i)
-     ww(i) = x3dop%w(i)
-     pp(i) = x3dop%periodic(i)
-  end do
-  alfa = x3dop%alfa
+  ! This is working (with deepcopy)
+  !$acc parallel loop gang vector collapse(2) private(buffer)
+  do k = 1, nz
+  do j = 1, ny
+    ! Compute r.h.s.
+    buffer(1) = afix*(ux(2,j,k)-ux(nx,j,k)) &
+              + bfix*(ux(3,j,k)-ux(nx-1,j,k))
+    buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
+              + bfix*(ux(4,j,k)-ux(nx,j,k))
+    do concurrent (i=3:nx-2)
+      buffer(i) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
+                + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
+    enddo
+    buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
+                 + bfix*(ux(1,j,k)-ux(nx-3,j,k))
+    buffer(nx) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
+               + bfix*(ux(2,j,k)-ux(nx-2,j,k))
 
-  do concurrent (k=1:nz, j=1:ny) local(buffer)
-     ! Compute r.h.s.
-     buffer(1) = afix*(ux(2,j,k)-ux(nx,j,k)) &
-               + bfix*(ux(3,j,k)-ux(nx-1,j,k))
-     buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
-               + bfix*(ux(4,j,k)-ux(nx,j,k))
-     do concurrent (i=3:nx-2)
-        buffer(i) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
-                  + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
-     enddo
-     buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
-                  + bfix*(ux(1,j,k)-ux(nx-3,j,k))
-     buffer(nx) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
-                + bfix*(ux(2,j,k)-ux(nx-2,j,k))
-
-     ! Solve tri-diagonal system
-     call thomas1d(buffer, ff, ss, ww, pp, alfa, nx)
-     do concurrent (i=1:nx)
-        tx(i,j,k) = buffer(i)
-     enddo
+    ! Solve tri-diagonal system
+    call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx)
+    do concurrent (i=1:nx)
+      tx(i,j,k) = buffer(i)
+    enddo
   enddo
+  enddo
+  !$acc end parallel loop
+
+#ifdef 0
+  ! This is broken (with deepcopy)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
+    ! Compute r.h.s.
+    buffer(1) = afix*(ux(2,j,k)-ux(nx,j,k)) &
+              + bfix*(ux(3,j,k)-ux(nx-1,j,k))
+    buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
+              + bfix*(ux(4,j,k)-ux(nx,j,k))
+    do concurrent (i=3:nx-2)
+      buffer(i) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
+                + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
+    enddo
+    buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
+                 + bfix*(ux(1,j,k)-ux(nx-3,j,k))
+    buffer(nx) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
+               + bfix*(ux(2,j,k)-ux(nx-2,j,k))
+
+    ! Solve tri-diagonal system
+    call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx)
+    do concurrent (i=1:nx)
+      tx(i,j,k) = buffer(i)
+    enddo
+  enddo
+#endif
 
 end subroutine derx_00
 

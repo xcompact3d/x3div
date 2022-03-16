@@ -8,6 +8,7 @@ time_integrators.f90 \
 tools.f90 \
 x3d_transpose.f90 \
 var.f90 \
+visu.f90 \
 thomas.f90 \
 x3d_operator_x_data.f90 \
 x3d_operator_y_data.f90 \
@@ -31,8 +32,9 @@ time_integrators.lo: module_param.lo
 tools.lo: module_param.lo
 x3d_transpose.lo: module_param.lo
 var.lo: module_param.lo
+visu.lo: module_param.lo
 thomas.lo: module_param.lo
-x3d_operator_1d.f90: module_param.lo x3d_operator_x_data.lo x3d_operator_y_data.lo x3d_operator_z_data.lo
+x3d_operator_1d.lo: module_param.lo x3d_operator_x_data.lo x3d_operator_y_data.lo x3d_operator_z_data.lo
 poisson.lo: x3d_operator_x_data.lo x3d_operator_y_data.lo x3d_operator_z_data.lo
 x3d_derive.lo: x3d_operator_1d.lo
 x3d_staggered.lo: x3d_operator_1d.lo
@@ -40,10 +42,10 @@ x3d_filters.lo: x3d_operator_1d.lo
 navier.lo: poisson.lo x3d_staggered.lo
 parameters.lo: module_param.lo
 bc_tgv2d.lo: x3d_operator_x_data.lo x3d_operator_y_data.lo
-bc_tgv.lo: x3d_derive.lo
+bc_tgv.lo: x3d_derive.lo visu.lo
 case.lo: bc_tgv2d.lo bc_tgv.lo
 transeq.lo: x3d_derive.lo case.lo
-x3d_tools.lo: x3d_derive.lo case.lo
+x3d_tools.lo: x3d_derive.lo case.lo visu.lo
 
 clean-local:
 	-rm -f *.mod

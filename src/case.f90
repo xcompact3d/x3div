@@ -18,6 +18,7 @@ module case
             case_init, &
             case_bc, &
             case_forcing, &
+            case_visu_init, &
             case_visu, &
             case_postprocess, &
             case_finalize
@@ -95,12 +96,29 @@ contains
   end subroutine case_forcing
 
   !
+  ! Register variables for visualization
+  !
+  subroutine case_visu_init()
+
+    implicit none
+
+    if (itype == itype_tgv)  call tgv_visu_init()
+
+  end subroutine case_visu_init
+
+  !
   ! Visualization
   ! This is called when itime % ioutput = 0
   !
-  subroutine case_visu()
+  subroutine case_visu(ux1, uy1, uz1, num)
 
     implicit none
+
+    ! Arguments
+    real(mytype), dimension(xsize(1),xsize(2),xsize(3)), intent(in) :: ux1, uy1, uz1
+    character(len=32), intent(in) :: num
+
+    if (itype == itype_tgv) call tgv_visu(ux1, uy1, uz1, num)
 
   end subroutine case_visu
 
@@ -108,22 +126,24 @@ contains
   ! Case-specific post-processing
   ! This is called at the end of each time step
   !
-  subroutine case_postprocess(ux1, uy1, uz1, ndt)
+  subroutine case_postprocess(ux1, uy1, uz1, it, num)
 
-    use param, only : ivisu, ioutput
+    use param, only : ioutput
+    use variables, only : nvisu
 
     implicit none
 
     ! Arguments
     real(mytype), dimension(xsize(1),xsize(2),xsize(3)), intent(in) :: ux1, uy1, uz1
-    integer, intent(in) :: ndt
+    integer, intent(in) :: it
+    character(len=32), intent(in) :: num
 
-    if (itype == itype_tgv) call tgv_postprocess(ux1, uy1, uz1, ndt)
+    if (itype == itype_tgv) call tgv_postprocess(ux1, uy1, uz1, it)
 
-    if (itype == itype_tgv2d) call tgv2d_postprocess(ux1, uy1, uz1, ndt)
+    if (itype == itype_tgv2d) call tgv2d_postprocess(ux1, uy1, uz1, it)
 
-    if ((ivisu /= 0).and.(ioutput /= 0)) then
-      if (mod(ndt, ioutput) == 0) call case_visu()
+    if ((nvisu /= 0).and.(ioutput /= 0)) then
+      if (mod(it, ioutput) == 0) call case_visu(ux1, uy1, uz1, num)
     endif
 
   end subroutine case_postprocess

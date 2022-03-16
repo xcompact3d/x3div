@@ -9,6 +9,7 @@ endif
 lib_LTLIBRARIES = libdecomp2d.la
 libdecomp2d_la_SOURCES = \
 decomp_2d.f90 \
+io.f90 \
 glassman.f90 \
 fft_@FFTENGINE@.f90
 libdecomp2d_la_LDFLAGS = -no-undefined
@@ -18,6 +19,7 @@ endif
 
 # Allow parallel make
 glassman.lo: decomp_2d.lo
+io.lo: decomp_2d.lo
 if HAVE_MKL
 fft_@FFTENGINE@.lo: glassman.lo mkl_dfti.lo
 else

@@ -64,7 +64,10 @@ else ifeq ($(FFT),fftw3_f03)
   LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
 else ifeq ($(FFT),generic)
   INC=
-  LIBFFT=#-lnvhpcwrapnvtx
+  LIBFFT=
+else ifeq ($(FFT),nvhpc)
+  INC=
+  LIBFFT=-lnvhpcwrapnvtx
 else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread

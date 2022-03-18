@@ -1,0 +1,7 @@
+@test
+subroutine test_dummy()
+   use funit
+
+   @assertTrue(1 > 0)
+   
+end subroutine test_dummy

@@ -329,6 +329,7 @@ contains
 
     complex(mytype) :: cw1_tmp
     real(mytype) :: ntot
+    integer, dimension(3) :: dim3d
 
     nx = nx_global
     ny = ny_global
@@ -357,6 +358,7 @@ contains
     !end do
 
     call nvtxStartRange("call normalisation")
+    write(*,*) 'Normalisation'
     do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
       ! POST PROCESSING IN Z
       cw1_tmp = cw1(i,j,k)
@@ -418,9 +420,19 @@ contains
       if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
       ! post-processing in spectral space
       cw1(i,j,k) = cw1_tmp
+      
 
     end do
     call nvtxEndRange
+    dim3d = shape(cw1)
+    do k = 1, dim3d(3),dim3d(3)/2+1
+      do j = 1, dim3d(2),dim3d(2)/2+1
+        do i = 1, dim3d(1),dim3d(1)/2+1
+          print "(i3,i3,i3,1x,e12.5,1x,e12.5)", i, j, k, real(cw1(i,j,k)),&
+                             aimag(cw1(i,j,k))
+        enddo
+      enddo
+    enddo
 
     ! compute c2r transform
     call nvtxStartRange("call decomp_c2r")

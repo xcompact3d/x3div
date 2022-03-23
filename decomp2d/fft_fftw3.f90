@@ -583,6 +583,8 @@ module decomp_2d_fft
     
     real(mytype), dimension(:,:,:), intent(IN) :: in_r
     complex(mytype), dimension(:,:,:), intent(OUT) :: out_c
+    integer :: i, j ,k
+    integer, dimension(3) :: dim3d
 
     if (format==PHYSICAL_IN_X) then
 
@@ -604,19 +606,67 @@ module decomp_2d_fft
           call transpose_y_to_z(wk13,out_c,sp)
        end if
        call c2c_1m_z(out_c,-1,plan(0,3))
-                
+
     else if (format==PHYSICAL_IN_Z) then
 
        ! ===== 1D FFTs in Z =====
+       dim3d = shape(in_r)
+       write(*,*) 'Init '
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_r(i,j,k))
+            end do
+         end do
+       end do
        call r2c_1m_z(in_r,wk13)
+       write(*,*) 'r2c_1m_z'
+       dim3d = shape(wk13)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
+                             aimag(wk13(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
           call transpose_z_to_y(wk13,wk2_r2c,sp)
           call c2c_1m_y(wk2_r2c,-1,plan(0,2))
+          write(*,*) 'c2c_1m_y'
+          dim3d = shape(wk2_r2c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
+                                aimag(wk2_r2c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
        else  ! out_c==wk2_r2c if 1D decomposition
           call transpose_z_to_y(wk13,out_c,sp)
           call c2c_1m_y(out_c,-1,plan(0,2))
+          write(*,*) 'c2c_1m_y2'
+          dim3d = shape(out_c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
+                                aimag(out_c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
        end if
 
        ! ===== Swap Y --> X; 1D FFTs in X =====
@@ -624,6 +674,19 @@ module decomp_2d_fft
           call transpose_y_to_x(wk2_r2c,out_c,sp)
        end if
        call c2c_1m_x(out_c,-1,plan(0,1))
+       write(*,*) 'c2c_1m_x'
+       dim3d = shape(out_c)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
+                             aimag(out_c(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 
     end if
     
@@ -640,10 +703,12 @@ module decomp_2d_fft
     
     complex(mytype), dimension(:,:,:), intent(INOUT) :: in_c
     real(mytype), dimension(:,:,:), intent(OUT) :: out_r
-
+    integer :: i,j,k
+    integer, dimension(3) :: dim3d
 #ifndef OVERWRITE
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
+    write(*,*) 'Start fft_3d_c2r line 754'
 
     if (format==PHYSICAL_IN_X) then
 
@@ -674,13 +739,52 @@ module decomp_2d_fft
 
     else if (format==PHYSICAL_IN_Z) then
 
+       write(*,*) 'Back Init c2c_1m_x line 788'
+       dim3d = shape(in_c)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
+                             aimag(in_c(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
        ! ===== 1D FFTs in X =====
 #ifdef OVERWRITE
        call c2c_1m_x(in_c,1,plan(2,1))
+       write(*,*) 'Back c2c_1m_x overwrite line 804'
+       dim3d = shape(in_c)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
+                             aimag(in_c(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 #else
        allocate(wk1(sp%xsz(1),sp%xsz(2),sp%xsz(3)))
        wk1 = in_c
        call c2c_1m_x(wk1,1,plan(2,1))
+       write(*,*) 'Back2 c2c_1m_x line 821'
+       dim3d = shape(wk1)
+       do k = 1, dim3d(3),dim3d(1)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk1(i,j,k)),&
+                             aimag(wk1(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 #endif
 
        ! ===== Swap X --> Y; 1D FFTs in Y =====
@@ -691,11 +795,50 @@ module decomp_2d_fft
           call transpose_x_to_y(wk1,wk2_r2c,sp)
 #endif
           call c2c_1m_y(wk2_r2c,1,plan(2,2))
+          write(*,*) 'Back c2c_1m_y line 844'
+          dim3d = shape(wk2_r2c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
+                                aimag(wk2_r2c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
        else  ! in_c==wk2_r2c if 1D decomposition
 #ifdef OVERWRITE
           call c2c_1m_y(in_c,1,plan(2,2))
+          write(*,*) 'Back2 c2c_1m_y line 860'
+          dim3d = shape(in_c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
+                                aimag(in_c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
 #else
           call c2c_1m_y(wk1,1,plan(2,2))
+          write(*,*) 'Back3 c2c_1m_y line 875'
+          dim3d = shape(wk1)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk1(i,j,k)),&
+                                aimag(wk1(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
 #endif
        end if
 
@@ -710,6 +853,18 @@ module decomp_2d_fft
 #endif
        end if
        call c2r_1m_z(wk13,out_r)
+       write(*,*) 'Back2 c2c_1m_z out_r line 902'
+       dim3d = shape(out_r)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_r(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 
     end if
 

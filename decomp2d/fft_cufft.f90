@@ -236,31 +236,31 @@ module decomp_2d_fft
     else if (format == PHYSICAL_IN_Z) then
 
        ! For C2C transforms
-       call plan_1m_z(plan(-1,3), ph, CUFFT_Z2Z,ws)
+       call plan_1m_z(plan(-1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(-1,2), ph, CUFFT_Z2Z,ws) 
+       call plan_1m_y(plan(-1,2), ph, CUFFT_C2C,ws) 
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(-1,1), ph, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan(-1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan( 1,1), ph, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan( 1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan( 1,2), ph, CUFFT_Z2Z,ws)
+       call plan_1m_y(plan( 1,2), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan( 1,3), ph, CUFFT_Z2Z,ws)
+       call plan_1m_z(plan( 1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
 
        ! For R2C/C2R tranforms
-       call plan_1m_z(plan(0,3), ph, CUFFT_D2Z,ws)
+       call plan_1m_z(plan(0,3), ph, CUFFT_R2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(0,2), sp, CUFFT_Z2Z,ws)
+       call plan_1m_y(plan(0,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(0,1), sp, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan(0,1), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(2,1), sp, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan(2,1), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(2,2), sp, CUFFT_Z2Z,ws)
+       call plan_1m_y(plan(2,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(2,3), sp, CUFFT_Z2R,ws)
+       call plan_1m_z(plan(2,3), sp, CUFFT_C2R,ws)
        cufft_ws = max (cufft_ws,ws)
     end if
 #endif
@@ -303,21 +303,26 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
+    complex(mytype), dimension(:,:,:), allocatable :: output
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
     integer :: istat
 
+    allocate(output,mold=inout)
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(inout)
-    istat = cufftExecZ2Z(plan1, inout, inout,isign)
+    !$acc host_data use_device(inout,output)
+    istat = cufftExecZ2Z(plan1, inout, output,isign)
     !$acc end host_data
 #else
-    !$acc host_data use_device(inout)
-    istat = cufftExecC2C(plan1, inout, inout,isign)
+    !$acc host_data use_device(inout,output)
+    istat = cufftExecC2C(plan1, inout, output,isign)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_x"
+    !$acc kernels
+    inout = output
+    !$acc end kernels 
 
     return
   end subroutine c2c_1m_x
@@ -329,28 +334,55 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
+    complex(mytype), dimension(:,:,:), allocatable :: input
+    complex(mytype), dimension(:,:,:), allocatable :: output
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
-    integer :: istat
+    integer :: istat, i,j,k
+    integer, dimension(3) :: dim3d
 
-    integer :: k, s3
+    integer :: s3
+    
+    dim3d = shape(inout)
+    allocate(input(dim3d(2),dim3d(1),dim3d(3)))
+    allocate(output(dim3d(2),dim3d(1),dim3d(3)))
+    ! Move y to leading direction
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           input(j,i,k) = inout(i,j,k)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels
 
     ! transform on one Z-plane at a time
     s3 = size(inout,3)
     do k=1,s3
 #ifdef DOUBLE_PREC
-       !$acc host_data use_device(inout)
-       istat = cufftExecZ2Z(plan1, inout(:,:,k), inout(:,:,k),isign)
+       !$acc host_data use_device(input,output)
+       istat = cufftExecZ2Z(plan1, input(:,:,k), output(:,:,k),isign)
        !$acc end host_data
 #else
-       !$acc host_data use_device(inout)
-       istat = cufftExecC2C(plan1, inout(:,:,k), inout(:,:,k),isign)
+       !$acc host_data use_device(input,output)
+       istat = cufftExecC2C(plan1, input(:,:,k), output(:,:,k),isign)
        !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_y istat ", istat, isign
     end do
-
+    ! Move y back
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           inout(i,j,k) = output(j,i,k)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels 
+    deallocate(input,output)
     return
   end subroutine c2c_1m_y
 
@@ -360,21 +392,49 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
+    complex(mytype), dimension(:,:,:), allocatable :: input
+    complex(mytype), dimension(:,:,:), allocatable :: output
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
-    integer :: istat
+    integer :: istat, i, j, k
+    integer, dimension(3) :: dim3d
+    
+    dim3d = shape(inout)
+    allocate(input(dim3d(3),dim3d(2),dim3d(1)))
+    allocate(output(dim3d(3),dim3d(2),dim3d(1)))
+    ! Move z to leadind direction
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           input(k,j,i) = inout(i,j,k)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels 
 
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(inout)
-    istat = cufftExecZ2Z(plan1, inout, inout,isign)
+    !$acc host_data use_device(input,output)
+    istat = cufftExecZ2Z(plan1, input, output,isign)
     !$acc end host_data
 #else
-    !$acc host_data use_device(inout)
-    istat = cufftExecC2C(plan1, inout, inout,isign)
+    !$acc host_data use_device(input,output)
+    istat = cufftExecC2C(plan1, input, output,isign)
     !$acc end host_data
 #endif
     if (istat /= 0) &
-       write (*,*) "Error in executing c2c_1m_z"
+       write (*,*) "Error in executing c2c_1m_z", istat, isign
+    ! Move z back
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           inout(i,j,k) = output(k,j,i)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels
+    deallocate(input,output)
 
     return
   end subroutine c2c_1m_z
@@ -410,22 +470,52 @@ module decomp_2d_fft
 
     implicit none
 
-    real(mytype), dimension(:,:,:), intent(IN)  ::  input
+    real(mytype), dimension(:,:,:), intent(IN)     ::  input
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
-    integer :: istat
-
+    real(mytype), dimension(:,:,:), allocatable    ::  input2
+    complex(mytype), dimension(:,:,:), allocatable :: output2
+    integer :: istat, i , j, k
+    integer,dimension(3) :: dim3d
+    
+    dim3d=shape(input)
+    allocate(input2(dim3d(3),dim3d(2),dim3d(1)))
+    ! Move z to leading direction
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           input2(k,j,i) = input(i,j,k)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels
+    ! Shape the output
+    dim3d=shape(output)
+    allocate(output2(dim3d(3),dim3d(2),dim3d(1)))
+    
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(input,output)
-    istat = cufftExecD2Z(plan(0,3), input, output)
+    !$acc host_data use_device(input2,output2)
+    istat = cufftExecD2Z(plan(0,3), input2, output2)
     !$acc end host_data
 #else
-    !$acc host_data use_device(input,output)
-    istat = cufftExecR2C(plan(0,3), input, output)
+    !$acc host_data use_device(input2,output2)
+    istat = cufftExecR2C(plan(0,3), input2, output2)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing r2c_1m_z istat ", istat
-
+    
+    ! Move z back
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           output(i,j,k) = output2(k,j,i)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels
+    deallocate(input2,output2)
     return
 
   end subroutine r2c_1m_z
@@ -436,7 +526,7 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
-    real(mytype), dimension(:,:,:), intent(OUT) :: output
+    real(mytype), dimension(:,:,:), intent(OUT)    :: output
     integer :: istat
 
 #ifdef DOUBLE_PREC
@@ -462,19 +552,50 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN) :: input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
-    integer :: istat
+    complex(mytype), dimension(:,:,:), allocatable :: input2
+    real(mytype), dimension(:,:,:), allocatable :: output2
+    integer :: istat, i, j, k
+    integer, dimension(3) :: dim3d
+
+    dim3d=shape(input)
+    allocate(input2(dim3d(3),dim3d(2),dim3d(1)))
+    ! Move z to leading direction
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           input2(k,j,i) = input(i,j,k)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels
+    ! Shape the output
+    dim3d=shape(output)
+    allocate(output2(dim3d(3),dim3d(2),dim3d(1)))
 
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(input,output)
-    istat = cufftExecZ2D(plan(2,3), input, output)
+    !$acc host_data use_device(input2,output2)
+    istat = cufftExecZ2D(plan(2,3), input2, output2)
     !$acc end host_data
 #else
     !$acc host_data use_device(input,output)
-    istat = cufftExecC2R(plan(2,3), input, output)
+    istat = cufftExecC2R(plan(2,3), input2, output2)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2r_1m_z"
+    
+    ! Move z back
+    !$acc kernels
+    do k=1,dim3d(3)
+      do j=1,dim3d(2)
+        do i=1,dim3d(1)
+           output(i,j,k) = output2(k,j,i)
+        enddo
+      enddo
+    enddo
+    !$acc end kernels
+    deallocate(input2,output2)
 
     return
 
@@ -593,6 +714,8 @@ module decomp_2d_fft
 
     real(mytype), dimension(:,:,:), intent(IN) :: in_r
     complex(mytype), dimension(:,:,:), intent(OUT) :: out_c
+    integer :: i, j ,k
+    integer, dimension(3) :: dim3d
 
     if (format==PHYSICAL_IN_X) then
 
@@ -619,8 +742,29 @@ module decomp_2d_fft
 
        ! ===== 1D FFTs in Z =====
        call nvtxStartRange("Z r2c_1m_z")
+       dim3d = shape(in_r)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_r(i,j,k))
+            end do
+         end do
+       end do
        call r2c_1m_z(in_r,wk13)
        call nvtxEndRange
+       write(*,*) 'r2c_1m_z'
+       dim3d = shape(wk13)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
+                             aimag(wk13(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
@@ -630,6 +774,19 @@ module decomp_2d_fft
           call nvtxStartRange("Z1 c2c_1m_y")
           call c2c_1m_y(wk2_r2c,-1,plan(0,2))
           call nvtxEndRange
+          write(*,*) 'c2c_1m_y'
+          dim3d = shape(wk2_r2c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
+                                aimag(wk2_r2c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
        else  ! out_c==wk2_r2c if 1D decomposition
           call nvtxStartRange("Z transpose_z_to_y")
           call transpose_z_to_y(wk13,out_c,sp)
@@ -637,6 +794,19 @@ module decomp_2d_fft
           call nvtxStartRange("Z c2c_1m_y")
           call c2c_1m_y(out_c,-1,plan(0,2))
           call nvtxEndRange
+          write(*,*) 'c2c_1m_y2'
+          dim3d = shape(out_c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
+                                aimag(out_c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
        end if
 
        ! ===== Swap Y --> X; 1D FFTs in X =====
@@ -648,6 +818,19 @@ module decomp_2d_fft
        call nvtxStartRange("c2c_1m_x")
        call c2c_1m_x(out_c,-1,plan(0,1))
        call nvtxEndRange
+       write(*,*) 'c2c_1m_x'
+       dim3d = shape(out_c)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
+                             aimag(out_c(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 
     end if
 
@@ -664,10 +847,12 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: in_c
     real(mytype), dimension(:,:,:), intent(OUT) :: out_r
-
+    integer :: i,j,k
+    integer, dimension(3) :: dim3d
 #ifndef OVERWRITE
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
+    write(*,*) 'Start fft_3d_c2r line 754'
 
     if (format==PHYSICAL_IN_X) then
 
@@ -698,13 +883,52 @@ module decomp_2d_fft
 
     else if (format==PHYSICAL_IN_Z) then
 
+       write(*,*) 'Back Init c2c_1m_x line 788'
+       dim3d = shape(in_c)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
+                             aimag(in_c(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
        ! ===== 1D FFTs in X =====
 #ifdef OVERWRITE
        call c2c_1m_x(in_c,1,plan(2,1))
+       write(*,*) 'Back c2c_1m_x overwrite line 804'
+       dim3d = shape(in_c)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
+                             aimag(in_c(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 #else
        allocate(wk1(sp%xsz(1),sp%xsz(2),sp%xsz(3)))
        wk1 = in_c
        call c2c_1m_x(wk1,1,plan(2,1))
+       write(*,*) 'Back2 c2c_1m_x line 821'
+       dim3d = shape(wk1)
+       do k = 1, dim3d(3),dim3d(1)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk1(i,j,k)),&
+                             aimag(wk1(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 #endif
 
        ! ===== Swap X --> Y; 1D FFTs in Y =====
@@ -715,11 +939,50 @@ module decomp_2d_fft
           call transpose_x_to_y(wk1,wk2_r2c,sp)
 #endif
           call c2c_1m_y(wk2_r2c,1,plan(2,2))
+          write(*,*) 'Back c2c_1m_y line 844'
+          dim3d = shape(wk2_r2c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
+                                aimag(wk2_r2c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
        else  ! in_c==wk2_r2c if 1D decomposition
 #ifdef OVERWRITE
           call c2c_1m_y(in_c,1,plan(2,2))
+          write(*,*) 'Back2 c2c_1m_y line 860'
+          dim3d = shape(in_c)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
+                                aimag(in_c(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
 #else
           call c2c_1m_y(wk1,1,plan(2,2))
+          write(*,*) 'Back3 c2c_1m_y line 875'
+          dim3d = shape(wk1)
+          do k = 1, dim3d(3),dim3d(3)/8
+            do j = 1, dim3d(2),dim3d(2)/8
+               do i = 1, dim3d(1),dim3d(1)/8
+                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk1(i,j,k)),&
+                                aimag(wk1(i,j,k))
+               end do
+            end do
+          end do
+          write(*,*)
+          write(*,*)
+
 #endif
        end if
 
@@ -734,6 +997,18 @@ module decomp_2d_fft
 #endif
        end if
        call c2r_1m_z(wk13,out_r)
+       write(*,*) 'Back2 c2c_1m_z out_r line 902'
+       dim3d = shape(out_r)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_r(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+
 
     end if
 

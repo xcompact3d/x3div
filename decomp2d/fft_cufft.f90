@@ -742,6 +742,7 @@ module decomp_2d_fft
 
        ! ===== 1D FFTs in Z =====
        call nvtxStartRange("Z r2c_1m_z")
+#ifdef DEBUG
        dim3d = shape(in_r)
        do k = 1, dim3d(3),dim3d(3)/8
          do j = 1, dim3d(2),dim3d(2)/8
@@ -750,8 +751,10 @@ module decomp_2d_fft
             end do
          end do
        end do
+#endif
        call r2c_1m_z(in_r,wk13)
        call nvtxEndRange
+#ifdef DEBUG
        write(*,*) 'r2c_1m_z'
        dim3d = shape(wk13)
        do k = 1, dim3d(3),dim3d(3)/8
@@ -764,8 +767,7 @@ module decomp_2d_fft
        end do
        write(*,*)
        write(*,*)
-
-
+#endif
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
           call nvtxStartRange("Z1 transpose_z_to_y")
@@ -774,6 +776,7 @@ module decomp_2d_fft
           call nvtxStartRange("Z1 c2c_1m_y")
           call c2c_1m_y(wk2_r2c,-1,plan(0,2))
           call nvtxEndRange
+#ifdef DEBUG
           write(*,*) 'c2c_1m_y'
           dim3d = shape(wk2_r2c)
           do k = 1, dim3d(3),dim3d(3)/8
@@ -786,7 +789,7 @@ module decomp_2d_fft
           end do
           write(*,*)
           write(*,*)
-
+#endif
        else  ! out_c==wk2_r2c if 1D decomposition
           call nvtxStartRange("Z transpose_z_to_y")
           call transpose_z_to_y(wk13,out_c,sp)
@@ -794,6 +797,7 @@ module decomp_2d_fft
           call nvtxStartRange("Z c2c_1m_y")
           call c2c_1m_y(out_c,-1,plan(0,2))
           call nvtxEndRange
+#ifdef DEBUG
           write(*,*) 'c2c_1m_y2'
           dim3d = shape(out_c)
           do k = 1, dim3d(3),dim3d(3)/8
@@ -806,7 +810,7 @@ module decomp_2d_fft
           end do
           write(*,*)
           write(*,*)
-
+#endif
        end if
 
        ! ===== Swap Y --> X; 1D FFTs in X =====
@@ -818,6 +822,7 @@ module decomp_2d_fft
        call nvtxStartRange("c2c_1m_x")
        call c2c_1m_x(out_c,-1,plan(0,1))
        call nvtxEndRange
+#ifdef DEBUG
        write(*,*) 'c2c_1m_x'
        dim3d = shape(out_c)
        do k = 1, dim3d(3),dim3d(3)/8
@@ -830,8 +835,7 @@ module decomp_2d_fft
        end do
        write(*,*)
        write(*,*)
-
-
+#endif
     end if
 
     return
@@ -852,7 +856,6 @@ module decomp_2d_fft
 #ifndef OVERWRITE
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
-    write(*,*) 'Start fft_3d_c2r line 754'
 
     if (format==PHYSICAL_IN_X) then
 
@@ -882,7 +885,7 @@ module decomp_2d_fft
        end if
 
     else if (format==PHYSICAL_IN_Z) then
-
+#ifdef DEBUG
        write(*,*) 'Back Init c2c_1m_x line 788'
        dim3d = shape(in_c)
        do k = 1, dim3d(3),dim3d(3)/8
@@ -895,10 +898,11 @@ module decomp_2d_fft
        end do
        write(*,*)
        write(*,*)
-
+#endif
        ! ===== 1D FFTs in X =====
 #ifdef OVERWRITE
        call c2c_1m_x(in_c,1,plan(2,1))
+#ifdef DEBUG
        write(*,*) 'Back c2c_1m_x overwrite line 804'
        dim3d = shape(in_c)
        do k = 1, dim3d(3),dim3d(3)/8
@@ -911,11 +915,12 @@ module decomp_2d_fft
        end do
        write(*,*)
        write(*,*)
-
+#endif
 #else
        allocate(wk1(sp%xsz(1),sp%xsz(2),sp%xsz(3)))
        wk1 = in_c
        call c2c_1m_x(wk1,1,plan(2,1))
+#ifdef DEBUG
        write(*,*) 'Back2 c2c_1m_x line 821'
        dim3d = shape(wk1)
        do k = 1, dim3d(3),dim3d(1)/8
@@ -928,7 +933,7 @@ module decomp_2d_fft
        end do
        write(*,*)
        write(*,*)
-
+#endif
 #endif
 
        ! ===== Swap X --> Y; 1D FFTs in Y =====
@@ -939,6 +944,7 @@ module decomp_2d_fft
           call transpose_x_to_y(wk1,wk2_r2c,sp)
 #endif
           call c2c_1m_y(wk2_r2c,1,plan(2,2))
+#ifdef DEBUG
           write(*,*) 'Back c2c_1m_y line 844'
           dim3d = shape(wk2_r2c)
           do k = 1, dim3d(3),dim3d(3)/8
@@ -951,10 +957,11 @@ module decomp_2d_fft
           end do
           write(*,*)
           write(*,*)
-
+#endif
        else  ! in_c==wk2_r2c if 1D decomposition
 #ifdef OVERWRITE
           call c2c_1m_y(in_c,1,plan(2,2))
+#ifdef DEBUG
           write(*,*) 'Back2 c2c_1m_y line 860'
           dim3d = shape(in_c)
           do k = 1, dim3d(3),dim3d(3)/8
@@ -967,9 +974,10 @@ module decomp_2d_fft
           end do
           write(*,*)
           write(*,*)
-
+#endif
 #else
           call c2c_1m_y(wk1,1,plan(2,2))
+#ifdef DEBUG
           write(*,*) 'Back3 c2c_1m_y line 875'
           dim3d = shape(wk1)
           do k = 1, dim3d(3),dim3d(3)/8
@@ -982,7 +990,7 @@ module decomp_2d_fft
           end do
           write(*,*)
           write(*,*)
-
+#endif
 #endif
        end if
 
@@ -997,6 +1005,7 @@ module decomp_2d_fft
 #endif
        end if
        call c2r_1m_z(wk13,out_r)
+#ifdef DEBUG
        write(*,*) 'Back2 c2c_1m_z out_r line 902'
        dim3d = shape(out_r)
        do k = 1, dim3d(3),dim3d(3)/8
@@ -1008,7 +1017,7 @@ module decomp_2d_fft
        end do
        write(*,*)
        write(*,*)
-
+#endif
 
     end if
 

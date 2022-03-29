@@ -62,7 +62,7 @@ program xcompact3d
 
   ndt = 1
 
-  do while(ndt < ndt_max)
+  do while(ndt <= ndt_max)
      itr = 1 ! no inner iterations
      !call init_flowfield()
 

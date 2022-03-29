@@ -358,7 +358,6 @@ contains
     !end do
 
     call nvtxStartRange("call normalisation")
-    write(*,*) 'Normalisation'
     do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
       ! POST PROCESSING IN Z
       cw1_tmp = cw1(i,j,k)
@@ -424,6 +423,7 @@ contains
 
     end do
     call nvtxEndRange
+#ifdef DEBUG
     dim3d = shape(cw1)
     do k = 1, dim3d(3),dim3d(3)/2+1
       do j = 1, dim3d(2),dim3d(2)/2+1
@@ -433,7 +433,7 @@ contains
         enddo
       enddo
     enddo
-
+#endif
     ! compute c2r transform
     call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)

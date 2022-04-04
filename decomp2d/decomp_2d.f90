@@ -1202,6 +1202,18 @@ contains
 
     integer :: i
 
+    !LG : add on following Segmentation fault - invalid memory reference
+    ! error with some compilers
+    
+    character(len=100) :: tmp_char
+    if (nrank==0) then
+     open(newunit=i,file='temp.dat', form='unformatted')
+         write(i) decomp%x1dist,decomp%y1dist,decomp%y2dist,decomp%z2dist, &
+              decomp%xsz,decomp%ysz,decomp%zsz
+     close(i)
+     call system("rm temp.dat")
+    endif
+
     ! MPI_ALLTOALLV buffer information
 
     do i=0, dims(1)-1

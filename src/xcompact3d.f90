@@ -10,6 +10,7 @@ program xcompact3d
 
   use transeq, only : calculate_transeq_rhs
   use navier, only : solve_poisson, cor_vel
+  use time_integrators, only : int_time
 
   implicit none
 
@@ -38,10 +39,7 @@ program xcompact3d
      tstart = MPI_Wtime()
 
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-
-     ux1(:,:,:) = ux1(:,:,:) + dt * dux1(:,:,:,1)
-     uy1(:,:,:) = uy1(:,:,:) + dt * duy1(:,:,:,1)
-     uz1(:,:,:) = uz1(:,:,:) + dt * duz1(:,:,:,1)
+     call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
      
      divu3(:,:,:) = zero
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)

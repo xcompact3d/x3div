@@ -24,11 +24,11 @@ subroutine parameter()
 
   if (nrank==0) then
      print *,'==========================================================='
-     print *,'======================Xcompact3D==========================='
-     print *,'===Copyright (c) 2018 Eric Lamballais and Sylvain Laizet==='
-     print *,'===Modified by Felipe Schuch and Ricardo Frantz============'
-     print *,'===Modified by Paul Bartholomew, Georgios Deskos and======='
-     print *,'===Sylvain Laizet -- 2018- ================================'
+     print *,'========================x3div=============================='
+     print *,'==========================================================='
+     print *,'==========================================================='
+     print *,'===============mini app of Xcompact3D======================'
+     print *,'==========================================================='
      print *,'==========================================================='
 #if defined(VERSION)
      write(*,*)'Git version        : ', VERSION

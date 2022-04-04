@@ -11,38 +11,54 @@ GIT_VERSION := $(shell git describe --tag --long --always)
 DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 
 LCL = local# local,lad,sdu,archer
-IVER = 17# 15,16,17,18
-CMP = gcc# intel,gcc
-FFT = generic# generic,fftw3,mkl
+CMP = gcc# intel,gcc,nagfor,cray,nvhpc
+FFT = generic# fftw3,fftw3_f03,generic,mkl
+
+BUILD ?= # debug can be used with gcc
+FCFLAGS ?= # user can set default compiler flags
+LDFLAGS ?= # user can set default linker flags
+FFLAGS = $(FCFLAGS)
+LFLAGS = $(LDFLAGS)
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
-FC = mpiifort
-#FFLAGS = -fpp -O3 -xHost -heap-arrays -shared-intel -mcmodel=large -safe-cray-ptr -g -traceback
-FFLAGS = -fpp -O3 -xSSE4.2 -axAVX,CORE-AVX-I,CORE-AVX2 -ipo -fp-model fast=2 -mcmodel=large -safe-cray-ptr -I$(MPI_ROOT)/lib
-##debuggin test: -check all -check bounds -chintel eck uninit -gen-interfaces -warn interfaces
+  FC = mpiifort
+  FFLAGS += -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
+  LFLAGS += 
 else ifeq ($(CMP),gcc)
-FC = mpif90
-#FFLAGS = -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -x f95-cpp-input
-FFLAGS = -cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fcray-pointer -fbacktrace -ffree-line-length-none
-#-ffpe-trap=invalid,zero
+  FC = mpif90
+  FFLAGS += -cpp
+  ifeq "$(shell expr `gfortran -dumpversion | cut -f1 -d.` \>= 10)" "1"
+    FFLAGS += -fallow-argument-mismatch
+  endif
+  ifeq ($(BUILD),debug)
+    DEFS += -DDEBUG
+    FFLAGS += -g3 -Og
+    FFLAGS += -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none
+  else
+    FFLAGS += -O3 -march=native
+    LFLAGS += 
+  endif
 else ifeq ($(CMP),nagfor)
-FC = mpinagfor
-FFLAGS = -fpp
+  FC = mpinagfor
+  FFLAGS += -fpp
 else ifeq ($(CMP),cray)
-FC = ftn
-FFLAGS = -eF -g -O3 -N 1023
+  FC = ftn
+  FFLAGS += -eF -g -O3 -N 1023
+  LFLAGS +=
+else ifeq ($(CMP),nvhpc)
+  FC = mpif90
+  FFLAGS += -cpp -O3 -march=native
+#  FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
+  LFLAGS += -lnvhpcwrapnvtx
 endif
 
-
-MODDIR = ./mod
 DECOMPDIR = ./decomp2d
 SRCDIR = ./src
 
 ### List of files for the main code
 SRCDECOMP = $(DECOMPDIR)/decomp_2d.f90 $(DECOMPDIR)/glassman.f90 $(DECOMPDIR)/fft_$(FFT).f90 $(DECOMPDIR)/io.f90
 OBJDECOMP = $(SRCDECOMP:%.f90=%.o)
-SRC = $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/time_integrators.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/parameters.f90 #$(SRCDIR)/*.f90
 OBJ = $(SRC:%.f90=%.o)
 SRC = $(SRCDIR)/module_param.f90 $(SRCDIR)/variables.f90 $(SRCDIR)/poisson.f90 $(SRCDIR)/time_integrators.f90 $(SRCDIR)/derive.f90 $(SRCDIR)/schemes.f90 $(SRCDIR)/navier.f90 $(SRCDIR)/parameters.f90 $(SRCDIR)/mom.f90 $(SRCDIR)/case.f90 $(SRCDIR)/transeq.f90 $(SRCDIR)/xcompact3d.f90
 
@@ -70,8 +86,8 @@ else ifeq ($(FFT),mkl)
 endif
 
 #######OPTIONS settings###########
-OPT = -I$(SRCDIR) -I$(DECOMPDIR) $(FFLAGS)
-LINKOPT = $(FFLAGS)
+OPT = -I$(SRCDIR) -I$(DECOMPDIR)
+LINKOPT = $(LFLAGS)
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 
@@ -81,19 +97,12 @@ xcompact3d : $(OBJDECOMP) $(OBJ)
 	$(FC) -o $@ $(LINKOPT) $(OBJDECOMP) $(OBJ) $(LIBFFT)
 
 $(OBJDECOMP):$(DECOMPDIR)%.o : $(DECOMPDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
+	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(INC) -c $<
 	mv $(@F) ${DECOMPDIR}
-	#mv *.mod ${DECOMPDIR}
-
 
 $(OBJ):$(SRCDIR)%.o : $(SRCDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
+	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(INC) -c $<
 	mv $(@F) ${SRCDIR}
-	#mv *.mod ${SRCDIR}
-
-## This %.o : %.f90 doesn't appear to be called...
-%.o : %.f90
-	$(FC) $(FFLAGS) $(DEFS) $(DEFS2) $(INC) -c $<
 
 .PHONY: post
 post:

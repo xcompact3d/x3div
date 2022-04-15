@@ -35,13 +35,16 @@ contains
   !  -  unnecessary scaling code removed
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  SUBROUTINE SPCFFT(U,N,ISIGN,WORK)
+  PURE SUBROUTINE SPCFFT(U,N,ISIGN,WORK)
+
+    !$acc routine seq
 
     IMPLICIT NONE
 
     LOGICAL :: INU
-    INTEGER :: A,B,C,N,I,ISIGN
-    COMPLEX(mytype) :: U(*),WORK(*)
+    INTEGER :: A,B,C,I
+    INTEGER, INTENT(IN) :: N, ISIGN
+    COMPLEX(mytype), INTENT(INOUT) :: U(*),WORK(*)
 
     A = 1
     B = N
@@ -73,15 +76,20 @@ contains
   END SUBROUTINE SPCFFT
 
 
-  SUBROUTINE SPCPFT( A, B, C, UIN, UOUT, ISIGN )
+  PURE SUBROUTINE SPCPFT( A, B, C, UIN, UOUT, ISIGN )
+
+    !$acc routine seq
 
     IMPLICIT NONE
 
-    INTEGER :: ISIGN,A,B,C,IA,IB,IC,JCR,JC
+    INTEGER, INTENT(IN), VALUE :: A, B, C, ISIGN
+    INTEGER :: IA,IB,IC,JCR,JC
 
     DOUBLE PRECISION :: ANGLE
 
-    COMPLEX(mytype) :: UIN(B,C,A),UOUT(B,A,C),DELTA,OMEGA,SUM
+    COMPLEX(mytype), INTENT(IN) :: UIN(B,C,A)
+    COMPLEX(mytype), INTENT(OUT) :: UOUT(B,A,C)
+    COMPLEX(mytype) :: DELTA,OMEGA,SUM
 
     ANGLE = 6.28318530717958_mytype / REAL( A * C, kind=mytype )
     OMEGA = CMPLX( 1.0, 0.0, kind=mytype )

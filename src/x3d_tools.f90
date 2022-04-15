@@ -3,15 +3,16 @@
 !SPDX-License-Identifier: BSD 3-Clause
 
 !##################################################################
-function rl(complexnumber)
+pure function rl(complexnumber)
 
-  !use param
   use decomp_2d, only : mytype
 
   implicit none
 
+  !$acc routine seq
+
   real(mytype) :: rl
-  complex(mytype) :: complexnumber
+  complex(mytype), intent(in) :: complexnumber
 
   rl = real(complexnumber, kind=mytype)
 
@@ -19,15 +20,16 @@ end function rl
 !##################################################################
 
 !##################################################################
-function iy(complexnumber)
+pure function iy(complexnumber)
 
-  !use param
   use decomp_2d, only : mytype
 
   implicit none
 
+  !$acc routine seq
+
   real(mytype) :: iy
-  complex(mytype) :: complexnumber
+  complex(mytype), intent(in) :: complexnumber
 
   iy = aimag(complexnumber)
 
@@ -35,15 +37,16 @@ end function iy
 !##################################################################
 
 !##################################################################
-function cx(realpart,imaginarypart)
+pure function cx(realpart,imaginarypart)
 
-  !use param
   use decomp_2d, only : mytype
 
   implicit none
 
+  !$acc routine seq
+
   complex(mytype) :: cx
-  real(mytype) :: realpart, imaginarypart
+  real(mytype), intent(in) :: realpart, imaginarypart
 
   cx = cmplx(realpart, imaginarypart, kind=mytype)
 

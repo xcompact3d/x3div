@@ -70,6 +70,8 @@ module decomp_2d_fft
   ! c2c transform, multiple 1D FFTs in x direction
   subroutine c2c_1m_x(inout, isign, decomp)
 
+    !$acc routine(spcfft) seq
+
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
@@ -78,6 +80,7 @@ module decomp_2d_fft
 
     integer :: i,j,k
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do k=1,decomp%xsz(3)
        do j=1,decomp%xsz(2)
           do i=1,decomp%xsz(1)
@@ -89,6 +92,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 
@@ -96,6 +100,8 @@ module decomp_2d_fft
 
   ! c2c transform, multiple 1D FFTs in y direction
   subroutine c2c_1m_y(inout, isign, decomp)
+
+    !$acc routine(spcfft) seq
 
     implicit none
 
@@ -105,6 +111,7 @@ module decomp_2d_fft
 
     integer :: i,j,k
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do k=1,decomp%ysz(3)
        do i=1,decomp%ysz(1)
           do j=1,decomp%ysz(2)
@@ -116,6 +123,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 
@@ -123,6 +131,8 @@ module decomp_2d_fft
 
   ! c2c transform, multiple 1D FFTs in z direction
   subroutine c2c_1m_z(inout, isign, decomp)
+
+    !$acc routine(spcfft) seq
 
     implicit none
 
@@ -132,6 +142,7 @@ module decomp_2d_fft
 
     integer :: i,j,k
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do j=1,decomp%zsz(2)
        do i=1,decomp%zsz(1)
           do k=1,decomp%zsz(3)
@@ -143,6 +154,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 
@@ -150,6 +162,8 @@ module decomp_2d_fft
 
   ! r2c transform, multiple 1D FFTs in x direction
   subroutine r2c_1m_x(input, output)
+
+    !$acc routine(spcfft) seq
 
     implicit none
 
@@ -163,6 +177,7 @@ module decomp_2d_fft
     s3 = size(input,3)
     d1 = size(output,1)
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do k=1,s3
        do j=1,s2
           ! Glassman's FFT is c2c only, 
@@ -179,6 +194,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 
@@ -186,6 +202,8 @@ module decomp_2d_fft
 
   ! r2c transform, multiple 1D FFTs in z direction
   subroutine r2c_1m_z(input, output)
+
+    !$acc routine(spcfft) seq
 
     implicit none
 
@@ -199,6 +217,7 @@ module decomp_2d_fft
     s3 = size(input,3)
     d3 = size(output,3)
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do j=1,s2
        do i=1,s1
           ! Glassman's FFT is c2c only, 
@@ -215,6 +234,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 
@@ -222,6 +242,8 @@ module decomp_2d_fft
 
   ! c2r transform, multiple 1D FFTs in x direction
   subroutine c2r_1m_x(input, output)
+
+    !$acc routine(spcfft) seq
 
     implicit none
 
@@ -234,6 +256,7 @@ module decomp_2d_fft
     d2 = size(output,2)
     d3 = size(output,3)
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do k=1,d3
        do j=1,d2
           ! Glassman's FFT is c2c only, 
@@ -258,6 +281,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 
@@ -265,6 +289,8 @@ module decomp_2d_fft
 
   ! c2r transform, multiple 1D FFTs in z direction
   subroutine c2r_1m_z(input, output)
+
+    !$acc routine(spcfft) seq
 
     implicit none
 
@@ -277,6 +303,7 @@ module decomp_2d_fft
     d2 = size(output,2)
     d3 = size(output,3)
 
+    !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do j=1,d2
        do i=1,d1
           do k=1,d3/2+1
@@ -291,6 +318,7 @@ module decomp_2d_fft
           end do
        end do
     end do
+    !$acc end parallel loop
 
     return
 

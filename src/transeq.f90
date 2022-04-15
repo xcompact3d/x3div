@@ -75,11 +75,17 @@ contains
     enddo
 
     call derx (td1,ta1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    print *, "td1", minval(td1), maxval(td1)
     call derx (te1,tb1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    print *, "te1", minval(te1), maxval(te1)
     call derx (tf1,tc1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    print *, "tf1", minval(tf1), maxval(tf1)
     call derx (ta1,ux1,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    print *, "ta1", minval(ta1), maxval(ta1)
     call derx (tb1,uy1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    print *, "tb1", minval(tb1), maxval(tb1)
     call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    print *, "tc1", minval(tc1), maxval(tc1)
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))

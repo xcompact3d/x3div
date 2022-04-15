@@ -560,7 +560,7 @@ contains
       integer, intent(in) :: n, ncl1, ncln
       real(mytype), dimension(n), intent(out) :: ff, fs, fw, ffp, fsp, fwp
       real(mytype), intent(in) :: alfa1, af1, bf1, cf1, df1, alfa2, af2, alfan, afn, bfn, &
-                                   cfn, dfn, alfam, afm, alfai, afi, bfi
+                                  cfn, dfn, alfam, afm, alfai, afi, bfi
       integer :: i
       real(mytype), dimension(n) :: fb, fc
 
@@ -793,11 +793,11 @@ contains
       integer, intent(in) :: n, ncl1, ncln
       real(mytype), dimension(n), intent(out) :: sf, ss, sw, sfp, ssp, swp
       real(mytype), intent(in) :: alsa1, as1, bs1, &
-                                   cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
-                                   asm, alsa3, as3, bs3, alsat, ast, bst, &
-                                   alsa4, as4, bs4, cs4, &
-                                   alsatt, astt, bstt, cstt, &
-                                   alsai, asi, bsi, csi, dsi
+                                  cs1, ds1, alsa2, as2, alsan, asn, bsn, csn, dsn, alsam, &
+                                  asm, alsa3, as3, bs3, alsat, ast, bst, &
+                                  alsa4, as4, bs4, cs4, &
+                                  alsatt, astt, bstt, cstt, &
+                                  alsai, asi, bsi, csi, dsi
       integer :: i
       real(mytype), dimension(n) :: sb, sc
 
@@ -993,14 +993,14 @@ contains
 
       real(mytype), intent(in) :: dx
       integer, intent(in) :: nxm, nx, nclx1, nclxn
-      real(mytype) :: alcaix6, acix6, bcix6
-      real(mytype) :: ailcaix6, aicix6, bicix6, cicix6, dicix6
-      real(mytype), dimension(nxm) :: cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
-                                      cwxp6, csx6, cwx6, cifx6, cicx6, cisx6
-      real(mytype), dimension(nxm) :: cibx6, cifxp6, cisxp6, ciwx6
-      real(mytype), dimension(nx) :: cfi6, cci6, cbi6, cfip6, csip6, cwip6, csi6, &
-                                     cwi6, cifi6, cici6, cibi6, cifip6
-      real(mytype), dimension(nx) :: cisip6, ciwip6, cisi6, ciwi6
+      real(mytype), intent(in) :: alcaix6, acix6, bcix6
+      real(mytype), intent(in) :: ailcaix6, aicix6, bicix6, cicix6, dicix6
+      real(mytype), dimension(nxm), intent(out) :: cfx6, ccx6, cbx6, cfxp6, ciwxp6, csxp6, &
+                                                   cwxp6, csx6, cwx6, cifx6, cicx6, cisx6
+      real(mytype), dimension(nxm), intent(out) :: cibx6, cifxp6, cisxp6, ciwx6
+      real(mytype), dimension(nx), intent(out) :: cfi6, cci6, cbi6, cfip6, csip6, cwip6, csi6, &
+                                                  cwi6, cifi6, cici6, cibi6, cifip6
+      real(mytype), dimension(nx), intent(out) :: cisip6, ciwip6, cisi6, ciwi6
 
       integer :: i
 

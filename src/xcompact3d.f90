@@ -13,6 +13,7 @@ program xcompact3d
   use navier,  only : solve_poisson, cor_vel
   use case
   use time_integrators, only : int_time
+  use nvtx
 
   implicit none
 
@@ -23,9 +24,7 @@ program xcompact3d
   integer :: code
 
   call boot_xcompact3d()
-
   call init_xcompact3d(ndt_max)
-
   call case_init(ux1, uy1, uz1)
 
   telapsed = 0
@@ -36,12 +35,12 @@ program xcompact3d
 
      itr = 1 ! no inner iterations
      !call init_flowfield()
-
-     tstart = MPI_Wtime()
-
      call case_bc(ux1, uy1, uz1)
-
+     call nvtxStartRange("transeq")
+     tstart = MPI_Wtime()
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
+     tend = MPI_Wtime()
+     call nvtxEndRange
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
 
      !do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
@@ -50,7 +49,6 @@ program xcompact3d
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
 
-     tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)
      tmin = telapsed
      tmax = telapsed

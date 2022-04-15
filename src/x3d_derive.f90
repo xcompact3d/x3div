@@ -183,6 +183,8 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -191,26 +193,61 @@ subroutine derx_00(tx,ux,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+#if 1
+  real(mytype), dimension(nx) :: buffer
 
-  do concurrent (k=1:nz, j=1:ny)
-     ! Compute r.h.s.
-     tx(1,j,k) = afix*(ux(2,j,k)-ux(nx,j,k)) &
-               + bfix*(ux(3,j,k)-ux(nx-1,j,k))
-     tx(2,j,k) = afix*(ux(3,j,k)-ux(1,j,k)) &
-               + bfix*(ux(4,j,k)-ux(nx,j,k))
-     do concurrent (i=3:nx-2)
-        tx(i,j,k) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
-                  + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
-     enddo
-     tx(nx-1,j,k) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
-                  + bfix*(ux(1,j,k)-ux(nx-3,j,k))
-     tx(nx,j,k) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
-                + bfix*(ux(2,j,k)-ux(nx-2,j,k))
+  ! This is working (with deepcopy)
+  !$acc parallel loop gang vector collapse(2) private(buffer)
+  do k = 1, nz
+  do j = 1, ny
+    ! Compute r.h.s.
+    buffer(1) = afix*(ux(2,j,k)-ux(nx,j,k)) &
+              + bfix*(ux(3,j,k)-ux(nx-1,j,k))
+    buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
+              + bfix*(ux(4,j,k)-ux(nx,j,k))
+    do concurrent (i=3:nx-2)
+      buffer(i) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
+                + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
+    enddo
+    buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
+                 + bfix*(ux(1,j,k)-ux(nx-3,j,k))
+    buffer(nx) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
+               + bfix*(ux(2,j,k)-ux(nx-2,j,k))
 
+    ! Solve tri-diagonal system
+    call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx)
+    do concurrent (i=1:nx)
+      tx(i,j,k) = buffer(i)
+    enddo
   enddo
+  enddo
+  !$acc end parallel loop
+#else
+  real(mytype), dimension(nx) :: buffer
 
-  ! Solve tri-diagonal system
-  call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  ! This is broken (with deepcopy)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
+    ! Compute r.h.s.
+    buffer(1) = afix*(ux(2,j,k)-ux(nx,j,k)) &
+              + bfix*(ux(3,j,k)-ux(nx-1,j,k))
+    buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
+              + bfix*(ux(4,j,k)-ux(nx,j,k))
+    do concurrent (i=3:nx-2)
+      buffer(i) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
+                + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
+    enddo
+    buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
+                 + bfix*(ux(1,j,k)-ux(nx-3,j,k))
+    buffer(nx) = afix*(ux(1,j,k)-ux(nx-1,j,k)) &
+               + bfix*(ux(2,j,k)-ux(nx-2,j,k))
+
+    ! Solve tri-diagonal system
+    call thomas1d(buffer, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx)
+    do concurrent (i=1:nx)
+      tx(i,j,k) = buffer(i)
+    enddo
+  enddo
+#endif
 
 end subroutine derx_00
 
@@ -222,6 +259,8 @@ subroutine derx_ij(tx,ux,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -230,48 +269,52 @@ subroutine derx_ij(tx,ux,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nx) :: buffer
 
-  do concurrent (k=1:nz, j=1:ny)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
-           tx(1,j,k) = zero
-           tx(2,j,k) = afix*(ux(3,j,k)-ux(1,j,k)) &
+           buffer(1) = zero
+           buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
                      + bfix*(ux(4,j,k)-ux(2,j,k))
         else
-           tx(1,j,k) = afix*(ux(2,j,k)+ux(2,j,k)) &
+           buffer(1) = afix*(ux(2,j,k)+ux(2,j,k)) &
                      + bfix*(ux(3,j,k)+ux(3,j,k))
-           tx(2,j,k) = afix*(ux(3,j,k)-ux(1,j,k)) &
+           buffer(2) = afix*(ux(3,j,k)-ux(1,j,k)) &
                      + bfix*(ux(4,j,k)+ux(2,j,k))
         endif
      else
-        tx(1,j,k) = af1x*ux(1,j,k) + bf1x*ux(2,j,k) + cf1x*ux(3,j,k)
-        tx(2,j,k) = af2x*(ux(3,j,k)-ux(1,j,k))
+        buffer(1) = af1x*ux(1,j,k) + bf1x*ux(2,j,k) + cf1x*ux(3,j,k)
+        buffer(2) = af2x*(ux(3,j,k)-ux(1,j,k))
      endif
      do concurrent (i=3:nx-2)
-        tx(i,j,k) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
+        buffer(i) = afix*(ux(i+1,j,k)-ux(i-1,j,k)) &
                   + bfix*(ux(i+2,j,k)-ux(i-2,j,k))
      enddo
      ! nx-1 <= i <= nx
      if (ncln==1) then
         if (npaire==1) then
-           tx(nx-1,j,k) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
+           buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
                         + bfix*(ux(nx-1,j,k)-ux(nx-3,j,k))
-           tx(nx,j,k) = zero
+           buffer(nx) = zero
         else
-           tx(nx-1,j,k) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
+           buffer(nx-1) = afix*(ux(nx,j,k)-ux(nx-2,j,k)) &
                         + bfix*((-ux(nx-1,j,k))-ux(nx-3,j,k))
-           tx(nx,j,k) = afix*((-ux(nx-1,j,k))-ux(nx-1,j,k)) &
+           buffer(nx) = afix*((-ux(nx-1,j,k))-ux(nx-1,j,k)) &
                       + bfix*((-ux(nx-2,j,k))-ux(nx-2,j,k))
         endif
      else
-        tx(nx-1,j,k) = afmx*(ux(nx,j,k)-ux(nx-2,j,k))
-        tx(nx,j,k) = - afnx*ux(nx,j,k) - bfnx*ux(nx-1,j,k) - cfnx*ux(nx-2,j,k)
+        buffer(nx-1) = afmx*(ux(nx,j,k)-ux(nx-2,j,k))
+        buffer(nx) = - afnx*ux(nx,j,k) - bfnx*ux(nx-1,j,k) - cfnx*ux(nx-2,j,k)
      endif
-  enddo
 
-  ! Solve tri-diagonal system
-  call xthomas(tx, ff, fs, fw, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, fs, fw, nx)
+     do concurrent (i=1:nx)
+        tx(i,j,k) = buffer(i)
+     enddo
+  enddo
 
 end subroutine derx_ij
 
@@ -345,6 +388,8 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -354,40 +399,44 @@ subroutine dery_00(ty,uy,x3dop,ppy,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(ny) :: buffer, ff, ss, ww, pp
 
-  ! Compute r.h.s.
-  do concurrent (k=1:nz)
-     do concurrent (i=1:nx)
-        ty(i,1,k) = afjy*(uy(i,2,k)-uy(i,ny,k)) &
-                  + bfjy*(uy(i,3,k)-uy(i,ny-1,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,2,k) = afjy*(uy(i,3,k)-uy(i,1,k)) &
-                  + bfjy*(uy(i,4,k)-uy(i,ny,k))
-     enddo
-     do concurrent (j=3:ny-2, i=1:nx)
-        ty(i,j,k) = afjy*(uy(i,j+1,k)-uy(i,j-1,k)) &
+  do concurrent (j=1:ny)
+     ff(j) = x3dop%f(j)
+     ss(j) = x3dop%s(j)
+     ww(j) = x3dop%w(j)
+     pp(j) = x3dop%periodic(j)
+  end do
+
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
+     ! Compute r.h.s.
+     buffer(1) = afjy*(uy(i,2,k)-uy(i,ny,k)) &
+               + bfjy*(uy(i,3,k)-uy(i,ny-1,k))
+     buffer(2) = afjy*(uy(i,3,k)-uy(i,1,k)) &
+               + bfjy*(uy(i,4,k)-uy(i,ny,k))
+     do concurrent (j=3:ny-2)
+        buffer(j) = afjy*(uy(i,j+1,k)-uy(i,j-1,k)) &
                   + bfjy*(uy(i,j+2,k)-uy(i,j-2,k))
      enddo
-     do concurrent (i=1:nx)
-        ty(i,ny-1,k) = afjy*(uy(i,ny,k)-uy(i,ny-2,k)) &
-                     + bfjy*(uy(i,1,k)-uy(i,ny-3,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,ny,k) = afjy*(uy(i,1,k)-uy(i,ny-1,k)) &
-                   + bfjy*(uy(i,2,k)-uy(i,ny-2,k))
+     buffer(ny-1) = afjy*(uy(i,ny,k)-uy(i,ny-2,k)) &
+                  + bfjy*(uy(i,1,k)-uy(i,ny-3,k))
+     buffer(ny) = afjy*(uy(i,1,k)-uy(i,ny-1,k)) &
+                + bfjy*(uy(i,2,k)-uy(i,ny-2,k))
+
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, ny)
+
+     ! Apply stretching if needed
+     if (istret /= 0) then
+        do concurrent (j=1:ny)
+           buffer(j) = buffer(j) * ppy(j)
+        enddo
+     endif
+
+     do concurrent (j=1:ny)
+        ty(i,j,k) = buffer(j)
      enddo
   enddo
-
-  ! Solve tri-diagonal system
-  call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-
-  ! Apply stretching if needed
-  if (istret /= 0) then
-     do concurrent (k=1:nz, j=1:ny, i=1:nx)
-        ty(i,j,k) = ty(i,j,k) * ppy(j)
-     enddo
-  endif
 
 end subroutine dery_00
 
@@ -399,6 +448,8 @@ subroutine dery_ij(ty,uy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -407,79 +458,60 @@ subroutine dery_ij(ty,uy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(ny) :: buffer
 
-  do concurrent (k=1:nz)
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
 
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
-           do concurrent (i=1:nx)
-              ty(i,1,k) = zero
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,2,k) = afjy*(uy(i,3,k)-uy(i,1,k)) &
-                        + bfjy*(uy(i,4,k)-uy(i,2,k))
-           enddo
+           buffer(1) = zero
+           buffer(2) = afjy*(uy(i,3,k)-uy(i,1,k)) &
+                     + bfjy*(uy(i,4,k)-uy(i,2,k))
         else
-           do concurrent (i=1:nx)
-              ty(i,1,k) = afjy*(uy(i,2,k)+uy(i,2,k)) &
-                        + bfjy*(uy(i,3,k)+uy(i,3,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,2,k) = afjy*(uy(i,3,k)-uy(i,1,k)) &
-                        + bfjy*(uy(i,4,k)+uy(i,2,k))
-           enddo
+           buffer(1) = afjy*(uy(i,2,k)+uy(i,2,k)) &
+                     + bfjy*(uy(i,3,k)+uy(i,3,k))
+           buffer(2) = afjy*(uy(i,3,k)-uy(i,1,k)) &
+                     + bfjy*(uy(i,4,k)+uy(i,2,k))
         endif
      else
-        do concurrent (i=1:nx)
-           ty(i,1,k) = af1y*uy(i,1,k)+bf1y*uy(i,2,k)+cf1y*uy(i,3,k)
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,2,k) = af2y*(uy(i,3,k)-uy(i,1,k))
-        enddo
+        buffer(1) = af1y*uy(i,1,k)+bf1y*uy(i,2,k)+cf1y*uy(i,3,k)
+        buffer(2) = af2y*(uy(i,3,k)-uy(i,1,k))
      endif
-     do concurrent (j=3:ny-2, i=1:nx)
-        ty(i,j,k) = afjy*(uy(i,j+1,k)-uy(i,j-1,k)) &
+     do concurrent (j=3:ny-2)
+        buffer(j) = afjy*(uy(i,j+1,k)-uy(i,j-1,k)) &
                   + bfjy*(uy(i,j+2,k)-uy(i,j-2,k))
      enddo
      if (ncln==1) then
         if (npaire==1) then
-           do concurrent (i=1:nx)
-              ty(i,ny-1,k) = afjy*(uy(i,ny,k)-uy(i,ny-2,k)) &
-                           + bfjy*(uy(i,ny-1,k)-uy(i,ny-3,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny,k) = zero
-           enddo
+           buffer(ny-1) = afjy*(uy(i,ny,k)-uy(i,ny-2,k)) &
+                        + bfjy*(uy(i,ny-1,k)-uy(i,ny-3,k))
+           buffer(ny) = zero
         else
-           do concurrent (i=1:nx)
-              ty(i,ny-1,k) = afjy*(uy(i,ny,k)-uy(i,ny-2,k)) &
-                           + bfjy*((-uy(i,ny-1,k))-uy(i,ny-3,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny,k) = afjy*((-uy(i,ny-1,k))-uy(i,ny-1,k)) &
-                         + bfjy*((-uy(i,ny-2,k))-uy(i,ny-2,k))
-           enddo
+           buffer(ny-1) = afjy*(uy(i,ny,k)-uy(i,ny-2,k)) &
+                        + bfjy*((-uy(i,ny-1,k))-uy(i,ny-3,k))
+           buffer(ny) = afjy*((-uy(i,ny-1,k))-uy(i,ny-1,k)) &
+                      + bfjy*((-uy(i,ny-2,k))-uy(i,ny-2,k))
         endif
      else
-        do concurrent (i=1:nx)
-           ty(i,ny-1,k) = afmy*(uy(i,ny,k)-uy(i,ny-2,k))
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,ny,k) = -afny*uy(i,ny,k)-bfny*uy(i,ny-1,k)-cfny*uy(i,ny-2,k)
+        buffer(ny-1) = afmy*(uy(i,ny,k)-uy(i,ny-2,k))
+        buffer(ny) = -afny*uy(i,ny,k)-bfny*uy(i,ny-1,k)-cfny*uy(i,ny-2,k)
+     endif
+
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, fs, fw, ny)
+
+     ! Apply stretching if needed
+     if (istret /= 0) then
+        do concurrent (j=1:ny)
+           buffer(j) = buffer(j) * ppy(j)
         enddo
      endif
-  enddo
 
-  ! Solve tri-diagonal system
-  call ythomas(ty, ff, fs, fw, nx, ny, nz)
-
-  ! Apply stretching if needed
-  if (istret /= 0) then
-     do concurrent (k=1:nz, j=1:ny, i=1:nx)
-        ty(i,j,k) = ty(i,j,k) * ppy(j)
+     do concurrent(j=1:ny)
+        ty(i,j,k) = buffer(j)
      enddo
-  endif
+  enddo
 
 end subroutine dery_ij
 
@@ -555,6 +587,8 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx,ny,nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -563,6 +597,7 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nz) :: buffer, ff, ss, ww, pp
 
   if (nz==1) then
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
@@ -571,30 +606,34 @@ subroutine derz_00(tz,uz,x3dop,nx,ny,nz)
      return
   endif
 
-  ! Compute r.h.s.
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,1) = afkz*(uz(i,j,2)-uz(i,j,nz  )) &
-               + bfkz*(uz(i,j,3)-uz(i,j,nz-1))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,2) = afkz*(uz(i,j,3)-uz(i,j,1 )) &
-               + bfkz*(uz(i,j,4)-uz(i,j,nz))
-  enddo
-  do concurrent (k=3:nz-2, j=1:ny, i=1:nx)
-     tz(i,j,k) = afkz*(uz(i,j,k+1)-uz(i,j,k-1)) &
-               + bfkz*(uz(i,j,k+2)-uz(i,j,k-2))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,nz-1) = afkz*(uz(i,j,nz)-uz(i,j,nz-2)) &
-                  + bfkz*(uz(i,j,1 )-uz(i,j,nz-3))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,nz) = afkz*(uz(i,j,1)-uz(i,j,nz-1)) &
-                + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
-  enddo
+  do concurrent (k=1:nz)
+     ff(k) = x3dop%f(k)
+     ss(k) = x3dop%s(k)
+     ww(k) = x3dop%w(k)
+     if (allocated(x3dop%periodic)) pp(k) = x3dop%periodic(k)
+  end do
 
-  ! Solve tri-diagonal system
-  call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
+     ! Compute r.h.s.
+     buffer(1) = afkz*(uz(i,j,2)-uz(i,j,nz  )) &
+               + bfkz*(uz(i,j,3)-uz(i,j,nz-1))
+     buffer(2) = afkz*(uz(i,j,3)-uz(i,j,1 )) &
+               + bfkz*(uz(i,j,4)-uz(i,j,nz))
+     do concurrent (k=3:nz-2)
+        buffer(k) = afkz*(uz(i,j,k+1)-uz(i,j,k-1)) &
+                  + bfkz*(uz(i,j,k+2)-uz(i,j,k-2))
+     enddo
+     buffer(nz-1) = afkz*(uz(i,j,nz)-uz(i,j,nz-2)) &
+                  + bfkz*(uz(i,j,1 )-uz(i,j,nz-3))
+     buffer(nz) = afkz*(uz(i,j,1)-uz(i,j,nz-1)) &
+                + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
+
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, nz)
+     do concurrent (k=1:nz)
+        tz(i,j,k) = buffer(k)
+     enddo
+  enddo
 
 end subroutine derz_00
 
@@ -606,6 +645,8 @@ subroutine derz_ij(tz,uz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -614,6 +655,7 @@ subroutine derz_ij(tz,uz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nz) :: buffer
 
   if (nz==1) then
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
@@ -622,70 +664,51 @@ subroutine derz_ij(tz,uz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
      return
   endif
 
-  ! Compute r.h.s.
-  if (ncl1==1) then
-     if (npaire==1) then
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,1) = zero
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,2) = afkz*(uz(i,j,3)-uz(i,j,1)) &
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
+     ! Compute r.h.s.
+     if (ncl1==1) then
+        if (npaire==1) then
+           buffer(1) = zero
+           buffer(2) = afkz*(uz(i,j,3)-uz(i,j,1)) &
                      + bfkz*(uz(i,j,4)-uz(i,j,2))
-        enddo
-     else
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,1) = afkz*(uz(i,j,2)+uz(i,j,2)) &
+        else
+           buffer(1) = afkz*(uz(i,j,2)+uz(i,j,2)) &
                      + bfkz*(uz(i,j,3)+uz(i,j,3))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,2) = afkz*(uz(i,j,3)-uz(i,j,1)) &
+           buffer(2) = afkz*(uz(i,j,3)-uz(i,j,1)) &
                      + bfkz*(uz(i,j,4)+uz(i,j,2))
-        enddo
-     endif
-  else
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,1) = af1z*uz(i,j,1) + bf1z*uz(i,j,2) &
-                  + cf1z*uz(i,j,3)
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,2) = af2z*(uz(i,j,3)-uz(i,j,1))
-     enddo
-  endif
-  do concurrent (k=3:nz-2, j=1:ny, i=1:nx)
-     tz(i,j,k) = afkz*(uz(i,j,k+1)-uz(i,j,k-1)) &
-               + bfkz*(uz(i,j,k+2)-uz(i,j,k-2))
-  enddo
-  if (ncln==1) then
-     if (npaire==1) then
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-1) = afkz*(uz(i,j,nz  )-uz(i,j,nz-2)) &
-                        + bfkz*(uz(i,j,nz-1)-uz(i,j,nz-3))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz) = zero
-        enddo
+        endif
      else
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-1) = afkz*( uz(i,j,nz  )-uz(i,j,nz-2)) &
-                        + bfkz*(-uz(i,j,nz-1)-uz(i,j,nz-3))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz) = afkz*(-uz(i,j,nz-1)-uz(i,j,nz-1)) &
-                      + bfkz*(-uz(i,j,nz-2)-uz(i,j,nz-2))
-        enddo
+        buffer(1) = af1z*uz(i,j,1) + bf1z*uz(i,j,2) &
+                  + cf1z*uz(i,j,3)
+        buffer(2) = af2z*(uz(i,j,3)-uz(i,j,1))
      endif
-  else
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,nz-1) = afmz*(uz(i,j,nz)-uz(i,j,nz-2))
+     do concurrent (k=3:nz-2)
+        buffer(k) = afkz*(uz(i,j,k+1)-uz(i,j,k-1)) &
+                  + bfkz*(uz(i,j,k+2)-uz(i,j,k-2))
      enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,nz) = - afnz*uz(i,j,nz) - bfnz*uz(i,j,nz-1) &
+     if (ncln==1) then
+        if (npaire==1) then
+           buffer(nz-1) = afkz*(uz(i,j,nz  )-uz(i,j,nz-2)) &
+                        + bfkz*(uz(i,j,nz-1)-uz(i,j,nz-3))
+           buffer(nz) = zero
+        else
+           buffer(nz-1) = afkz*( uz(i,j,nz  )-uz(i,j,nz-2)) &
+                        + bfkz*(-uz(i,j,nz-1)-uz(i,j,nz-3))
+           buffer(nz) = afkz*(-uz(i,j,nz-1)-uz(i,j,nz-1)) &
+                      + bfkz*(-uz(i,j,nz-2)-uz(i,j,nz-2))
+        endif
+     else
+        buffer(nz-1) = afmz*(uz(i,j,nz)-uz(i,j,nz-2))
+        buffer(nz) = - afnz*uz(i,j,nz) - bfnz*uz(i,j,nz-1) &
                      - cfnz*uz(i,j,nz-2)
-     enddo
-  endif
+     endif
 
-  ! Solve tri-diagonal system
-  call zthomas(tz, ff, fs, fw, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, fs, fw, nz)
+     do concurrent (k=1:nz)
+        tz(i,j,k) = buffer(k)
+     enddo
+  enddo
 
 end subroutine derz_ij
 
@@ -757,6 +780,8 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -765,10 +790,18 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nx) :: buffer, ff, ss, ww, pp
+
+  do concurrent (i=1:nx)
+     ff(i) = x3dop%f(i)
+     ss(i) = x3dop%s(i)
+     ww(i) = x3dop%w(i)
+     if (allocated(x3dop%periodic)) pp(i) = x3dop%periodic(i)
+  end do
 
   ! Compute r.h.s.
-  do concurrent (k=1:nz, j=1:ny)
-     tx(1,j,k) = asix*(ux(2,j,k)-ux(1   ,j,k) &
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
+     buffer(1) = asix*(ux(2,j,k)-ux(1   ,j,k) &
                       -ux(1,j,k)+ux(nx  ,j,k)) &
                + bsix*(ux(3,j,k)-ux(1   ,j,k) &
                       -ux(1,j,k)+ux(nx-1,j,k)) &
@@ -776,7 +809,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                       -ux(1,j,k)+ux(nx-2,j,k)) &
                + dsix*(ux(5,j,k)-ux(1   ,j,k) &
                       -ux(1,j,k)+ux(nx-3,j,k))
-     tx(2,j,k) = asix*(ux(3,j,k)-ux(2   ,j,k) &
+     buffer(2) = asix*(ux(3,j,k)-ux(2   ,j,k) &
                       -ux(2,j,k)+ux(1   ,j,k)) &
                + bsix*(ux(4,j,k)-ux(2   ,j,k) &
                       -ux(2,j,k)+ux(nx  ,j,k)) &
@@ -784,7 +817,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                       -ux(2,j,k)+ux(nx-1,j,k)) &
                + dsix*(ux(6,j,k)-ux(2   ,j,k) &
                       -ux(2,j,k)+ux(nx-2,j,k))
-     tx(3,j,k) = asix*(ux(4,j,k)-ux(3 ,j,k) &
+     buffer(3) = asix*(ux(4,j,k)-ux(3 ,j,k) &
                       -ux(3,j,k)+ux(2 ,j,k)) &
                + bsix*(ux(5,j,k)-ux(3 ,j,k) &
                       -ux(3,j,k)+ux(1 ,j,k)) &
@@ -792,7 +825,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                       -ux(3,j,k)+ux(nx,j,k)) &
                + dsix*(ux(7,j,k)-ux(3 ,j,k) &
                       -ux(3,j,k)+ux(nx-1,j,k))
-     tx(4,j,k) = asix*(ux(5,j,k)-ux(4 ,j,k) &
+     buffer(4) = asix*(ux(5,j,k)-ux(4 ,j,k) &
                       -ux(4,j,k)+ux(3 ,j,k)) &
                + bsix*(ux(6,j,k)-ux(4 ,j,k) &
                       -ux(4,j,k)+ux(2,j,k)) &
@@ -801,7 +834,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                + dsix*(ux(8,j,k)-ux(4 ,j,k) &
                       -ux(4,j,k)+ux(nx,j,k))
      do concurrent (i=5:nx-4)
-        tx(i,j,k) = asix*(ux(i+1,j,k)-ux(i  ,j,k) &
+        buffer(i) = asix*(ux(i+1,j,k)-ux(i  ,j,k) &
                          -ux(i  ,j,k)+ux(i-1,j,k)) &
                   + bsix*(ux(i+2,j,k)-ux(i  ,j,k) &
                          -ux(i  ,j,k)+ux(i-2,j,k)) &
@@ -810,7 +843,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                   + dsix*(ux(i+4,j,k)-ux(i  ,j,k) &
                          -ux(i  ,j,k)+ux(i-4,j,k))
      enddo
-     tx(nx-3,j,k) = asix*(ux(nx-2,j,k)-ux(nx-3,j,k) &
+     buffer(nx-3) = asix*(ux(nx-2,j,k)-ux(nx-3,j,k) &
                          -ux(nx-3,j,k)+ux(nx-4,j,k)) &
                   + bsix*(ux(nx-1,j,k)-ux(nx-3,j,k) &
                          -ux(nx-3,j,k)+ux(nx-5,j,k)) &
@@ -818,7 +851,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                          -ux(nx-3,j,k)+ux(nx-6,j,k)) &
                   + dsix*(ux(1   ,j,k)-ux(nx-3,j,k) &
                          -ux(nx-3,j,k)+ux(nx-7,j,k))
-     tx(nx-2,j,k) = asix*(ux(nx-1,j,k)-ux(nx-2,j,k) &
+     buffer(nx-2) = asix*(ux(nx-1,j,k)-ux(nx-2,j,k) &
                          -ux(nx-2,j,k)+ux(nx-3,j,k)) &
                   + bsix*(ux(nx  ,j,k)-ux(nx-2,j,k) &
                          -ux(nx-2,j,k)+ux(nx-4,j,k)) &
@@ -826,7 +859,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                          -ux(nx-2,j,k)+ux(nx-5,j,k)) &
                   + dsix*(ux(2   ,j,k)-ux(nx-2,j,k) &
                          -ux(nx-2,j,k)+ux(nx-6,j,k))
-     tx(nx-1,j,k) = asix*(ux(nx  ,j,k)-ux(nx-1,j,k) &
+     buffer(nx-1) = asix*(ux(nx  ,j,k)-ux(nx-1,j,k) &
                          -ux(nx-1,j,k)+ux(nx-2,j,k)) &
                   + bsix*(ux(1   ,j,k)-ux(nx-1,j,k) &
                          -ux(nx-1,j,k)+ux(nx-3,j,k)) &
@@ -834,7 +867,7 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                          -ux(nx-1,j,k)+ux(nx-4,j,k)) &
                   + dsix*(ux(3   ,j,k)-ux(nx-1,j,k) &
                          -ux(nx-1,j,k)+ux(nx-5,j,k))
-     tx(nx  ,j,k) = asix*(ux(1 ,j,k)-ux(nx  ,j,k) &
+     buffer(nx  ) = asix*(ux(1 ,j,k)-ux(nx  ,j,k) &
                          -ux(nx,j,k)+ux(nx-1,j,k)) &
                   + bsix*(ux(2 ,j,k)-ux(nx  ,j,k) &
                          -ux(nx,j,k)+ux(nx-2,j,k)) &
@@ -842,10 +875,13 @@ subroutine derxx_00(tx,ux,x3dop,nx,ny,nz)
                          -ux(nx,j,k)+ux(nx-3,j,k)) &
                   + dsix*(ux(4 ,j,k)-ux(nx  ,j,k) &
                          -ux(nx,j,k)+ux(nx-4,j,k))
-  enddo
 
-  ! Solve tri-diagonal system
-  call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, nx)
+     do concurrent (i=1:nx)
+        tx(i,j,k) = buffer(i)
+     enddo
+  enddo
 
 end subroutine derxx_00
 
@@ -857,6 +893,8 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
   real(mytype), intent(out), dimension(nx,ny,nz) :: tx
@@ -865,13 +903,14 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nx) :: buffer
 
-  do concurrent (k=1:nz, j=1:ny)
+  do concurrent (k=1:nz, j=1:ny) local(buffer)
 
      ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
-           tx(1,j,k) = asix*(ux(2,j,k)-ux(1,j,k) &
+           buffer(1) = asix*(ux(2,j,k)-ux(1,j,k) &
                             -ux(1,j,k)+ux(2,j,k)) &
                      + bsix*(ux(3,j,k)-ux(1,j,k) &
                             -ux(1,j,k)+ux(3,j,k)) &
@@ -879,7 +918,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -ux(1,j,k)+ux(4,j,k)) &
                      + dsix*(ux(5,j,k)-ux(1,j,k) &
                             -ux(1,j,k)+ux(5,j,k))
-           tx(2,j,k) = asix*(ux(3,j,k)-ux(2,j,k) &
+           buffer(2) = asix*(ux(3,j,k)-ux(2,j,k) &
                             -ux(2,j,k)+ux(1,j,k)) &
                      + bsix*(ux(4,j,k)-ux(2,j,k) &
                             -ux(2,j,k)+ux(2,j,k)) &
@@ -887,7 +926,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -ux(2,j,k)+ux(3,j,k)) &
                      + dsix*(ux(6,j,k)-ux(2,j,k) &
                             -ux(2,j,k)+ux(4,j,k))
-           tx(3,j,k) = asix*(ux(4,j,k)-ux(3,j,k) &
+           buffer(3) = asix*(ux(4,j,k)-ux(3,j,k) &
                             -ux(3,j,k)+ux(2,j,k)) &
                      + bsix*(ux(5,j,k)-ux(3,j,k) &
                             -ux(3,j,k)+ux(1,j,k)) &
@@ -895,7 +934,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -ux(3,j,k)+ux(2,j,k)) &
                      + dsix*(ux(7,j,k)-ux(3,j,k) &
                             -ux(3,j,k)+ux(3,j,k))
-           tx(4,j,k) = asix*(ux(5,j,k)-ux(4,j,k) &
+           buffer(4) = asix*(ux(5,j,k)-ux(4,j,k) &
                             -ux(4,j,k)+ux(3,j,k)) &
                      + bsix*(ux(6,j,k)-ux(4,j,k) &
                             -ux(4,j,k)+ux(2,j,k)) &
@@ -904,8 +943,8 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                      + dsix*(ux(8,j,k)-ux(4,j,k) &
                             -ux(4,j,k)+ux(2,j,k))
         else
-           tx(1,j,k) = zero
-           tx(2,j,k) = asix*(ux(3,j,k)-ux(2,j,k) &
+           buffer(1) = zero
+           buffer(2) = asix*(ux(3,j,k)-ux(2,j,k) &
                             -ux(2,j,k)+ux(1,j,k)) &
                      + bsix*(ux(4,j,k)-ux(2,j,k) &
                             -ux(2,j,k)-ux(2,j,k)) &
@@ -913,7 +952,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -ux(2,j,k)-ux(3,j,k)) &
                      + dsix*(ux(6,j,k)-ux(2,j,k) &
                             -ux(2,j,k)-ux(4,j,k))
-           tx(3,j,k) = asix*(ux(4,j,k)-ux(3,j,k) &
+           buffer(3) = asix*(ux(4,j,k)-ux(3,j,k) &
                             -ux(3,j,k)+ux(2,j,k)) &
                      + bsix*(ux(5,j,k)-ux(3,j,k) &
                             -ux(3,j,k)+ux(1,j,k)) &
@@ -921,7 +960,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -ux(3,j,k)-ux(2,j,k)) &
                      + dsix*(ux(7,j,k)-ux(3,j,k) &
                             -ux(3,j,k)-ux(3,j,k))
-           tx(4,j,k) = asix*(ux(5,j,k)-ux(4,j,k) &
+           buffer(4) = asix*(ux(5,j,k)-ux(4,j,k) &
                             -ux(4,j,k)+ux(3,j,k)) &
                      + bsix*(ux(6,j,k)-ux(4,j,k) &
                             -ux(4,j,k)+ux(2,j,k)) &
@@ -931,15 +970,15 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -ux(4,j,k)-ux(2,j,k))
         endif
      else
-        tx(1,j,k) = as1x*ux(1,j,k) + bs1x*ux(2,j,k) &
+        buffer(1) = as1x*ux(1,j,k) + bs1x*ux(2,j,k) &
                   + cs1x*ux(3,j,k) + ds1x*ux(4,j,k)
-        tx(2,j,k) = as2x*(ux(3,j,k)-ux(2,j,k) &
+        buffer(2) = as2x*(ux(3,j,k)-ux(2,j,k) &
                          -ux(2,j,k)+ux(1,j,k))
-        tx(3,j,k) = as3x*(ux(4,j,k)-ux(3,j,k) &
+        buffer(3) = as3x*(ux(4,j,k)-ux(3,j,k) &
                         -ux(3,j,k)+ux(2,j,k)) &
                   + bs3x*(ux(5,j,k)-ux(3,j,k) &
                          -ux(3,j,k)+ux(1,j,k))
-        tx(4,j,k) = as4x*(ux(5,j,k)-ux(4,j,k) &
+        buffer(4) = as4x*(ux(5,j,k)-ux(4,j,k) &
                          -ux(4,j,k)+ux(3,j,k)) &
                   + bs4x*(ux(6,j,k)-ux(4,j,k) &
                          -ux(4,j,k)+ux(2,j,k)) &
@@ -947,7 +986,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                          -ux(4,j,k)+ux(1,j,k))
      endif
      do concurrent (i=5:nx-4)
-        tx(i,j,k) = asix*(ux(i+1,j,k)-ux(i  ,j,k) &
+        buffer(i) = asix*(ux(i+1,j,k)-ux(i  ,j,k) &
                          -ux(i  ,j,k)+ux(i-1,j,k)) &
                   + bsix*(ux(i+2,j,k)-ux(i  ,j,k) &
                          -ux(i  ,j,k)+ux(i-2,j,k)) &
@@ -958,7 +997,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
      enddo
      if (ncln == 1) then
         if (npaire==1) then
-           tx(nx-3,j,k) = asix*(ux(nx-2,j,k)-ux(nx-3,j,k) &
+           buffer(nx-3) = asix*(ux(nx-2,j,k)-ux(nx-3,j,k) &
                                -ux(nx-3,j,k)+ux(nx-4,j,k)) &
                         + bsix*(ux(nx-1,j,k)-ux(nx-3,j,k) &
                                -ux(nx-3,j,k)+ux(nx-5,j,k)) &
@@ -966,7 +1005,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -ux(nx-3,j,k)+ux(nx-6,j,k)) &
                         + dsix*(ux(nx-1,j,k)-ux(nx-3,j,k) &
                                -ux(nx-3,j,k)+ux(nx-7,j,k))
-           tx(nx-2,j,k) = asix*(ux(nx-1,j,k)-ux(nx-2,j,k) &
+           buffer(nx-2) = asix*(ux(nx-1,j,k)-ux(nx-2,j,k) &
                                -ux(nx-2,j,k)+ux(nx-3,j,k)) &
                         + bsix*(ux(nx  ,j,k)-ux(nx-2,j,k) &
                                -ux(nx-2,j,k)+ux(nx-4,j,k)) &
@@ -974,7 +1013,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -ux(nx-2,j,k)+ux(nx-5,j,k)) &
                         + dsix*(ux(nx-2,j,k)-ux(nx-2,j,k) &
                                -ux(nx-2,j,k)+ux(nx-6,j,k))
-           tx(nx-1,j,k) = asix*(ux(nx  ,j,k)-ux(nx-1,j,k) &
+           buffer(nx-1) = asix*(ux(nx  ,j,k)-ux(nx-1,j,k) &
                                -ux(nx-1,j,k)+ux(nx-2,j,k)) &
                         + bsix*(ux(nx-1,j,k)-ux(nx-1,j,k) &
                                -ux(nx-1,j,k)+ux(nx-3,j,k)) &
@@ -982,7 +1021,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -ux(nx-1,j,k)+ux(nx-4,j,k)) &
                         + dsix*(ux(nx-3,j,k)-ux(nx-1,j,k) &
                                -ux(nx-1,j,k)+ux(nx-5,j,k))
-           tx(nx  ,j,k) = asix*(ux(nx-1,j,k)-ux(nx  ,j,k) &
+           buffer(nx  ) = asix*(ux(nx-1,j,k)-ux(nx  ,j,k) &
                                -ux(nx  ,j,k)+ux(nx-1,j,k)) &
                         + bsix*(ux(nx-2,j,k)-ux(nx  ,j,k) &
                                -ux(nx  ,j,k)+ux(nx-2,j,k)) &
@@ -991,7 +1030,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                         + dsix*(ux(nx-4,j,k)-ux(nx  ,j,k) &
                                -ux(nx  ,j,k)+ux(nx-4,j,k))
         else
-           tx(nx-3,j,k) = asix*( ux(nx-2,j,k)-ux(nx-3,j,k) &
+           buffer(nx-3) = asix*( ux(nx-2,j,k)-ux(nx-3,j,k) &
                                 -ux(nx-3,j,k)+ux(nx-4,j,k)) &
                         + bsix*( ux(nx-1,j,k)-ux(nx-3,j,k) &
                                 -ux(nx-3,j,k)+ux(nx-5,j,k)) &
@@ -999,7 +1038,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                 -ux(nx-3,j,k)+ux(nx-6,j,k)) &
                         + dsix*(-ux(nx-1,j,k)-ux(nx-3,j,k) &
                                 -ux(nx-3,j,k)+ux(nx-7,j,k))
-           tx(nx-2,j,k) = asix*( ux(nx-1,j,k)-ux(nx-2,j,k) &
+           buffer(nx-2) = asix*( ux(nx-1,j,k)-ux(nx-2,j,k) &
                                 -ux(nx-2,j,k)+ux(nx-3,j,k)) &
                         + bsix*( ux(nx  ,j,k)-ux(nx-2,j,k) &
                                 -ux(nx-2,j,k)+ux(nx-4,j,k)) &
@@ -1007,7 +1046,7 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                 -ux(nx-2,j,k)+ux(nx-5,j,k)) &
                         + dsix*(-ux(nx-2,j,k)-ux(nx-2,j,k) &
                                 -ux(nx-2,j,k)+ux(nx-6,j,k))
-           tx(nx-1,j,k) = asix*( ux(nx  ,j,k)-ux(nx-1,j,k) &
+           buffer(nx-1) = asix*( ux(nx  ,j,k)-ux(nx-1,j,k) &
                                 -ux(nx-1,j,k)+ux(nx-2,j,k)) &
                         + bsix*(-ux(nx-1,j,k)-ux(nx-1,j,k) &
                                 -ux(nx-1,j,k)+ux(nx-3,j,k)) &
@@ -1015,28 +1054,31 @@ subroutine derxx_ij(tx,ux,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                 -ux(nx-1,j,k)+ux(nx-4,j,k)) &
                         + dsix*(-ux(nx-3,j,k)-ux(nx-1,j,k) &
                                 -ux(nx-1,j,k)+ux(nx-5,j,k))
-           tx(nx  ,j,k) = zero
+           buffer(nx  ) = zero
         endif
      else
-        tx(nx-3,j,k) = asttx*(ux(nx-2,j,k)-ux(nx-3,j,k) &
+        buffer(nx-3) = asttx*(ux(nx-2,j,k)-ux(nx-3,j,k) &
                              -ux(nx-3,j,k)+ux(nx-4,j,k)) &
                      + bsttx*(ux(nx-1,j,k)-ux(nx-3,j,k) &
                              -ux(nx-3,j,k)+ux(nx-5,j,k)) &
                      + csttx*(ux(nx,j,k)-ux(nx-3,j,k) &
                              -ux(nx-3,j,k)+ux(nx-6,j,k))
-        tx(nx-2,j,k) = astx*(ux(nx-1,j,k)-ux(nx-2,j,k) &
+        buffer(nx-2) = astx*(ux(nx-1,j,k)-ux(nx-2,j,k) &
                             -ux(nx-2,j,k)+ux(nx-3,j,k)) &
                      + bstx*(ux(nx  ,j,k)-ux(nx-2,j,k) &
                             -ux(nx-2,j,k)+ux(nx-4,j,k))
-        tx(nx-1,j,k) = asmx*(ux(nx  ,j,k)-ux(nx-1,j,k) &
+        buffer(nx-1) = asmx*(ux(nx  ,j,k)-ux(nx-1,j,k) &
                             -ux(nx-1,j,k)+ux(nx-2,j,k))
-        tx(nx  ,j,k) = asnx*ux(nx  ,j,k) + bsnx*ux(nx-1,j,k) &
+        buffer(nx  ) = asnx*ux(nx  ,j,k) + bsnx*ux(nx-1,j,k) &
                      + csnx*ux(nx-2,j,k) + dsnx*ux(nx-3,j,k)
      endif
-  enddo
 
-  ! Solve tri-diagonal system
-  call xthomas(tx, sf, ss, sw, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, sf, ss, sw, nx)
+     do concurrent (i=1:nx)
+        tx(i,j,k) = buffer(i)
+     enddo
+  enddo
 
 end subroutine derxx_ij
 
@@ -1108,6 +1150,8 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -1116,51 +1160,51 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(ny) :: buffer, ff, ss, ww, pp
+
+  do concurrent (j=1:ny)
+     ff(j) = x3dop%f(j)
+     ss(j) = x3dop%s(j)
+     ww(j) = x3dop%w(j)
+     if (allocated(x3dop%periodic)) pp(j) = x3dop%periodic(j)
+  end do
 
   ! Compute r.h.s.
-  do concurrent (k=1:nz)
-     do concurrent (i=1:nx)
-        ty(i,1,k) = asjy*(uy(i,2,k)-uy(i,1,k) &
-                         -uy(i,1,k)+uy(i,ny,k)) &
-                  + bsjy*(uy(i,3,k)-uy(i,1,k) &
-                         -uy(i,1,k)+uy(i,ny-1,k)) &
-                  + csjy*(uy(i,4,k)-uy(i,1,k) &
-                         -uy(i,1,k)+uy(i,ny-2,k)) &
-                  + dsjy*(uy(i,5,k)-uy(i,1,k) &
-                         -uy(i,1,k)+uy(i,ny-3,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,2,k) = asjy*(uy(i,3,k)-uy(i,2,k) &
-                         -uy(i,2,k)+uy(i,1,k)) &
-                  + bsjy*(uy(i,4,k)-uy(i,2,k) &
-                         -uy(i,2,k)+uy(i,ny,k)) &
-                  + csjy*(uy(i,5,k)-uy(i,2,k) &
-                         -uy(i,2,k)+uy(i,ny-1,k)) &
-                  + dsjy*(uy(i,6,k)-uy(i,2,k) &
-                         -uy(i,2,k)+uy(i,ny-2,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,3,k) = asjy*(uy(i,4,k)-uy(i,3,k) &
-                         -uy(i,3,k)+uy(i,2,k)) &
-                  + bsjy*(uy(i,5,k)-uy(i,3,k) &
-                         -uy(i,3,k)+uy(i,1,k)) &
-                  + csjy*(uy(i,6,k)-uy(i,3,k) &
-                         -uy(i,3,k)+uy(i,ny,k)) &
-                  + dsjy*(uy(i,7,k)-uy(i,3,k) &
-                         -uy(i,3,k)+uy(i,ny-1,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,4,k) = asjy*(uy(i,5,k)-uy(i,4,k) &
-                         -uy(i,4,k)+uy(i,3,k)) &
-                  + bsjy*(uy(i,6,k)-uy(i,4,k) &
-                         -uy(i,4,k)+uy(i,2,k)) &
-                  + csjy*(uy(i,7,k)-uy(i,4,k) &
-                         -uy(i,4,k)+uy(i,1,k)) &
-                  + dsjy*(uy(i,8,k)-uy(i,4,k) &
-                         -uy(i,4,k)+uy(i,ny,k))
-     enddo
-     do concurrent (j=5:ny-4, i=1:nx)
-        ty(i,j,k) = asjy*(uy(i,j+1,k)-uy(i,j,k) &
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
+     buffer(1) = asjy*(uy(i,2,k)-uy(i,1,k) &
+                      -uy(i,1,k)+uy(i,ny,k)) &
+               + bsjy*(uy(i,3,k)-uy(i,1,k) &
+                      -uy(i,1,k)+uy(i,ny-1,k)) &
+               + csjy*(uy(i,4,k)-uy(i,1,k) &
+                      -uy(i,1,k)+uy(i,ny-2,k)) &
+               + dsjy*(uy(i,5,k)-uy(i,1,k) &
+                      -uy(i,1,k)+uy(i,ny-3,k))
+     buffer(2) = asjy*(uy(i,3,k)-uy(i,2,k) &
+                      -uy(i,2,k)+uy(i,1,k)) &
+               + bsjy*(uy(i,4,k)-uy(i,2,k) &
+                      -uy(i,2,k)+uy(i,ny,k)) &
+               + csjy*(uy(i,5,k)-uy(i,2,k) &
+                      -uy(i,2,k)+uy(i,ny-1,k)) &
+               + dsjy*(uy(i,6,k)-uy(i,2,k) &
+                      -uy(i,2,k)+uy(i,ny-2,k))
+     buffer(3) = asjy*(uy(i,4,k)-uy(i,3,k) &
+                      -uy(i,3,k)+uy(i,2,k)) &
+               + bsjy*(uy(i,5,k)-uy(i,3,k) &
+                      -uy(i,3,k)+uy(i,1,k)) &
+               + csjy*(uy(i,6,k)-uy(i,3,k) &
+                      -uy(i,3,k)+uy(i,ny,k)) &
+               + dsjy*(uy(i,7,k)-uy(i,3,k) &
+                      -uy(i,3,k)+uy(i,ny-1,k))
+     buffer(4) = asjy*(uy(i,5,k)-uy(i,4,k) &
+                      -uy(i,4,k)+uy(i,3,k)) &
+               + bsjy*(uy(i,6,k)-uy(i,4,k) &
+                      -uy(i,4,k)+uy(i,2,k)) &
+               + csjy*(uy(i,7,k)-uy(i,4,k) &
+                      -uy(i,4,k)+uy(i,1,k)) &
+               + dsjy*(uy(i,8,k)-uy(i,4,k) &
+                      -uy(i,4,k)+uy(i,ny,k))
+     do concurrent (j=5:ny-4)
+        buffer(j) = asjy*(uy(i,j+1,k)-uy(i,j,k) &
                          -uy(i,j,k)+uy(i,j-1,k)) &
                   + bsjy*(uy(i,j+2,k)-uy(i,j,k) &
                          -uy(i,j,k)+uy(i,j-2,k)) &
@@ -1169,50 +1213,45 @@ subroutine deryy_00(ty,uy,x3dop,nx,ny,nz)
                   + dsjy*(uy(i,j+4,k)-uy(i,j,k) &
                          -uy(i,j,k)+uy(i,j-4,k))
      enddo
-     do concurrent (i=1:nx)
-        ty(i,ny-3,k) = asjy*(uy(i,ny-2,k)-uy(i,ny-3,k) &
-                            -uy(i,ny-3,k)+uy(i,ny-4,k)) &
-                     + bsjy*(uy(i,ny-1,k)-uy(i,ny-3,k) &
-                            -uy(i,ny-3,k)+uy(i,ny-5,k)) &
-                     + csjy*(uy(i,ny  ,k)-uy(i,ny-3,k) &
-                            -uy(i,ny-3,k)+uy(i,ny-6,k)) &
-                     + dsjy*(uy(i,1   ,k)-uy(i,ny-3,k) &
-                            -uy(i,ny-3,k)+uy(i,ny-7,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,ny-2,k) = asjy*(uy(i,ny-1,k)-uy(i,ny-2,k) &
-                            -uy(i,ny-2,k)+uy(i,ny-3,k)) &
-                     + bsjy*(uy(i,ny  ,k)-uy(i,ny-2,k) &
-                            -uy(i,ny-2,k)+uy(i,ny-4,k)) &
-                     + csjy*(uy(i,1   ,k)-uy(i,ny-2,k) &
-                            -uy(i,ny-2,k)+uy(i,ny-5,k)) &
-                     + dsjy*(uy(i,2   ,k)-uy(i,ny-2,k) &
-                            -uy(i,ny-2,k)+uy(i,ny-6,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,ny-1,k) = asjy*(uy(i,ny  ,k)-uy(i,ny-1,k) &
-                            -uy(i,ny-1,k)+uy(i,ny-2,k)) &
-                     + bsjy*(uy(i,1   ,k)-uy(i,ny-1,k) &
-                            -uy(i,ny-1,k)+uy(i,ny-3,k)) &
-                     + csjy*(uy(i,2   ,k)-uy(i,ny-1,k) &
-                            -uy(i,ny-1,k)+uy(i,ny-4,k)) &
-                     + dsjy*(uy(i,3   ,k)-uy(i,ny-1,k) &
-                            -uy(i,ny-1,k)+uy(i,ny-5,k))
-     enddo
-     do concurrent (i=1:nx)
-        ty(i,ny  ,k) = asjy*(uy(i,1 ,k)-uy(i,ny  ,k) &
-                            -uy(i,ny,k)+uy(i,ny-1,k)) &
-                     + bsjy*(uy(i,2 ,k)-uy(i,ny  ,k) &
-                            -uy(i,ny,k)+uy(i,ny-2,k)) &
-                     + csjy*(uy(i,3 ,k)-uy(i,ny  ,k) &
-                            -uy(i,ny,k)+uy(i,ny-3,k)) &
-                     + dsjy*(uy(i,4 ,k)-uy(i,ny  ,k) &
-                            -uy(i,ny,k)+uy(i,ny-4,k))
+     buffer(ny-3) = asjy*(uy(i,ny-2,k)-uy(i,ny-3,k) &
+                         -uy(i,ny-3,k)+uy(i,ny-4,k)) &
+                  + bsjy*(uy(i,ny-1,k)-uy(i,ny-3,k) &
+                         -uy(i,ny-3,k)+uy(i,ny-5,k)) &
+                  + csjy*(uy(i,ny  ,k)-uy(i,ny-3,k) &
+                         -uy(i,ny-3,k)+uy(i,ny-6,k)) &
+                  + dsjy*(uy(i,1   ,k)-uy(i,ny-3,k) &
+                         -uy(i,ny-3,k)+uy(i,ny-7,k))
+     buffer(ny-2) = asjy*(uy(i,ny-1,k)-uy(i,ny-2,k) &
+                         -uy(i,ny-2,k)+uy(i,ny-3,k)) &
+                  + bsjy*(uy(i,ny  ,k)-uy(i,ny-2,k) &
+                         -uy(i,ny-2,k)+uy(i,ny-4,k)) &
+                  + csjy*(uy(i,1   ,k)-uy(i,ny-2,k) &
+                         -uy(i,ny-2,k)+uy(i,ny-5,k)) &
+                  + dsjy*(uy(i,2   ,k)-uy(i,ny-2,k) &
+                         -uy(i,ny-2,k)+uy(i,ny-6,k))
+     buffer(ny-1) = asjy*(uy(i,ny  ,k)-uy(i,ny-1,k) &
+                         -uy(i,ny-1,k)+uy(i,ny-2,k)) &
+                  + bsjy*(uy(i,1   ,k)-uy(i,ny-1,k) &
+                         -uy(i,ny-1,k)+uy(i,ny-3,k)) &
+                  + csjy*(uy(i,2   ,k)-uy(i,ny-1,k) &
+                         -uy(i,ny-1,k)+uy(i,ny-4,k)) &
+                  + dsjy*(uy(i,3   ,k)-uy(i,ny-1,k) &
+                         -uy(i,ny-1,k)+uy(i,ny-5,k))
+     buffer(ny  ) = asjy*(uy(i,1 ,k)-uy(i,ny  ,k) &
+                         -uy(i,ny,k)+uy(i,ny-1,k)) &
+                  + bsjy*(uy(i,2 ,k)-uy(i,ny  ,k) &
+                         -uy(i,ny,k)+uy(i,ny-2,k)) &
+                  + csjy*(uy(i,3 ,k)-uy(i,ny  ,k) &
+                         -uy(i,ny,k)+uy(i,ny-3,k)) &
+                  + dsjy*(uy(i,4 ,k)-uy(i,ny  ,k) &
+                         -uy(i,ny,k)+uy(i,ny-4,k))
+
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, ny)
+     do concurrent (j=1:ny)
+        ty(i,j,k) = buffer(j)
      enddo
   enddo
-
-  ! Solve tri-diagonal system
-  call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
 end subroutine deryy_00
 
@@ -1224,6 +1263,8 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
   real(mytype), intent(out), dimension(nx,ny,nz) :: ty
@@ -1232,112 +1273,89 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(ny) :: buffer
 
-  ! Compute r.h.s.
-  do concurrent (k=1:nz)
+  do concurrent (k=1:nz, i=1:nx) local(buffer)
+     ! Compute r.h.s.
      if (ncl1==1) then
         if (npaire==1) then
-           do concurrent (i=1:nx)
-              ty(i,1,k) = asjy*(uy(i,2,k)-uy(i,1,k) &
-                               -uy(i,1,k)+uy(i,2,k)) &
-                        + bsjy*(uy(i,3,k)-uy(i,1,k) &
-                               -uy(i,1,k)+uy(i,3,k)) &
-                        + csjy*(uy(i,4,k)-uy(i,1,k) &
-                               -uy(i,1,k)+uy(i,4,k)) &
-                        + dsjy*(uy(i,5,k)-uy(i,1,k) &
-                               -uy(i,1,k)+uy(i,5,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,2,k) = asjy*(uy(i,3,k)-uy(i,2,k) &
-                               -uy(i,2,k)+uy(i,1,k)) &
-                        + bsjy*(uy(i,4,k)-uy(i,2,k) &
-                               -uy(i,2,k)+uy(i,2,k)) &
-                        + csjy*(uy(i,5,k)-uy(i,2,k) &
-                               -uy(i,2,k)+uy(i,3,k)) &
-                        + dsjy*(uy(i,6,k)-uy(i,2,k) &
-                               -uy(i,2,k)+uy(i,4,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,3,k) = asjy*(uy(i,4,k)-uy(i,3,k) &
-                               -uy(i,3,k)+uy(i,2,k)) &
-                        + bsjy*(uy(i,5,k)-uy(i,3,k) &
-                               -uy(i,3,k)+uy(i,1,k)) &
-                        + csjy*(uy(i,6,k)-uy(i,3,k) &
-                               -uy(i,3,k)+uy(i,2,k)) &
-                        + dsjy*(uy(i,7,k)-uy(i,3,k) &
-                               -uy(i,3,k)+uy(i,3,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,4,k) = asjy*(uy(i,5,k)-uy(i,4,k) &
-                               -uy(i,4,k)+uy(i,3,k)) &
-                        + bsjy*(uy(i,6,k)-uy(i,4,k) &
-                               -uy(i,4,k)+uy(i,2,k)) &
-                        + csjy*(uy(i,7,k)-uy(i,4,k) &
-                               -uy(i,4,k)+uy(i,1,k)) &
-                        + dsjy*(uy(i,8,k)-uy(i,4,k) &
-                               -uy(i,4,k)+uy(i,2,k))
-           enddo
+           buffer(1) = asjy*(uy(i,2,k)-uy(i,1,k) &
+                            -uy(i,1,k)+uy(i,2,k)) &
+                     + bsjy*(uy(i,3,k)-uy(i,1,k) &
+                            -uy(i,1,k)+uy(i,3,k)) &
+                     + csjy*(uy(i,4,k)-uy(i,1,k) &
+                            -uy(i,1,k)+uy(i,4,k)) &
+                     + dsjy*(uy(i,5,k)-uy(i,1,k) &
+                            -uy(i,1,k)+uy(i,5,k))
+           buffer(2) = asjy*(uy(i,3,k)-uy(i,2,k) &
+                            -uy(i,2,k)+uy(i,1,k)) &
+                     + bsjy*(uy(i,4,k)-uy(i,2,k) &
+                            -uy(i,2,k)+uy(i,2,k)) &
+                     + csjy*(uy(i,5,k)-uy(i,2,k) &
+                            -uy(i,2,k)+uy(i,3,k)) &
+                     + dsjy*(uy(i,6,k)-uy(i,2,k) &
+                            -uy(i,2,k)+uy(i,4,k))
+           buffer(3) = asjy*(uy(i,4,k)-uy(i,3,k) &
+                            -uy(i,3,k)+uy(i,2,k)) &
+                     + bsjy*(uy(i,5,k)-uy(i,3,k) &
+                            -uy(i,3,k)+uy(i,1,k)) &
+                     + csjy*(uy(i,6,k)-uy(i,3,k) &
+                            -uy(i,3,k)+uy(i,2,k)) &
+                     + dsjy*(uy(i,7,k)-uy(i,3,k) &
+                            -uy(i,3,k)+uy(i,3,k))
+           buffer(4) = asjy*(uy(i,5,k)-uy(i,4,k) &
+                            -uy(i,4,k)+uy(i,3,k)) &
+                     + bsjy*(uy(i,6,k)-uy(i,4,k) &
+                            -uy(i,4,k)+uy(i,2,k)) &
+                     + csjy*(uy(i,7,k)-uy(i,4,k) &
+                            -uy(i,4,k)+uy(i,1,k)) &
+                     + dsjy*(uy(i,8,k)-uy(i,4,k) &
+                            -uy(i,4,k)+uy(i,2,k))
         else
-           do concurrent (i=1:nx)
-              ty(i,1,k) = zero
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,2,k) = asjy*(uy(i,3,k)-uy(i,2,k) &
-                               -uy(i,2,k)+uy(i,1,k)) &
-                        + bsjy*(uy(i,4,k)-uy(i,2,k) &
-                               -uy(i,2,k)-uy(i,2,k)) &
-                        + csjy*(uy(i,5,k)-uy(i,2,k) &
-                               -uy(i,2,k)-uy(i,3,k)) &
-                        + dsjy*(uy(i,6,k)-uy(i,2,k) &
-                               -uy(i,2,k)-uy(i,4,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,3,k) = asjy*(uy(i,4,k)-uy(i,3,k) &
-                               -uy(i,3,k)+uy(i,2,k)) &
-                        + bsjy*(uy(i,5,k)-uy(i,3,k) &
-                               -uy(i,3,k)+uy(i,1,k)) &
-                        + csjy*(uy(i,6,k)-uy(i,3,k) &
-                               -uy(i,3,k)-uy(i,2,k)) &
-                        + dsjy*(uy(i,7,k)-uy(i,3,k) &
-                               -uy(i,3,k)-uy(i,3,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,4,k) = asjy*(uy(i,5,k)-uy(i,4,k) &
-                               -uy(i,4,k)+uy(i,3,k)) &
-                        + bsjy*(uy(i,6,k)-uy(i,4,k) &
-                               -uy(i,4,k)+uy(i,2,k)) &
-                        + csjy*(uy(i,7,k)-uy(i,4,k) &
-                               -uy(i,4,k)-uy(i,1,k)) &
-                        + dsjy*(uy(i,8,k)-uy(i,4,k) &
-                               -uy(i,4,k)-uy(i,2,k))
-           enddo
+           buffer(1) = zero
+           buffer(2) = asjy*(uy(i,3,k)-uy(i,2,k) &
+                            -uy(i,2,k)+uy(i,1,k)) &
+                     + bsjy*(uy(i,4,k)-uy(i,2,k) &
+                            -uy(i,2,k)-uy(i,2,k)) &
+                     + csjy*(uy(i,5,k)-uy(i,2,k) &
+                            -uy(i,2,k)-uy(i,3,k)) &
+                     + dsjy*(uy(i,6,k)-uy(i,2,k) &
+                            -uy(i,2,k)-uy(i,4,k))
+           buffer(3) = asjy*(uy(i,4,k)-uy(i,3,k) &
+                            -uy(i,3,k)+uy(i,2,k)) &
+                     + bsjy*(uy(i,5,k)-uy(i,3,k) &
+                            -uy(i,3,k)+uy(i,1,k)) &
+                     + csjy*(uy(i,6,k)-uy(i,3,k) &
+                            -uy(i,3,k)-uy(i,2,k)) &
+                     + dsjy*(uy(i,7,k)-uy(i,3,k) &
+                            -uy(i,3,k)-uy(i,3,k))
+           buffer(4) = asjy*(uy(i,5,k)-uy(i,4,k) &
+                            -uy(i,4,k)+uy(i,3,k)) &
+                     + bsjy*(uy(i,6,k)-uy(i,4,k) &
+                            -uy(i,4,k)+uy(i,2,k)) &
+                     + csjy*(uy(i,7,k)-uy(i,4,k) &
+                            -uy(i,4,k)-uy(i,1,k)) &
+                     + dsjy*(uy(i,8,k)-uy(i,4,k) &
+                            -uy(i,4,k)-uy(i,2,k))
         endif
      else
-        do concurrent (i=1:nx)
-           ty(i,1,k) = as1y*uy(i,1,k) + bs1y*uy(i,2,k) &
-                     + cs1y*uy(i,3,k) + ds1y*uy(i,4,k)
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,2,k) = as2y*(uy(i,3,k)-uy(i,2,k) &
-                            -uy(i,2,k)+uy(i,1,k))
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,3,k) = as3y*(uy(i,4,k)-uy(i,3,k) &
-                            -uy(i,3,k)+uy(i,2,k)) &
-                     + bs3y*(uy(i,5,k)-uy(i,3,k) &
-                            -uy(i,3,k)+uy(i,1,k))
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,4,k) = as4y*(uy(i,5,k)-uy(i,4,k) &
-                            -uy(i,4  ,k)+uy(i,3,k)) &
-                     + bs4y*(uy(i,6,k)-uy(i,4  ,k) &
-                            -uy(i,4  ,k)+uy(i,2,k)) &
-                     + cs4y*(uy(i,7,k)-uy(i,4  ,k) &
-                            -uy(i,4  ,k)+uy(i,1,k))
-        enddo
+        buffer(1) = as1y*uy(i,1,k) + bs1y*uy(i,2,k) &
+                  + cs1y*uy(i,3,k) + ds1y*uy(i,4,k)
+        buffer(2) = as2y*(uy(i,3,k)-uy(i,2,k) &
+                         -uy(i,2,k)+uy(i,1,k))
+        buffer(3) = as3y*(uy(i,4,k)-uy(i,3,k) &
+                         -uy(i,3,k)+uy(i,2,k)) &
+                  + bs3y*(uy(i,5,k)-uy(i,3,k) &
+                         -uy(i,3,k)+uy(i,1,k))
+        buffer(4) = as4y*(uy(i,5,k)-uy(i,4,k) &
+                         -uy(i,4  ,k)+uy(i,3,k)) &
+                  + bs4y*(uy(i,6,k)-uy(i,4  ,k) &
+                         -uy(i,4  ,k)+uy(i,2,k)) &
+                  + cs4y*(uy(i,7,k)-uy(i,4  ,k) &
+                         -uy(i,4  ,k)+uy(i,1,k))
      endif
-     do concurrent (j=5:ny-4, i=1:nx)
-        ty(i,j,k) = asjy*(uy(i,j+1,k)-uy(i,j  ,k) &
+     do concurrent (j=5:ny-4)
+        buffer(j) = asjy*(uy(i,j+1,k)-uy(i,j  ,k) &
                          -uy(i,j  ,k)+uy(i,j-1,k)) &
                   + bsjy*(uy(i,j+2,k)-uy(i,j  ,k) &
                          -uy(i,j  ,k)+uy(i,j-2,k)) &
@@ -1348,107 +1366,88 @@ subroutine deryy_ij(ty,uy,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
      enddo
      if (ncln==1) then
         if (npaire==1) then
-           do concurrent (i=1:nx)
-              ty(i,ny-3,k) = asjy*(uy(i,ny-2,k)-uy(i,ny-3,k) &
-                                  -uy(i,ny-3,k)+uy(i,ny-4,k)) &
-                           + bsjy*(uy(i,ny-1,k)-uy(i,ny-3,k) &
-                                  -uy(i,ny-3,k)+uy(i,ny-5,k)) &
-                           + csjy*(uy(i,ny  ,k)-uy(i,ny-3,k) &
-                                  -uy(i,ny-3,k)+uy(i,ny-6,k)) &
-                           + dsjy*(uy(i,ny-1,k)-uy(i,ny-3,k) &
-                                  -uy(i,ny-3,k)+uy(i,ny-7,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny-2,k) = asjy*(uy(i,ny-1,k)-uy(i,ny-2,k) &
-                                  -uy(i,ny-2,k)+uy(i,ny-3,k)) &
-                           + bsjy*(uy(i,ny  ,k)-uy(i,ny-2,k) &
-                                  -uy(i,ny-2,k)+uy(i,ny-4,k)) &
-                           + csjy*(uy(i,ny-1,k)-uy(i,ny-2,k) &
-                                  -uy(i,ny-2,k)+uy(i,ny-5,k)) &
-                           + dsjy*(uy(i,ny-2,k)-uy(i,ny-2,k) &
-                                  -uy(i,ny-2,k)+uy(i,ny-6,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny-1,k) = asjy*(uy(i,ny  ,k)-uy(i,ny-1,k) &
-                                  -uy(i,ny-1,k)+uy(i,ny-2,k)) &
-                           + bsjy*(uy(i,ny-1,k)-uy(i,ny-1,k) &
-                                  -uy(i,ny-1,k)+uy(i,ny-3,k)) &
-                           + csjy*(uy(i,ny-2,k)-uy(i,ny-1,k) &
-                                  -uy(i,ny-1,k)+uy(i,ny-4,k)) &
-                           + dsjy*(uy(i,ny-3,k)-uy(i,ny-1,k) &
-                                  -uy(i,ny-1,k)+uy(i,ny-5,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny  ,k) = asjy*(uy(i,ny-1,k)-uy(i,ny  ,k) &
-                                  -uy(i,ny  ,k)+uy(i,ny-1,k)) &
-                           + bsjy*(uy(i,ny-2,k)-uy(i,ny  ,k) &
-                                  -uy(i,ny  ,k)+uy(i,ny-2,k)) &
-                           + csjy*(uy(i,ny-3,k)-uy(i,ny  ,k) &
-                                  -uy(i,ny  ,k)+uy(i,ny-3,k)) &
-                           + dsjy*(uy(i,ny-4,k)-uy(i,ny  ,k) &
-                                  -uy(i,ny  ,k)+uy(i,ny-4,k))
-           enddo
+           buffer(ny-3) = asjy*(uy(i,ny-2,k)-uy(i,ny-3,k) &
+                               -uy(i,ny-3,k)+uy(i,ny-4,k)) &
+                        + bsjy*(uy(i,ny-1,k)-uy(i,ny-3,k) &
+                               -uy(i,ny-3,k)+uy(i,ny-5,k)) &
+                        + csjy*(uy(i,ny  ,k)-uy(i,ny-3,k) &
+                               -uy(i,ny-3,k)+uy(i,ny-6,k)) &
+                        + dsjy*(uy(i,ny-1,k)-uy(i,ny-3,k) &
+                               -uy(i,ny-3,k)+uy(i,ny-7,k))
+           buffer(ny-2) = asjy*(uy(i,ny-1,k)-uy(i,ny-2,k) &
+                               -uy(i,ny-2,k)+uy(i,ny-3,k)) &
+                        + bsjy*(uy(i,ny  ,k)-uy(i,ny-2,k) &
+                               -uy(i,ny-2,k)+uy(i,ny-4,k)) &
+                        + csjy*(uy(i,ny-1,k)-uy(i,ny-2,k) &
+                               -uy(i,ny-2,k)+uy(i,ny-5,k)) &
+                        + dsjy*(uy(i,ny-2,k)-uy(i,ny-2,k) &
+                               -uy(i,ny-2,k)+uy(i,ny-6,k))
+           buffer(ny-1) = asjy*(uy(i,ny  ,k)-uy(i,ny-1,k) &
+                               -uy(i,ny-1,k)+uy(i,ny-2,k)) &
+                        + bsjy*(uy(i,ny-1,k)-uy(i,ny-1,k) &
+                               -uy(i,ny-1,k)+uy(i,ny-3,k)) &
+                        + csjy*(uy(i,ny-2,k)-uy(i,ny-1,k) &
+                               -uy(i,ny-1,k)+uy(i,ny-4,k)) &
+                        + dsjy*(uy(i,ny-3,k)-uy(i,ny-1,k) &
+                               -uy(i,ny-1,k)+uy(i,ny-5,k))
+           buffer(ny  ) = asjy*(uy(i,ny-1,k)-uy(i,ny  ,k) &
+                               -uy(i,ny  ,k)+uy(i,ny-1,k)) &
+                        + bsjy*(uy(i,ny-2,k)-uy(i,ny  ,k) &
+                               -uy(i,ny  ,k)+uy(i,ny-2,k)) &
+                        + csjy*(uy(i,ny-3,k)-uy(i,ny  ,k) &
+                               -uy(i,ny  ,k)+uy(i,ny-3,k)) &
+                        + dsjy*(uy(i,ny-4,k)-uy(i,ny  ,k) &
+                               -uy(i,ny  ,k)+uy(i,ny-4,k))
         else
-           do concurrent (i=1:nx)
-              ty(i,ny-3,k) = asjy*( uy(i,ny-2,k)-uy(i,ny-3,k) &
-                                   -uy(i,ny-3,k)+uy(i,ny-4,k)) &
-                           + bsjy*( uy(i,ny-1,k)-uy(i,ny-3,k) &
-                                   -uy(i,ny-3,k)+uy(i,ny-5,k)) &
-                           + csjy*(-uy(i,ny ,k)-uy(i,ny-3,k) &
-                                   -uy(i,ny-3,k)+uy(i,ny-6,k)) &
-                           + dsjy*(-uy(i,ny-1,k)-uy(i,ny-3,k) &
-                                   -uy(i,ny-3,k)+uy(i,ny-7,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny-2,k) = asjy*( uy(i,ny-1,k)-uy(i,ny-2,k) &
-                                   -uy(i,ny-2,k)+uy(i,ny-3,k)) &
-                           + bsjy*( uy(i,ny  ,k)-uy(i,ny-2,k) &
-                                   -uy(i,ny-2,k)+uy(i,ny-4,k)) &
-                           + csjy*(-uy(i,ny-1,k)-uy(i,ny-2,k) &
-                                   -uy(i,ny-2,k)+uy(i,ny-5,k)) &
-                           + dsjy*(-uy(i,ny-2,k)-uy(i,ny-2,k) &
-                                   -uy(i,ny-2,k)+uy(i,ny-6,k))
-           enddo
-           do concurrent (i=1:nx)
-              ty(i,ny-1,k) = asjy*( uy(i,ny  ,k)-uy(i,ny-1,k) &
-                                   -uy(i,ny-1,k)+uy(i,ny-2,k)) &
-                           + bsjy*(-uy(i,ny-1,k)-uy(i,ny-1,k) &
-                                   -uy(i,ny-1,k)+uy(i,ny-3,k)) &
-                           + csjy*(-uy(i,ny-2,k)-uy(i,ny-1,k) &
-                                   -uy(i,ny-1,k)+uy(i,ny-4,k)) &
-                           + dsjy*(-uy(i,ny-3,k)-uy(i,ny-1,k) &
-                                   -uy(i,ny-1,k)+uy(i,ny-5,k))
-              ty(i,ny  ,k) = zero
-           enddo
+           buffer(ny-3) = asjy*( uy(i,ny-2,k)-uy(i,ny-3,k) &
+                                -uy(i,ny-3,k)+uy(i,ny-4,k)) &
+                        + bsjy*( uy(i,ny-1,k)-uy(i,ny-3,k) &
+                                -uy(i,ny-3,k)+uy(i,ny-5,k)) &
+                        + csjy*(-uy(i,ny ,k)-uy(i,ny-3,k) &
+                                -uy(i,ny-3,k)+uy(i,ny-6,k)) &
+                        + dsjy*(-uy(i,ny-1,k)-uy(i,ny-3,k) &
+                                -uy(i,ny-3,k)+uy(i,ny-7,k))
+           buffer(ny-2) = asjy*( uy(i,ny-1,k)-uy(i,ny-2,k) &
+                                -uy(i,ny-2,k)+uy(i,ny-3,k)) &
+                        + bsjy*( uy(i,ny  ,k)-uy(i,ny-2,k) &
+                                -uy(i,ny-2,k)+uy(i,ny-4,k)) &
+                        + csjy*(-uy(i,ny-1,k)-uy(i,ny-2,k) &
+                                -uy(i,ny-2,k)+uy(i,ny-5,k)) &
+                        + dsjy*(-uy(i,ny-2,k)-uy(i,ny-2,k) &
+                                -uy(i,ny-2,k)+uy(i,ny-6,k))
+           buffer(ny-1) = asjy*( uy(i,ny  ,k)-uy(i,ny-1,k) &
+                                -uy(i,ny-1,k)+uy(i,ny-2,k)) &
+                        + bsjy*(-uy(i,ny-1,k)-uy(i,ny-1,k) &
+                                -uy(i,ny-1,k)+uy(i,ny-3,k)) &
+                        + csjy*(-uy(i,ny-2,k)-uy(i,ny-1,k) &
+                                -uy(i,ny-1,k)+uy(i,ny-4,k)) &
+                        + dsjy*(-uy(i,ny-3,k)-uy(i,ny-1,k) &
+                                -uy(i,ny-1,k)+uy(i,ny-5,k))
+           buffer(ny  ) = zero
         endif
      else
-        do concurrent (i=1:nx)
-           ty(i,ny-3,k) = astty*(uy(i,ny-2,k)-uy(i,ny-3  ,k) &
-                                -uy(i,ny-3  ,k)+uy(i,ny-4,k)) &
-                        + bstty*(uy(i,ny-1,k)-uy(i,ny-3  ,k) &
-                                -uy(i,ny-3  ,k)+uy(i,ny-5,k)) &
-                        + cstty*(uy(i,ny,k)-uy(i,ny-3  ,k) &
-                                -uy(i,ny-3  ,k)+uy(i,ny-6,k))
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,ny-2,k) = asty*(uy(i,ny-1,k)-uy(i,ny-2,k) &
-                               -uy(i,ny-2,k)+uy(i,ny-3,k)) &
-                        + bsty*(uy(i,ny  ,k)-uy(i,ny-2,k) &
-                               -uy(i,ny-2,k)+uy(i,ny-4,k))
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,ny-1,k) = asmy*(uy(i,ny  ,k)-uy(i,ny-1,k) &
-                               -uy(i,ny-1,k)+uy(i,ny-2,k))
-        enddo
-        do concurrent (i=1:nx)
-           ty(i,ny  ,k) = asny*uy(i,ny  ,k) + bsny*uy(i,ny-1,k) &
-                        + csny*uy(i,ny-2,k) + dsny*uy(i,ny-3,k)
-        enddo
+        buffer(ny-3) = astty*(uy(i,ny-2,k)-uy(i,ny-3  ,k) &
+                             -uy(i,ny-3  ,k)+uy(i,ny-4,k)) &
+                     + bstty*(uy(i,ny-1,k)-uy(i,ny-3  ,k) &
+                             -uy(i,ny-3  ,k)+uy(i,ny-5,k)) &
+                     + cstty*(uy(i,ny,k)-uy(i,ny-3  ,k) &
+                             -uy(i,ny-3  ,k)+uy(i,ny-6,k))
+        buffer(ny-2) = asty*(uy(i,ny-1,k)-uy(i,ny-2,k) &
+                            -uy(i,ny-2,k)+uy(i,ny-3,k)) &
+                     + bsty*(uy(i,ny  ,k)-uy(i,ny-2,k) &
+                            -uy(i,ny-2,k)+uy(i,ny-4,k))
+        buffer(ny-1) = asmy*(uy(i,ny  ,k)-uy(i,ny-1,k) &
+                            -uy(i,ny-1,k)+uy(i,ny-2,k))
+        buffer(ny  ) = asny*uy(i,ny  ,k) + bsny*uy(i,ny-1,k) &
+                     + csny*uy(i,ny-2,k) + dsny*uy(i,ny-3,k)
      endif
-  enddo
 
-  ! Solve tri-diagonal system
-  call ythomas(ty, sf, ss, sw, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, sf, ss, sw, ny)
+     do concurrent (j=1:ny)
+        ty(i,j,k) = buffer(j)
+     enddo
+  enddo
 
 end subroutine deryy_ij
 
@@ -1520,6 +1519,8 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -1528,6 +1529,14 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nz) :: buffer, ff, ss, ww, pp
+
+  do concurrent (k=1:nz)
+     ff(k) = x3dop%f(k)
+     ss(k) = x3dop%s(k)
+     ww(k) = x3dop%w(k)
+     if (allocated(x3dop%periodic)) pp(k) = x3dop%periodic(k)
+  end do
 
   if (nz==1) then
     do concurrent(k=1:nz, j=1:ny, i=1:nx)
@@ -1536,9 +1545,9 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
     return
   endif
 
-  ! Compute r.h.s.
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,1) = askz*(uz(i,j,2)-uz(i,j,1   ) &
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
+     ! Compute r.h.s.
+     buffer(1) = askz*(uz(i,j,2)-uz(i,j,1   ) &
                       -uz(i,j,1)+uz(i,j,nz  )) &
                + bskz*(uz(i,j,3)-uz(i,j,1   ) &
                       -uz(i,j,1)+uz(i,j,nz-1)) &
@@ -1546,9 +1555,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                       -uz(i,j,1)+uz(i,j,nz-2)) &
                + dskz*(uz(i,j,5)-uz(i,j,1   ) &
                       -uz(i,j,1)+uz(i,j,nz-3))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,2) = askz*(uz(i,j,3)-uz(i,j,2 ) &
+     buffer(2) = askz*(uz(i,j,3)-uz(i,j,2 ) &
                       -uz(i,j,2)+uz(i,j,1 )) &
                + bskz*(uz(i,j,4)-uz(i,j,2 ) &
                       -uz(i,j,2)+uz(i,j,nz)) &
@@ -1556,9 +1563,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                       -uz(i,j,2)+uz(i,j,nz-1)) &
                + dskz*(uz(i,j,6)-uz(i,j,2 ) &
                       -uz(i,j,2)+uz(i,j,nz-2))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,3) = askz*(uz(i,j,4)-uz(i,j,3 ) &
+     buffer(3) = askz*(uz(i,j,4)-uz(i,j,3 ) &
                       -uz(i,j,3)+uz(i,j,2 )) &
                + bskz*(uz(i,j,5)-uz(i,j,3 ) &
                       -uz(i,j,3)+uz(i,j,1 )) &
@@ -1566,9 +1571,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                       -uz(i,j,3)+uz(i,j,nz)) &
                + dskz*(uz(i,j,7)-uz(i,j,3 ) &
                       -uz(i,j,3)+uz(i,j,nz-1))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,4) = askz*(uz(i,j,5)-uz(i,j,4 ) &
+     buffer(4) = askz*(uz(i,j,5)-uz(i,j,4 ) &
                       -uz(i,j,4)+uz(i,j,3 )) &
                + bskz*(uz(i,j,6)-uz(i,j,4 ) &
                       -uz(i,j,4)+uz(i,j,2 )) &
@@ -1576,19 +1579,17 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                       -uz(i,j,4)+uz(i,j,1)) &
                + dskz*(uz(i,j,8)-uz(i,j,4 ) &
                       -uz(i,j,4)+uz(i,j,nz))
-  enddo
-  do concurrent (k=5:nz-4, j=1:ny, i=1:nx)
-     tz(i,j,k) = askz*(uz(i,j,k+1)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-1)) &
-               + bskz*(uz(i,j,k+2)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-2)) &
-               + cskz*(uz(i,j,k+3)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-3)) &
-               + dskz*(uz(i,j,k+4)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-4))
-  enddo
-  do concurrent (j=1:ny, i=1:nx)
-     tz(i,j,nz-3) = askz*(uz(i,j,nz-2)-uz(i,j,nz-3) &
+     do concurrent (k=5:nz-4)
+        buffer(k) = askz*(uz(i,j,k+1)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-1)) &
+                  + bskz*(uz(i,j,k+2)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-2)) &
+                  + cskz*(uz(i,j,k+3)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-3)) &
+                  + dskz*(uz(i,j,k+4)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-4))
+     enddo
+     buffer(nz-3) = askz*(uz(i,j,nz-2)-uz(i,j,nz-3) &
                          -uz(i,j,nz-3)+uz(i,j,nz-4)) &
                   + bskz*(uz(i,j,nz-1 )-uz(i,j,nz-3) &
                          -uz(i,j,nz-3)+uz(i,j,nz-5)) &
@@ -1596,7 +1597,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                          -uz(i,j,nz-3)+uz(i,j,nz-6)) &
                   + dskz*(uz(i,j,1   )-uz(i,j,nz-3) &
                          -uz(i,j,nz-3)+uz(i,j,nz-7))
-     tz(i,j,nz-2) = askz*(uz(i,j,nz-1)-uz(i,j,nz-2) &
+     buffer(nz-2) = askz*(uz(i,j,nz-1)-uz(i,j,nz-2) &
                          -uz(i,j,nz-2)+uz(i,j,nz-3)) &
                   + bskz*(uz(i,j,nz  )-uz(i,j,nz-2) &
                          -uz(i,j,nz-2)+uz(i,j,nz-4)) &
@@ -1604,7 +1605,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                          -uz(i,j,nz-2)+uz(i,j,nz-5)) &
                   + dskz*(uz(i,j,2   )-uz(i,j,nz-2) &
                          -uz(i,j,nz-2)+uz(i,j,nz-6))
-     tz(i,j,nz-1) = askz*(uz(i,j,nz  )-uz(i,j,nz-1) &
+     buffer(nz-1) = askz*(uz(i,j,nz  )-uz(i,j,nz-1) &
                          -uz(i,j,nz-1)+uz(i,j,nz-2)) &
                   + bskz*(uz(i,j,1   )-uz(i,j,nz-1) &
                          -uz(i,j,nz-1)+uz(i,j,nz-3)) &
@@ -1612,7 +1613,7 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                          -uz(i,j,nz-1)+uz(i,j,nz-4)) &
                   + dskz*(uz(i,j,3   )-uz(i,j,nz-1) &
                          -uz(i,j,nz-1)+uz(i,j,nz-5))
-     tz(i,j,nz  ) = askz*(uz(i,j,1 )-uz(i,j,nz  ) &
+     buffer(nz  ) = askz*(uz(i,j,1 )-uz(i,j,nz  ) &
                          -uz(i,j,nz)+uz(i,j,nz-1)) &
                   + bskz*(uz(i,j,2 )-uz(i,j,nz  ) &
                          -uz(i,j,nz)+uz(i,j,nz-2)) &
@@ -1620,10 +1621,13 @@ subroutine derzz_00(tz,uz,x3dop,nx,ny,nz)
                          -uz(i,j,nz)+uz(i,j,nz-3)) &
                   + dskz*(uz(i,j,4 )-uz(i,j,nz  ) &
                          -uz(i,j,nz)+uz(i,j,nz-4))
-  enddo
 
-  ! Solve tri-diagonal system
-  call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, ff, ss, ww, pp, x3dop%alfa, nz)
+     do concurrent (k=1:nz)
+        tz(i,j,k) = buffer(k)
+     enddo
+  enddo
 
 end subroutine derzz_00
 
@@ -1635,6 +1639,8 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   implicit none
 
+  !$acc routine(thomas1d_0, thomas1d_12) seq
+
   ! Arguments
   integer, intent(in) :: nx, ny, nz, npaire, ncl1, ncln
   real(mytype), intent(out), dimension(nx,ny,nz) :: tz
@@ -1643,6 +1649,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
 
   ! Local variables
   integer :: i, j, k
+  real(mytype), dimension(nz) :: buffer
 
   if (nz==1) then
     do concurrent(k=1:nz, j=1:ny, i=1:nx)
@@ -1650,11 +1657,11 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
     enddo
   endif
 
-  ! Compute r.h.s.
-  if (ncl1==1) then
-     if (npaire==1) then
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,1) = askz*(uz(i,j,2)-uz(i,j,1) &
+  do concurrent (j=1:ny, i=1:nx) local(buffer)
+     ! Compute r.h.s.
+     if (ncl1==1) then
+        if (npaire==1) then
+           buffer(1) = askz*(uz(i,j,2)-uz(i,j,1) &
                             -uz(i,j,1)+uz(i,j,2)) &
                      + bskz*(uz(i,j,3)-uz(i,j,1) &
                             -uz(i,j,1)+uz(i,j,3)) &
@@ -1662,9 +1669,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,1)+uz(i,j,4)) &
                      + dskz*(uz(i,j,5)-uz(i,j,1) &
                             -uz(i,j,1)+uz(i,j,5))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,2) = askz*(uz(i,j,3)-uz(i,j,2) &
+           buffer(2) = askz*(uz(i,j,3)-uz(i,j,2) &
                             -uz(i,j,2)+uz(i,j,1)) &
                      + bskz*(uz(i,j,4)-uz(i,j,2) &
                             -uz(i,j,2)+uz(i,j,2)) &
@@ -1672,9 +1677,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,2)+uz(i,j,3)) &
                      + dskz*(uz(i,j,6)-uz(i,j,2) &
                             -uz(i,j,2)+uz(i,j,4))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,3) = askz*(uz(i,j,4)-uz(i,j,3) &
+           buffer(3) = askz*(uz(i,j,4)-uz(i,j,3) &
                             -uz(i,j,3)+uz(i,j,2)) &
                      + bskz*(uz(i,j,5)-uz(i,j,3) &
                             -uz(i,j,3)+uz(i,j,1)) &
@@ -1682,9 +1685,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,3)+uz(i,j,2)) &
                      + dskz*(uz(i,j,7)-uz(i,j,3) &
                             -uz(i,j,3)+uz(i,j,3))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,4) = askz*(uz(i,j,5)-uz(i,j,4) &
+           buffer(4) = askz*(uz(i,j,5)-uz(i,j,4) &
                             -uz(i,j,4)+uz(i,j,3)) &
                      + bskz*(uz(i,j,6)-uz(i,j,4) &
                             -uz(i,j,4)+uz(i,j,2)) &
@@ -1692,13 +1693,9 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,4)+uz(i,j,1)) &
                      + dskz*(uz(i,j,8)-uz(i,j,4) &
                             -uz(i,j,4)+uz(i,j,2))
-        enddo
-     else
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,1) = zero
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,2) = askz*(uz(i,j,3)-uz(i,j,2) &
+        else
+           buffer(1) = zero
+           buffer(2) = askz*(uz(i,j,3)-uz(i,j,2) &
                             -uz(i,j,2)+uz(i,j,1)) &
                      + bskz*(uz(i,j,4)-uz(i,j,2) &
                             -uz(i,j,2)-uz(i,j,2)) &
@@ -1706,9 +1703,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,2)-uz(i,j,3)) &
                      + dskz*(uz(i,j,6)-uz(i,j,2) &
                             -uz(i,j,2)-uz(i,j,4))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,3) = askz*(uz(i,j,4)-uz(i,j,3) &
+           buffer(3) = askz*(uz(i,j,4)-uz(i,j,3) &
                             -uz(i,j,3)+uz(i,j,2)) &
                      + bskz*(uz(i,j,5)-uz(i,j,3) &
                             -uz(i,j,3)+uz(i,j,1)) &
@@ -1716,9 +1711,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,3)-uz(i,j,2)) &
                      + dskz*(uz(i,j,7)-uz(i,j,3) &
                             -uz(i,j,3)-uz(i,j,3))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,4) = askz*(uz(i,j,5)-uz(i,j,4) &
+           buffer(4) = askz*(uz(i,j,5)-uz(i,j,4) &
                             -uz(i,j,4)+uz(i,j,3)) &
                      + bskz*(uz(i,j,6)-uz(i,j,4) &
                             -uz(i,j,4)+uz(i,j,2)) &
@@ -1726,46 +1719,36 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                             -uz(i,j,4)-uz(i,j,1)) &
                      + dskz*(uz(i,j,8)-uz(i,j,4) &
                             -uz(i,j,4)-uz(i,j,2))
-        enddo
-     endif
-  else
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,1) = as1z*uz(i,j,1) + bs1z*uz(i,j,2) &
+        endif
+     else
+        buffer(1) = as1z*uz(i,j,1) + bs1z*uz(i,j,2) &
                   + cs1z*uz(i,j,3) + ds1z*uz(i,j,4)
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,2) = as2z*(uz(i,j,3)-uz(i,j,2) &
+        buffer(2) = as2z*(uz(i,j,3)-uz(i,j,2) &
                          -uz(i,j,2)+uz(i,j,1))
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,3) = as3z*(uz(i,j,4)-uz(i,j,3) &
+        buffer(3) = as3z*(uz(i,j,4)-uz(i,j,3) &
                          -uz(i,j,3)+uz(i,j,2)) &
                   + bs3z*(uz(i,j,5)-uz(i,j,3) &
                          -uz(i,j,3)+uz(i,j,1))
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,4) = as4z*(uz(i,j,5)-uz(i,j,4  ) &
+        buffer(4) = as4z*(uz(i,j,5)-uz(i,j,4  ) &
                          -uz(i,j,4  )+uz(i,j,3)) &
                   + bs4z*(uz(i,j,6)-uz(i,j,4 ) &
                          -uz(i,j,4 )+uz(i,j,2)) &
                   + cs4z*(uz(i,j,7)-uz(i,j,4  ) &
                          -uz(i,j,4  )+uz(i,j,1))
+     endif
+     do concurrent (k=5:nz-4)
+        buffer(k) = askz*(uz(i,j,k+1)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-1)) &
+                  + bskz*(uz(i,j,k+2)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-2)) &
+                  + cskz*(uz(i,j,k+3)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-3)) &
+                  + dskz*(uz(i,j,k+4)-uz(i,j,k  ) &
+                         -uz(i,j,k  )+uz(i,j,k-4))
      enddo
-  endif
-  do concurrent (k=5:nz-4, j=1:ny, i=1:nx)
-     tz(i,j,k) = askz*(uz(i,j,k+1)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-1)) &
-               + bskz*(uz(i,j,k+2)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-2)) &
-               + cskz*(uz(i,j,k+3)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-3)) &
-               + dskz*(uz(i,j,k+4)-uz(i,j,k  ) &
-                      -uz(i,j,k  )+uz(i,j,k-4))
-  enddo
-  if (ncln==1) then
-     if (npaire==1) then
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-3) = askz*(uz(i,j,nz-2)-uz(i,j,nz-3) &
+     if (ncln==1) then
+        if (npaire==1) then
+           buffer(nz-3) = askz*(uz(i,j,nz-2)-uz(i,j,nz-3) &
                                -uz(i,j,nz-3)+uz(i,j,nz-4)) &
                         + bskz*(uz(i,j,nz-1)-uz(i,j,nz-3) &
                                -uz(i,j,nz-3)+uz(i,j,nz-5)) &
@@ -1773,9 +1756,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uz(i,j,nz-3)+uz(i,j,nz-6)) &
                         + dskz*(uz(i,j,nz-1)-uz(i,j,nz-3) &
                                -uz(i,j,nz-3)+uz(i,j,nz-7))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-2) = askz*(uz(i,j,nz-1)-uz(i,j,nz-2) &
+           buffer(nz-2) = askz*(uz(i,j,nz-1)-uz(i,j,nz-2) &
                                -uz(i,j,nz-2)+uz(i,j,nz-3)) &
                         + bskz*(uz(i,j,nz  )-uz(i,j,nz-2) &
                                -uz(i,j,nz-2)+uz(i,j,nz-4)) &
@@ -1783,9 +1764,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uz(i,j,nz-2)+uz(i,j,nz-5)) &
                         + dskz*(uz(i,j,nz-2)-uz(i,j,nz-2) &
                                -uz(i,j,nz-2)+uz(i,j,nz-6))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-1) = askz*(uz(i,j,nz  )-uz(i,j,nz-1) &
+           buffer(nz-1) = askz*(uz(i,j,nz  )-uz(i,j,nz-1) &
                                -uz(i,j,nz-1)+uz(i,j,nz-2)) &
                         + bskz*(uz(i,j,nz-1)-uz(i,j,nz-1) &
                                -uz(i,j,nz-1)+uz(i,j,nz-3)) &
@@ -1793,9 +1772,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uz(i,j,nz-1)+uz(i,j,nz-4)) &
                         + dskz*(uz(i,j,nz-3)-uz(i,j,nz-1) &
                                -uz(i,j,nz-1)+uz(i,j,nz-5))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz  ) = askz*(uz(i,j,nz-1)-uz(i,j,nz  ) &
+           buffer(nz  ) = askz*(uz(i,j,nz-1)-uz(i,j,nz  ) &
                                -uz(i,j,nz  )+uz(i,j,nz-1)) &
                         + bskz*(uz(i,j,nz-2)-uz(i,j,nz  ) &
                                -uz(i,j,nz  )+uz(i,j,nz-2)) &
@@ -1803,10 +1780,8 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                -uz(i,j,nz  )+uz(i,j,nz-3)) &
                         + dskz*(uz(i,j,nz-4)-uz(i,j,nz  ) &
                                -uz(i,j,nz  )+uz(i,j,nz-4))
-        enddo
-     else
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-3) = askz*( uz(i,j,nz-2)-uz(i,j,nz-3) &
+        else
+           buffer(nz-3) = askz*( uz(i,j,nz-2)-uz(i,j,nz-3) &
                                 -uz(i,j,nz-3)+uz(i,j,nz-4)) &
                         + bskz*( uz(i,j,nz-1)-uz(i,j,nz-3) &
                                 -uz(i,j,nz-3)+uz(i,j,nz-5)) &
@@ -1814,9 +1789,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                 -uz(i,j,nz-3)+uz(i,j,nz-6)) &
                         + dskz*(-uz(i,j,nz-1)-uz(i,j,nz-3) &
                                 -uz(i,j,nz-3)+uz(i,j,nz-7))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-2) = askz*( uz(i,j,nz-1)-uz(i,j,nz-2) &
+           buffer(nz-2) = askz*( uz(i,j,nz-1)-uz(i,j,nz-2) &
                                 -uz(i,j,nz-2)+uz(i,j,nz-3)) &
                         + bskz*( uz(i,j,nz  )-uz(i,j,nz-2) &
                                 -uz(i,j,nz-2)+uz(i,j,nz-4)) &
@@ -1824,9 +1797,7 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                 -uz(i,j,nz-2)+uz(i,j,nz-5)) &
                         + dskz*(-uz(i,j,nz-2)-uz(i,j,nz-2) &
                                 -uz(i,j,nz-2)+uz(i,j,nz-6))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz-1) = askz*( uz(i,j,nz  )-uz(i,j,nz-1) &
+           buffer(nz-1) = askz*( uz(i,j,nz  )-uz(i,j,nz-1) &
                                 -uz(i,j,nz-1)+uz(i,j,nz-2)) &
                         + bskz*(-uz(i,j,nz-1)-uz(i,j,nz-1) &
                                 -uz(i,j,nz-1)+uz(i,j,nz-3)) &
@@ -1834,38 +1805,31 @@ subroutine derzz_ij(tz,uz,sf,ss,sw,nx,ny,nz,npaire,ncl1,ncln)
                                 -uz(i,j,nz-1)+uz(i,j,nz-4)) &
                         + dskz*(-uz(i,j,nz-3)-uz(i,j,nz-1) &
                                 -uz(i,j,nz-1)+uz(i,j,nz-5))
-        enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,nz  ) = zero
-        enddo
-     endif
-  else
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,nz-3) = asttz*(uz(i,j,nz-2)-uz(i,j,nz-3  ) &
+           buffer(nz  ) = zero
+        endif
+     else
+        buffer(nz-3) = asttz*(uz(i,j,nz-2)-uz(i,j,nz-3  ) &
                              -uz(i,j,nz-3  )+uz(i,j,nz-4)) &
                      + bsttz*(uz(i,j,nz-1)-uz(i,j,nz-3  ) &
                              -uz(i,j,nz-3  )+uz(i,j,nz-5)) &
                      + csttz*(uz(i,j,nz)-uz(i,j,nz-3  ) &
                              -uz(i,j,nz-3  )+uz(i,j,nz-6))
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,nz-2) = astz*(uz(i,j,nz-1)-uz(i,j,nz-2) &
+        buffer(nz-2) = astz*(uz(i,j,nz-1)-uz(i,j,nz-2) &
                             -uz(i,j,nz-2)+uz(i,j,nz-3)) &
                      + bstz*(uz(i,j,nz  )-uz(i,j,nz-2) &
                             -uz(i,j,nz-2)+uz(i,j,nz-4))
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,nz-1) = asmz*(uz(i,j,nz  )-uz(i,j,nz-1) &
+        buffer(nz-1) = asmz*(uz(i,j,nz  )-uz(i,j,nz-1) &
                             -uz(i,j,nz-1)+uz(i,j,nz-2))
-     enddo
-     do concurrent (j=1:ny, i=1:nx)
-        tz(i,j,nz  ) = asnz*uz(i,j,nz  ) + bsnz*uz(i,j,nz-1) &
+        buffer(nz  ) = asnz*uz(i,j,nz  ) + bsnz*uz(i,j,nz-1) &
                      + csnz*uz(i,j,nz-2) + dsnz*uz(i,j,nz-3)
-     enddo
-  endif
+     endif
 
-  ! Solve tri-diagonal system
-  call zthomas(tz, sf, ss, sw, nx, ny, nz)
+     ! Solve tri-diagonal system
+     call thomas1d(buffer, sf, ss, sw, nz)
+     do concurrent(k=1:nz)
+        tz(i,j,k) = buffer(k)
+     enddo
+  enddo
 
 end subroutine derzz_ij
 

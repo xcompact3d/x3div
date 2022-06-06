@@ -1,0 +1,42 @@
+name: Build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    # We don't want to build openmpi each time this workflow is
+    # run. Setup caching of OpenMPI after it is built and installed.
+    # See "Caching dependencies to speed up workflows" on the GH
+    # actions docs.
+    - name: Cache OpenMPI
+      id: cache-openmpi
+      uses: actions/cache@v2
+      with:
+        path: openmpi-4.1.2/installed
+        key: openmpi-4.1.2
+
+    - name: Build openmpi
+      if: steps.cache-openmpi.outputs.cache-hit != 'true'
+      run: |
+        wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.2.tar.gz
+        tar -xf openmpi-4.1.2.tar.gz
+        cd openmpi-4.1.2/ && mkdir installed
+        ./configure --prefix=$(pwd)/installed
+        make all install
+
+    - name: Build x3div
+      run: |
+        export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
+        make CMP=gcc
+
+    - name: Run default benchmark
+      run: |
+        export PATH=$(pwd)/openmpi-4.1.2/installed/bin/:$PATH
+        export LD_LIBRARY_PATH=$(pwd)/openmpi-4.1.2/installed/lib:$LD_LIBRARY_PATH
+        mpirun -n 1 xcompact3d

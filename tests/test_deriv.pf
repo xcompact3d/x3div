@@ -12,6 +12,8 @@ module test_deriv
    @testCase(testParameters={getParameters()}, constructor=newTestDeriv)
    type, extends(ParameterizedTestCase) :: testDeriv
       type(pencilSize) :: pencil_size
+    contains
+      procedure :: allocate_on_pencil
    end type testDeriv
 
  contains
@@ -31,6 +33,16 @@ module test_deriv
           & ]
    end function getParameters
 
+   subroutine allocate_on_pencil(this, array)
+     class(testDeriv), intent(in) :: this
+     real, allocatable, intent(inout) :: array(:, :, :)
+     allocate(array( &
+          & this % pencil_size % nx, &
+          & this % pencil_size % ny, &
+          & this % pencil_size % nz) &
+          & )
+   end subroutine allocate_on_pencil
+
    function toString(this) result(string)
      class(pencilSize), intent(in) :: this
      character(:), allocatable :: string
@@ -42,10 +54,17 @@ module test_deriv
   @test
   subroutine test_derx_odd_11(this)
     class (testDeriv), intent(inout) :: this
+    real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
 
+    call this % allocate_on_pencil(func)
+    call this % allocate_on_pencil(dfunc)
+    call this % allocate_on_pencil(expected_dfunc)
+    
     write(*, *) this % pencil_size % toString()
 
     @assertTrue(1 > 0)
+
+    deallocate(func, dfunc, expected_dfunc)
 
   end subroutine test_derx_odd_11
 

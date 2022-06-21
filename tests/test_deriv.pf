@@ -1,0 +1,53 @@
+module test_deriv
+  use funit
+  implicit none
+
+  @testParameter
+  type, extends(AbstractTestParameter) :: pencilSize
+     integer :: nx, ny, nz
+   contains
+     procedure :: toString
+   end type pencilSize
+
+   @testCase(testParameters={getParameters()}, constructor=newTestDeriv)
+   type, extends(ParameterizedTestCase) :: testDeriv
+      type(pencilSize) :: pencil_size
+   end type testDeriv
+
+ contains
+
+   function newTestDeriv(param)
+     type(testDeriv) :: newTestDeriv
+     type(pencilSize), intent(in) :: param
+     newTestDeriv%pencil_size = param
+   end function newTestDeriv
+
+   function getParameters() result(test_pencil_sizes)
+     type(pencilSize), allocatable :: test_pencil_sizes(:)
+     test_pencil_sizes = [ &
+          & pencilSize(16,16,16), &
+          & pencilSize(32,32,32), &
+          & pencilSize(64,64,64) &
+          & ]
+   end function getParameters
+
+   function toString(this) result(string)
+     class(pencilSize), intent(in) :: this
+     character(:), allocatable :: string
+     character(len=80) :: buffer
+     write(buffer, '("nx = ",i3.3,1x,"ny = ( ",i3.3,1x,"nz = ( ",i3.3)')
+     string = trim(buffer)
+   end function toString
+
+  @test
+  subroutine test_derx_odd_11(this)
+    class (testDeriv), intent(inout) :: this
+
+    write(*, *) this % pencil_size % toString()
+
+    @assertTrue(1 > 0)
+
+  end subroutine test_derx_odd_11
+
+end module test_deriv
+

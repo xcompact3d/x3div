@@ -2,6 +2,17 @@ module test_deriv
   use funit
   implicit none
 
+  ! Explicit interface required as long as derivative functions
+  ! are not defined in a module.
+  interface
+     subroutine derx_11(tx,ux,rx,sx,ffx,fsx,fwx,nx,ny,nz,npaire)
+       integer :: nx,ny,nz,npaire
+       real, dimension(nx,ny,nz) :: tx,ux,rx
+       real, dimension(ny,nz):: sx
+       real, dimension(nx):: ffx,fsx,fwx
+     end subroutine derx_11
+  end interface
+
   @testParameter
   type, extends(AbstractTestParameter) :: pencilSize
      integer :: nx, ny, nz
@@ -117,7 +128,7 @@ module test_deriv
          & this % pencil_size % nx, &
          & this % pencil_size % ny, &
          & this % pencil_size % nz, &
-         0)
+         npaire = 0)
 
     @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
 

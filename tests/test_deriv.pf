@@ -53,12 +53,26 @@ module test_deriv
 
   @test
   subroutine test_derx_odd_11(this)
+    use x3d_precision, only: pi
     class (testDeriv), intent(inout) :: this
     real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
+    integer :: i, j, k
+    real :: x, dx
 
     call this % allocate_on_pencil(func)
     call this % allocate_on_pencil(dfunc)
     call this % allocate_on_pencil(expected_dfunc)
+
+    dx = 1. / (this % pencil_size % nx - 1)
+    do k=1,this % pencil_size % nz
+       do j=1,this % pencil_size % ny
+          do i=1,this % pencil_size % nx
+             x = (i - 1.) * dx * 4. * pi
+             func(i,j,k) = sin(x)  !odd
+             expected_dfunc(i,j,k) = 4. * pi * cos(x)
+          enddo
+       enddo
+    enddo
     
     write(*, *) this % pencil_size % toString()
 

@@ -84,6 +84,8 @@ module test_deriv
   @test
   subroutine test_derx_odd_11(this)
     use x3d_precision, only: pi
+    use x3d_derive, only : derx_ij
+    use x3d_operator_x_data, only: afix, bfix
     class (testDeriv), intent(inout) :: this
     real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
     real, allocatable :: ff(:), fs(:), fw(:)
@@ -107,9 +109,15 @@ module test_deriv
        enddo
     enddo
 
-    write(*, *) this % pencil_size % toString()
+    afix = (7. / 9.) / dx
+    bfix = (1. / 36.) / dx
+    call derx_ij(dfunc, func, ff, fs, fw, &
+         & this % pencil_size % nx, &
+         & this % pencil_size % ny, &
+         & this % pencil_size % nz, &
+         0, 1, 1)
 
-    @assertTrue(1 > 0)
+    @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
 
     deallocate(func, dfunc, expected_dfunc)
 

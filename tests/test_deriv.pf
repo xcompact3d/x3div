@@ -66,8 +66,9 @@ module test_deriv
           & )
    end subroutine allocate_on_pencil
 
-   subroutine setup_coefficient_arrays(this, ff, fs, fw)
+   subroutine setup_coefficient_arrays(this, ff, fs, fw, ncl1, ncln)
      class(testDeriv), intent(in) :: this
+     integer, intent(in) :: ncl1, ncln
      real, allocatable, intent(out) :: ff(:), fs(:), fw(:)
 
      real, allocatable :: fb(:)
@@ -75,22 +76,41 @@ module test_deriv
      integer :: i
 
      ff = [(alfai, i = 1,this % pencil_size % nx)]
-     ff(1) = alfai + alfai
-     ff(this % pencil_size % nx) = 0.
      fw = [(1., i = 1,this % pencil_size % nx)]
      fs = [(0., i = 1,this % pencil_size % nx)]
-
      fb = [(alfai, i = 1, this % pencil_size % nx)]
-     fb(this % pencil_size % nx - 1) = alfai + alfai
+
+     ff(this % pencil_size % nx) = 0.
      fb(this % pencil_size % nx) = 0.
+
+     select case(ncl1)
+     case(1)
+        ff(1) = alfai + alfai
+     case(0)
+        fw(1) = 2.
+     case default
+        write(*, *) "Shouldn't be here, stopping"
+        stop
+     end select
+
+     select case(ncln)
+     case(1)
+        fb(this % pencil_size % nx - 1) = alfai + alfai
+     case(0)
+        fw(this % pencil_size % nx) = 1. + alfai * alfai
+     case default
+        write(*, *) "Shouldn't be here, stopping"
+        stop
+     end select
+
      do i=2,this % pencil_size % nx
         fs(i) = fb(i-1) / fw(i-1)
         fw(i) = fw(i) - ff(i-1) * fs(i)
      enddo
+     fs(1) = 0.
      do i=1,this % pencil_size % nx
         fw(i) = 1. / fw(i)
      enddo
-     fs(1) = 0.
 
      deallocate(fb)
    end subroutine setup_coefficient_arrays
@@ -112,7 +132,7 @@ module test_deriv
     integer :: i, j, k
     real :: x, dx
 
-    call this % setup_coefficient_arrays(this% ff, this % fs, this % fw)
+    call this % setup_coefficient_arrays(this% ff, this % fs, this % fw, ncl1 = 1, ncln = 1)
 
     dx = 1. / (this % pencil_size % nx - 1)
     do k=1,this % pencil_size % nz

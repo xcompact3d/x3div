@@ -12,12 +12,34 @@ module test_deriv
    @testCase(testParameters={getParameters()}, constructor=newTestDeriv)
    type, extends(ParameterizedTestCase) :: testDeriv
       type(pencilSize) :: pencil_size
+      real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
+      real, allocatable :: ff(:), fs(:), fw(:)
+      real, allocatable :: s(:, :), di1(:, :, :)
     contains
       procedure :: allocate_on_pencil
       procedure :: setup_coefficient_arrays
+      procedure :: setUp
+      procedure :: tearDown
    end type testDeriv
 
  contains
+
+   subroutine setUp(this)
+     class(testDeriv), intent(inout) :: this
+
+    call this % allocate_on_pencil(this % func)
+    call this % allocate_on_pencil(this % dfunc)
+    call this % allocate_on_pencil(this % expected_dfunc)
+
+  end subroutine setUp
+
+  subroutine tearDown(this)
+    class(testDeriv), intent(inout) :: this
+
+    deallocate(this % func, this % dfunc, this % expected_dfunc)
+    deallocate(this % ff, this % fs, this % fw)
+
+   end subroutine tearDown
 
    function newTestDeriv(param)
      type(testDeriv) :: newTestDeriv
@@ -87,40 +109,31 @@ module test_deriv
     use x3d_derive, only : derx_ij
     use x3d_operator_x_data, only: afix, bfix
     class (testDeriv), intent(inout) :: this
-    real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
-    real, allocatable :: ff(:), fs(:), fw(:)
     integer :: i, j, k
     real :: x, dx
 
-    call this % allocate_on_pencil(func)
-    call this % allocate_on_pencil(dfunc)
-    call this % allocate_on_pencil(expected_dfunc)
-
-    call this % setup_coefficient_arrays(ff, fs, fw)
+    call this % setup_coefficient_arrays(this% ff, this % fs, this % fw)
 
     dx = 1. / (this % pencil_size % nx - 1)
     do k=1,this % pencil_size % nz
        do j=1,this % pencil_size % ny
           do i=1,this % pencil_size % nx
              x = (i - 1.) * dx * 4. * pi
-             func(i,j,k) = sin(x)  !odd
-             expected_dfunc(i,j,k) = 4. * pi * cos(x)
+             this % func(i,j,k) = sin(x)  !odd
+             this % expected_dfunc(i,j,k) = 4. * pi * cos(x)
           enddo
        enddo
     enddo
 
     afix = (7. / 9.) / dx
     bfix = (1. / 36.) / dx
-    call derx_ij(dfunc, func, ff, fs, fw, &
+    call derx_ij(this % dfunc, this % func, &
+         & this % ff, this % fs, this % fw, &
          & this % pencil_size % nx, &
          & this % pencil_size % ny, &
-         & this % pencil_size % nz, &
-         0, 1, 1)
+         & this % pencil_size % nz, 0, 1, 1)
 
-    @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
-
-    deallocate(func, dfunc, expected_dfunc)
-    deallocate(ff, fs, fw)
+    @assertEqual(this % dfunc, this % expected_dfunc, tolerance=1E-2)
 
   end subroutine test_derx_odd_11
 

@@ -184,7 +184,7 @@ subroutine init_xcompact3d(ndt_max)
 
   call parameter()
 
-  write(*,*) 'Decomp2d_init'
+  !write(*,*) 'Decomp2d_init'
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
   call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
   call init_coarser_mesh_statV(nvisu,nvisu,nvisu,.true.)    !start from 1 == true
@@ -206,7 +206,7 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm,nym,nzm,phG)
 
   call init_flowfield()
-  write(*,*) 'End init_xcompact3d'
+  !write(*,*) 'End init_xcompact3d'
  
 
 endsubroutine init_xcompact3d

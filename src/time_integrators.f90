@@ -33,116 +33,13 @@ contains
     kmax = xsize(3)
 
 
-    ! for the moment we just use euler
-    !call nvtxStartRange("Do concurr 256")
-    !!$acc kernels vector_length(256)
-    !do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
-    !  var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
-    !enddo
-    !!$acc end kernel
-    !call nvtxEndRange
-    
-    call nvtxStartRange("time loop collapse")
-    !$acc parallel loop gang vector collapse(3)
-    do k=1,xsize(3)
-    do j=1,xsize(2)
-    do i=1,xsize(1)
-      var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
-    enddo
-    enddo
-    enddo
-    !$acc end parallel loop
-    call nvtxEndRange
-    
     call nvtxStartRange("time loop orig")
+    ! We have only Euler
     do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
       var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
     enddo
     call nvtxEndRange
     
-    
-    
-    !if (iimplicit.ge.1) then
-    !   !>>> (semi)implicit Y diffusion
-
-    !   if (present(isc)) then
-    !      is = isc
-    !   else
-    !      is = 0
-    !   endif
-    !   if (present(npaire).and.present(forcing1)) then
-    !      call inttimp(var1, dvar1, npaire=npaire, isc=is, forcing1=forcing1)
-    !   else if (present(npaire)) then
-    !      call inttimp(var1, dvar1, npaire=npaire, isc=is)
-    !   else
-    !      if (nrank  == 0) write(*,*) "Error in intt call."
-    !      call MPI_ABORT(MPI_COMM_WORLD,code,ierror); stop
-    !   endif
-
-    !elseif (itimescheme.eq.1) then
-    !   !>>> Euler
-
-    !   var1(:,:,:)=gdt(itr)*dvar1(:,:,:,1)+var1(:,:,:)
-    !elseif(itimescheme.eq.2) then
-    !   !>>> Adam-Bashforth second order (AB2)
-
-    !   ! Do first time step with Euler
-    !   if(itime.eq.1.and.irestart.eq.0) then
-    !      var1(:,:,:)=gdt(itr)*dvar1(:,:,:,1)+var1(:,:,:)
-    !   else
-    !      var1(:,:,:)=adt(itr)*dvar1(:,:,:,1)+bdt(itr)*dvar1(:,:,:,2)+var1(:,:,:)
-    !   endif
-    !   dvar1(:,:,:,2)=dvar1(:,:,:,1)
-    !elseif(itimescheme.eq.3) then
-    !   !>>> Adams-Bashforth third order (AB3)
-
-    !   ! Do first time step with Euler
-    !   if(itime.eq.1.and.irestart.eq.0) then
-    !      var1(:,:,:)=dt*dvar1(:,:,:,1)+var1(:,:,:)
-    !   elseif(itime.eq.2.and.irestart.eq.0) then
-    !      ! Do second time step with AB2
-    !      var1(:,:,:)=onepfive*dt*dvar1(:,:,:,1)-half*dt*dvar1(:,:,:,2)+var1(:,:,:)
-    !      dvar1(:,:,:,3)=dvar1(:,:,:,2)
-    !   else
-    !      ! Finally using AB3
-    !      var1(:,:,:)=adt(itr)*dvar1(:,:,:,1)+bdt(itr)*dvar1(:,:,:,2)+cdt(itr)*dvar1(:,:,:,3)+var1(:,:,:)
-    !      dvar1(:,:,:,3)=dvar1(:,:,:,2)
-    !   endif
-    !   dvar1(:,:,:,2)=dvar1(:,:,:,1)
-    !elseif(itimescheme.eq.4) then
-    !   !>>> Adams-Bashforth fourth order (AB4)
-
-    !   if (nrank==0) then
-    !      write(*,*) "AB4 not implemented!"
-    !      stop
-    !   endif
-
-    !   !>>> Runge-Kutta (low storage) RK3
-    !elseif(itimescheme.eq.5) then
-    !   if(itr.eq.1) then
-    !      var1(:,:,:)=gdt(itr)*dvar1(:,:,:,1)+var1(:,:,:)
-    !   else
-    !      var1(:,:,:)=adt(itr)*dvar1(:,:,:,1)+bdt(itr)*dvar1(:,:,:,2)+var1(:,:,:)
-    !   endif
-    !   dvar1(:,:,:,2)=dvar1(:,:,:,1)
-    !   !>>> Runge-Kutta (low storage) RK4
-    !elseif(itimescheme.eq.6) then
-
-    !   if (nrank==0) then
-    !      write(*,*) "RK4 not implemented!"
-    !      STOP
-    !   endif
-
-    !else
-
-    !   if (nrank==0) then
-    !      write(*,*) "Unrecognised itimescheme: ", itimescheme
-    !      STOP
-    !   endif
-
-    !endif
-
-
     return
 
   end subroutine intt

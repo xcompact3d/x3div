@@ -1,16 +1,4 @@
-#=======================================================================
-# Makefile for Xcompact3D
-#=======================================================================
-# Choose pre-processing options
-#   -DDOUBLE_PREC - use double-precision
-#   -DSAVE_SINGLE - Save 3D data in single-precision
-#   -DDEBG        - debuggin xcompact3d.f90
-# generate a Git version string
-GIT_VERSION := $(shell git describe --tag --long --always)
-
-DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
-
-LCL = local# local,lad,sdu,archer
+#
 IVER = 17# 15,16,17,18
 CMP = nvhpc# intel,gcc,nvhpc
 FFT = cufft# generic,fftw3,mkl,cufft
@@ -70,8 +58,8 @@ else ifeq ($(FFT),mkl)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 	INC=-I$(MKLROOT)/include
 else ifeq ($(FFT),cufft)
-  CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
-  INC=-I/scratch21/eb/gpu/software/NVHPC/22.1/Linux_x86_64/22.1/compilers/include
+  #CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
+  INC=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/compilers/include
   #LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
 endif
 

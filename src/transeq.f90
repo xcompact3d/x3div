@@ -111,21 +111,21 @@ contains
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
     
-    call nvtxStartRange("Trans collapse 256")
-    !!!!$acc kernels vector_length(256)
-    !do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
-    !$acc parallel loop gang vector collapse(3)
-    do k=1,xsz3
-    do j=1,xsz2
-    do i=1,xsz3
-      ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
-      tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
-      tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
-    enddo
-    enddo
-    enddo
-    !!!!$acc end kernel
-    call nvtxEndRange
+    !call nvtxStartRange("Trans collapse 256")
+    !!!!!$acc kernels vector_length(256)
+    !!do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    !!$acc parallel loop gang vector collapse(3)
+    !do k=1,xsz3
+    !do j=1,xsz2
+    !do i=1,xsz1
+    !  ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
+    !  tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
+    !  tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
+    !enddo
+    !enddo
+    !enddo
+    !!!!!$acc end kernel
+    !call nvtxEndRange
     
     call nvtxStartRange("Trans Do concurr standard")
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)

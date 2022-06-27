@@ -316,6 +316,7 @@ module decomp_2d_fft
 #else
     !$acc host_data use_device(inout,output)
     istat = cufftExecC2C(plan1, inout, output,isign)
+
     !$acc end host_data
 #endif
     if (istat /= 0) &
@@ -323,6 +324,7 @@ module decomp_2d_fft
     !$acc kernels
     inout = output
     !$acc end kernels 
+
 
     return
   end subroutine c2c_1m_x
@@ -367,6 +369,7 @@ module decomp_2d_fft
 #else
        !$acc host_data use_device(input,output)
        istat = cufftExecC2C(plan1, input(:,:,k), output(:,:,k),isign)
+
        !$acc end host_data
 #endif
     if (istat /= 0) &
@@ -504,7 +507,6 @@ module decomp_2d_fft
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing r2c_1m_z istat ", istat
-    
     ! Move z back
     !$acc kernels
     do k=1,dim3d(3)
@@ -583,8 +585,7 @@ module decomp_2d_fft
     !$acc end host_data
 #endif
     if (istat /= 0) &
-       write (*,*) "Error in executing c2r_1m_z"
-    
+       write (*,*) "Error in executing c2r_1m_z"    
     ! Move z back
     !$acc kernels
     do k=1,dim3d(3)

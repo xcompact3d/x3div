@@ -419,7 +419,6 @@ contains
       if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
       ! post-processing in spectral space
       cw1(i,j,k) = cw1_tmp
-      
 
     end do
     call nvtxEndRange

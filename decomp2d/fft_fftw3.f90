@@ -606,7 +606,7 @@ module decomp_2d_fft
           call transpose_y_to_z(wk13,out_c,sp)
        end if
        call c2c_1m_z(out_c,-1,plan(0,3))
-
+                
     else if (format==PHYSICAL_IN_Z) then
 
        ! ===== 1D FFTs in Z =====
@@ -884,5 +884,5 @@ module decomp_2d_fft
     return
   end subroutine fft_3d_c2r
 
-
+  
 end module decomp_2d_fft

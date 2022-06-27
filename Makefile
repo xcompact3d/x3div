@@ -22,7 +22,7 @@ else ifeq ($(CMP),nvhpc)
 FC = mpif90
 #FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
 FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
-#FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft  
+#FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft
 endif
 
 
@@ -57,10 +57,8 @@ else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
 	INC=-I$(MKLROOT)/include
-else ifeq ($(FFT),cufft)
-  #CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
+else ifeq ($(FFT),cufft)                               
   INC=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/compilers/include
-  #LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
 endif
 
 #######OPTIONS settings###########

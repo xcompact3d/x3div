@@ -79,10 +79,10 @@ contains
     use x3d_transpose
     use x3d_derive
     use decomp_2d , only : xsize, ysize, zsize
-    use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1,di1
-    use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2,di2
-    use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3,di3
-
+    use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1
+    use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2
+    use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3
+    use nvtx
     use mom, only : test_du, test_dv, test_dw
     
     implicit none
@@ -95,25 +95,55 @@ contains
 
 
     integer :: i,j,k,is
+    integer :: xsz1, xsz2, xsz3
+    integer :: ysz1, ysz2, ysz3
+    integer :: zsz1, zsz2, zsz3
+    xsz1=xsize(1)
+    xsz2=xsize(2)
+    xsz3=xsize(3)
+    ysz1=ysize(1)
+    ysz2=ysize(2)
+    ysz3=ysize(3)
+    zsz1=zsize(1)
+    zsz2=zsize(2)
+    zsz3=zsize(3)
 
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
     
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    call nvtxStartRange("Trans collapse 256")
+    !!!!$acc kernels vector_length(256)
+    !do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    !$acc parallel loop gang vector collapse(3)
+    do k=1,xsz3
+    do j=1,xsz2
+    do i=1,xsz3
       ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
       tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
       tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
     enddo
+    enddo
+    enddo
+    !!!!$acc end kernel
+    call nvtxEndRange
+    
+    call nvtxStartRange("Trans Do concurr standard")
+    do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
+      ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
+      tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
+      tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
+    enddo
+    call nvtxEndRange
 
-    call derx (td1,ta1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (te1,tb1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tf1,tc1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (ta1,ux1,di1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
-    call derx (tb1,uy1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
-    call derx (tc1,uz1,di1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (td1,ta1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (te1,tb1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tf1,tc1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (ta1,ux1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
+    call derx (tb1,uy1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call derx (tc1,uz1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
       tg1(i,j,k) = td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k)
       th1(i,j,k) = te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k)
       ti1(i,j,k) = tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k)
@@ -128,21 +158,21 @@ contains
 
     !WORK Y-PENCILS
     
-    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+    do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       td2(i,j,k) = ux2(i,j,k) * uy2(i,j,k)
       te2(i,j,k) = uy2(i,j,k) * uy2(i,j,k)
       tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
     enddo
 
-    call dery (tg2,td2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (th2,te2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (ti2,tf2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (td2,ux2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (te2,uy2,di2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
-    call dery (tf2,uz2,di2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tg2,td2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (th2,te2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (ti2,tf2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (td2,ux2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (te2,uy2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
+    call dery (tf2,uz2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
 
     ! Convective terms of y-pencil in tg2,th2,ti2
-    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+    do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       tg2(i,j,k) = tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k)
       th2(i,j,k) = th2(i,j,k) + uy2(i,j,k) * te2(i,j,k)
       ti2(i,j,k) = ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k)
@@ -155,21 +185,21 @@ contains
     call x3d_transpose_y_to_z(uz2,uz3)
 
     !WORK Z-PENCILS
-    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+    do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
       td3(i,j,k) = ux3(i,j,k) * uz3(i,j,k)
       te3(i,j,k) = uy3(i,j,k) * uz3(i,j,k)
       tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)
     enddo
 
-    call derz (tg3,td3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call derz (th3,te3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
-    call derz (ti3,tf3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (td3,ux3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (te3,uy3,di3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
-    call derz (tf3,uz3,di3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (tg3,td3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (th3,te3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call derz (ti3,tf3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (td3,ux3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (te3,uy3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
+    call derz (tf3,uz3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
-    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+    do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
       ta3(i,j,k) = tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k)
       tb3(i,j,k) = th3(i,j,k) + uz3(i,j,k) * te3(i,j,k)
       tc3(i,j,k) = ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k)
@@ -188,7 +218,7 @@ contains
     call x3d_transpose_y_to_x(tf2,tc1) !diff+conv. terms
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
       dux1(i,j,k,1) = ta1(i,j,k)
       duy1(i,j,k,1) = tb1(i,j,k)
       duz1(i,j,k,1) = tc1(i,j,k)

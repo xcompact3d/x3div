@@ -40,41 +40,42 @@ module x3d_filters
   
   implicit none
 
-  public          ! Make everything public unless declared private
+  ! Make everything public unless declared private
+  public
 
   ABSTRACT INTERFACE
-     SUBROUTINE FILTER_X(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
+     SUBROUTINE FILTER_X(t,u,s,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
        integer, intent(in) :: nx,ny,nz,npaire
-       real(mytype), intent(out), dimension(nx,ny,nz) :: t,r
+       real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
        real(mytype), intent(out), dimension(ny,nz):: s
        real(mytype), intent(in), dimension(nx):: ff,fs,fw
      END SUBROUTINE FILTER_X
-     SUBROUTINE FILTER_Y(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
+     SUBROUTINE FILTER_Y(t,u,s,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
        integer, intent(in) :: nx,ny,nz,npaire
-       real(mytype), intent(out), dimension(nx,ny,nz) :: t,r
+       real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
        real(mytype), intent(out), dimension(nx,nz):: s
        real(mytype), intent(in), dimension(ny):: ff,fs,fw
      END SUBROUTINE FILTER_Y
-     SUBROUTINE FILTER_Z(t,u,r,s,ff,fs,fw,nx,ny,nz,npaire)
+     SUBROUTINE FILTER_Z(t,u,s,ff,fs,fw,nx,ny,nz,npaire)
        use decomp_2d, only : mytype
        integer, intent(in) :: nx,ny,nz,npaire
-       real(mytype), intent(out), dimension(nx,ny,nz) :: t,r
+       real(mytype), intent(out), dimension(nx,ny,nz) :: t
        real(mytype), intent(in), dimension(nx,ny,nz) :: u
        real(mytype), intent(out), dimension(nx,ny):: s
        real(mytype), intent(in), dimension(nz):: ff,fs,fw
      END SUBROUTINE FILTER_Z
   END INTERFACE
 
-  PROCEDURE (FILTER_X) filx_00,filx_11, filx_12, filx_21, filx_22
-  PROCEDURE (FILTER_X), POINTER :: filx,filxS
-  PROCEDURE (FILTER_Y) fily_00,fily_11, fily_12, fily_21, fily_22
-  PROCEDURE (FILTER_Y), POINTER :: fily,filyS
-  PROCEDURE (FILTER_Z) filz_00,filz_11, filz_12, filz_21, filz_22
-  PROCEDURE (FILTER_Z), POINTER :: filz,filzS
+  PROCEDURE (FILTER_X) :: filx_00, filx_11, filx_12, filx_21, filx_22
+  PROCEDURE (FILTER_Y) :: fily_00, fily_11, fily_12, fily_21, fily_22
+  PROCEDURE (FILTER_Z) :: filz_00, filz_11, filz_12, filz_21, filz_22
+  PROCEDURE (FILTER_X), POINTER :: filx=>null(), filxS=>null()
+  PROCEDURE (FILTER_Y), POINTER :: fily=>null(), filyS=>null()
+  PROCEDURE (FILTER_Z), POINTER :: filz=>null(), filzS=>null()
 
 contains
 

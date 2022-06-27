@@ -88,7 +88,7 @@ module decomp_2d_poisson
        real(mytype), dimension(:,:,:), intent(inout) :: rhs
      end subroutine poisson_xxx
   end interface
-  procedure (poisson_xxx), pointer :: poisson
+  procedure (poisson_xxx), pointer :: poisson=>null()
 
   public :: decomp_2d_poisson_init,decomp_2d_poisson_finalize,poisson
 contains
@@ -150,8 +150,14 @@ contains
 #endif
 
     allocate(ax(nx),bx(nx))
+    ax = zero
+    bx = zero
     allocate(ay(ny),by(ny))
+    ay = zero
+    by = zero
     allocate(az(nz),bz(nz))
+    az = zero
+    bz = zero
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
 #ifdef DEBUG 
@@ -169,76 +175,75 @@ contains
     if (bcx==0 .and. bcy==0 .and. bcz==0) then
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
-       allocate(kxyz(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       cw1 = zero
+       allocate(kxyz, source=cw1)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),ny,sp%yst(3):sp%yen(3),5))
+       a3 = zero
     else if (bcx==1 .and. bcy==0 .and. bcz==0) then
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
-       allocate(cw1b(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       cw1 = zero
+       allocate(cw1b, source=cw1)
        allocate(rw1(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
             ph%xst(3):ph%xen(3)))
-       allocate(rw1b(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
-            ph%xst(3):ph%xen(3)))
+       rw1 = zero
+       allocate(rw1b, source=rw1)
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
-       allocate(kxyz(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       rw2 = zero
+       allocate(kxyz, source=cw1)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),ny,sp%yst(3):sp%yen(3),5))
+       a3 = zero
     else if (bcx==0 .and. bcy==1 .and. bcz==0) then
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
-       allocate(rw2b(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
-            ph%yst(3):ph%yen(3)))
+       rw2 = zero
+       allocate(rw2b, source=rw2)
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
+       cw1 = zero
        allocate(cw2(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
             sp%yst(3):sp%yen(3)))
-       allocate(cw22(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2b(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2c(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(kxyz(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
+       cw2 = zero
+       allocate(cw22, cw2b, cw2c, kxyz, source=cw2)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),ny,sp%yst(3):sp%yen(3),5))
+       a3 = zero
     else if (bcx==1 .and. bcy==1) then
        allocate(cw1(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
             sp%xst(3):sp%xen(3)))
-       allocate(cw1b(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))
+       cw1 = zero
+       allocate(cw1b, source=cw1)
        allocate(cw2(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
             sp%yst(3):sp%yen(3)))
-       allocate(cw22(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2b(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
-       allocate(cw2c(sp%yst(1):sp%yen(1),sp%yst(2):sp%yen(2), &
-            sp%yst(3):sp%yen(3)))
+       cw2 = zero
+       allocate(cw22, cw2b, cw2c, source=cw2)
        allocate(rw1(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
             ph%xst(3):ph%xen(3)))
-       allocate(rw1b(ph%xst(1):ph%xen(1),ph%xst(2):ph%xen(2), &
-            ph%xst(3):ph%xen(3)))
+       rw1 = zero
+       allocate(rw1b, source=rw1)
        allocate(rw2(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
             ph%yst(3):ph%yen(3)))
-       allocate(rw2b(ph%yst(1):ph%yen(1),ph%yst(2):ph%yen(2), &
-            ph%yst(3):ph%yen(3)))
+       rw2 = zero
+       allocate(rw2b, source=rw2)
        if (bcz==1) then  
           allocate(rw3(ph%zsz(1),ph%zsz(2),ph%zsz(3)))
+          rw3 = zero
        end if
-       allocate(kxyz(sp%xst(1):sp%xen(1),sp%xst(2):sp%xen(2), &
-            sp%xst(3):sp%xen(3)))    
+       allocate(kxyz, source=cw1)
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
-       allocate(a2(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
+       a = zero
+       allocate(a2, source=a)
        allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))      
+       a3 = zero
     end if
 
 #ifdef DEBUG 
@@ -261,6 +266,8 @@ contains
   subroutine decomp_2d_poisson_finalize
 
     implicit none
+
+    nullify(poisson)
 
     deallocate(ax,bx,ay,by,az,bz)
 
@@ -297,11 +304,12 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine poisson_000(rhs)
 
-    use derivX
-    use derivY
-    use derivZ
+    use x3d_operator_x_data
+    use x3d_operator_y_data
+    use x3d_operator_z_data
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d_fft, only : PHYSICAL_IN_Z
+    use nvtx
 
     ! right-hand-side of Poisson as input
     ! solution of Poisson as output
@@ -319,13 +327,15 @@ contains
 
     integer :: nx,ny,nz, i,j,k
 
-    complex(mytype) :: cx
-    real(mytype) :: rl, iy
-    external cx, rl, iy
+    complex(mytype) :: cw1_tmp
+    real(mytype) :: ntot
 
     nx = nx_global
     ny = ny_global
     nz = nz_global
+    ntot = real(nx, kind=mytype) &
+         * real(ny, kind=mytype) &
+         * real(nz, kind=mytype)
 
     if (.not. fft_initialised) then
        call decomp_2d_fft_init(PHYSICAL_IN_Z)
@@ -333,77 +343,89 @@ contains
     end if
 
     ! compute r2c transform 
+    call nvtxStartRange("call decomp_fft_r2c")
     call decomp_2d_fft_3d(rhs,cw1)
+    call nvtxEndRange
+    !do k = sp%xst(3), sp%xen(3)
+    !   do j = sp%xst(2), sp%xen(2)
+    !      do i = sp%xst(1), sp%xen(1)
+    !         if (abs(cw1(i,j,k)) > 1.0e-4) then
+    !            write(*,*) 'After r2c', i, j, k, cw1(i,j,k)
+    !         end if
+    !      end do
+    !   end do
+    !end do
 
-    ! normalisation
-    cw1 = cw1 / real(nx, kind=mytype) /real(ny, kind=mytype) &
-         / real(nz, kind=mytype)
-
+    call nvtxStartRange("call normalisation")
     do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
-             ! POST PROCESSING IN Z
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bz(k) + tmp2 * az(k), &
-                             tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
-
-             ! POST PROCESSING IN Y
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
-             if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
-
-             ! POST PROCESSING IN X
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
-                             tmp2 * bx(i) - tmp1 * ax(i), kind=mytype)
-             if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
-
-             ! Solve Poisson
-             tmp1 = real(kxyz(i,j,k), kind=mytype)
-             tmp2 = aimag(kxyz(i,j,k))
-             ! CANNOT DO A DIVISION BY ZERO
-             if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
-                cw1(i,j,k) = zero
-             else
-                cw1(i,j,k) = cmplx(real(cw1(i,j,k),kind=mytype) / (-tmp1), &
-                                  aimag(cw1(i,j,k)) / (-tmp2), kind=mytype)
-             end if
-
-             !Print result in spectal space after Poisson
-             !     if (abs(out(i,j,k)) > 1.0e-4) then
-             !        write(*,*) 'AFTER',i,j,k,out(i,j,k),xyzk
-             !     end if
-
-             ! post-processing backward
-
-             ! POST PROCESSING IN Z
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bz(k) - tmp2 * az(k), &
-                            -tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
-
-             ! POST PROCESSING IN Y
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
-             if (j > (ny/2 + 1)) cw1(i,j,k) = -cw1(i,j,k)
-
-             ! POST PROCESSING IN X
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
-                            -tmp2 * bx(i) + tmp1 * ax(i), kind=mytype)
-             if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
-       ! post-processing in spectral space
-
+      ! POST PROCESSING IN Z
+      cw1_tmp = cw1(i,j,k)
+      tmp1 = real(cw1_tmp, kind=mytype)/ntot
+      tmp2 = aimag(cw1_tmp)/ntot
+      cw1_tmp = cmplx(tmp1 * bz(k) + tmp2 * az(k), &
+                      tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
+      
+      ! POST PROCESSING IN Y
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                      tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
+      if (j > (ny/2+1)) cw1_tmp = -cw1_tmp
+      
+      ! POST PROCESSING IN X
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                      tmp2 * bx(i) - tmp1 * ax(i), kind=mytype)
+      if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
+      
+      ! Solve Poisson
+      tmp1 = real(kxyz(i,j,k), kind=mytype)
+      tmp2 = aimag(kxyz(i,j,k))
+      ! CANNOT DO A DIVISION BY ZERO
+      if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
+         cw1_tmp = zero
+      else
+         cw1_tmp = cmplx(real(cw1_tmp,kind=mytype) / (-tmp1), &
+                           aimag(cw1_tmp) / (-tmp2), kind=mytype)
+      end if
+      
+      !Print result in spectal space after Poisson
+      !     if (abs(out(i,j,k)) > 1.0e-4) then
+      !        write(*,*) 'AFTER',i,j,k,out(i,j,k),xyzk
+      !     end if
+      
+      ! post-processing backward
+      
+      ! POST PROCESSING IN Z
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * bz(k) - tmp2 * az(k), &
+                     -tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
+      
+      ! POST PROCESSING IN Y
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                      tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
+      if (j > (ny/2 + 1)) cw1_tmp = -cw1_tmp
+      
+      ! POST PROCESSING IN X
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                     -tmp2 * bx(i) + tmp1 * ax(i), kind=mytype)
+      if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
+      ! post-processing in spectral space
+      cw1(i,j,k) = cw1_tmp
 
     end do
+    call nvtxEndRange
 
     ! compute c2r transform
+    call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)
+    call nvtxEndRange
 
     !   call decomp_2d_fft_finalize
 
@@ -731,11 +753,10 @@ contains
     !
     !***********************************************************
 
-    use derivX 
-    use derivY 
-    use derivZ 
+    use x3d_operator_x_data 
+    use x3d_operator_y_data
+    use x3d_operator_z_data
     use param
-    !use decomp_2d
     use variables
     use decomp_2d_fft
     use x3dprecision, only: sin_prec, cos_prec, pi, twopi

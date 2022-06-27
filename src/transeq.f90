@@ -80,7 +80,7 @@ contains
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
 
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
       ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
       tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
       tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
@@ -94,7 +94,7 @@ contains
     call derx (tc1,uz1,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
 
     ! Convective terms of x-pencil are stored in tg1,th1,ti1
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
       dux1(i,j,k,1) = -half*(td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k))
       duy1(i,j,k,1) = -half*(te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k))
       duz1(i,j,k,1) = -half*(tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k))
@@ -106,7 +106,7 @@ contains
 
     !WORK Y-PENCILS
 
-    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+    do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       td2(i,j,k) = ux2(i,j,k) * uy2(i,j,k)
       te2(i,j,k) = uy2(i,j,k) * uy2(i,j,k)
       tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
@@ -120,7 +120,7 @@ contains
     call dery (tf2,uz2,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
 
     ! Convective terms of y-pencil in tg2,th2,ti2
-    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+    do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       tg2(i,j,k) = -half*(tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k))
       th2(i,j,k) = -half*(th2(i,j,k) + uy2(i,j,k) * te2(i,j,k))
       ti2(i,j,k) = -half*(ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k))
@@ -128,7 +128,7 @@ contains
 
     ! Add a part of the diffusive term if needed
     if (istret /= 0 .and. xnu /= 0) then
-      do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+      do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
         tg2(i,j,k) = tg2(i,j,k) - pp4y(j)*td2(i,j,k)
         th2(i,j,k) = th2(i,j,k) - pp4y(j)*te2(i,j,k)
         ti2(i,j,k) = ti2(i,j,k) - pp4y(j)*tf2(i,j,k)
@@ -154,7 +154,7 @@ contains
     call derz (tf3,uz3,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
-    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+    do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
       ta3(i,j,k) = -half*(tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k))
       tb3(i,j,k) = -half*(th3(i,j,k) + uz3(i,j,k) * te3(i,j,k))
       tc3(i,j,k) = -half*(ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k))
@@ -169,7 +169,7 @@ contains
       call derzz(tf3,uz3,x3d_op_derzz ,zsize(1),zsize(2),zsize(3))
 
       ! Add convective and diffusive terms of z-pencil
-      do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+      do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
          ta3(i,j,k) = ta3(i,j,k) + xnu*td3(i,j,k)
          tb3(i,j,k) = tb3(i,j,k) + xnu*te3(i,j,k)
          tc3(i,j,k) = tc3(i,j,k) + xnu*tf3(i,j,k)
@@ -193,13 +193,13 @@ contains
       ! Add convective and diffusive terms of y-pencil
       if (istret /= 0) then
         ! In this case, a part of the y-diffusive term was added before
-        do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+        do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
           tg2(i,j,k) = tg2(i,j,k) + xnu*ta2(i,j,k)*pp2y(j)
           th2(i,j,k) = th2(i,j,k) + xnu*tb2(i,j,k)*pp2y(j)
           ti2(i,j,k) = ti2(i,j,k) + xnu*tc2(i,j,k)*pp2y(j)
         enddo
       else
-        do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+        do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
           tg2(i,j,k) = tg2(i,j,k) + xnu*ta2(i,j,k)
           th2(i,j,k) = th2(i,j,k) + xnu*tb2(i,j,k)
           ti2(i,j,k) = ti2(i,j,k) + xnu*tc2(i,j,k)
@@ -209,7 +209,7 @@ contains
     endif
 
     ! Combine y-rhs with z-rhs
-    do concurrent (k=1:ysize(3), j=1:ysize(2), i=1:ysize(1))
+    do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       tg2(i,j,k) = tg2(i,j,k) + td2(i,j,k)
       th2(i,j,k) = th2(i,j,k) + te2(i,j,k)
       ti2(i,j,k) = ti2(i,j,k) + tf2(i,j,k)
@@ -229,7 +229,7 @@ contains
       call derxx(tf1,uz1,x3d_op_derxxp,xsize(1),xsize(2),xsize(3))
 
       ! Add convective and diffusive terms of x-pencil
-      do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+      do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
         dux1(i,j,k,1) = dux1(i,j,k,1) + xnu*td1(i,j,k)
         duy1(i,j,k,1) = duy1(i,j,k,1) + xnu*te1(i,j,k)
         duz1(i,j,k,1) = duz1(i,j,k,1) + xnu*tf1(i,j,k)
@@ -237,7 +237,7 @@ contains
     endif
 
     !FINAL SUM: y and z rhs + x rhs
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
       dux1(i,j,k,1) = dux1(i,j,k,1) + ta1(i,j,k)
       duy1(i,j,k,1) = duy1(i,j,k,1) + tb1(i,j,k)
       duz1(i,j,k,1) = duz1(i,j,k,1) + tc1(i,j,k)

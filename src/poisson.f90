@@ -1,6 +1,34 @@
-!Copyright (c) 2012-2022, Xcompact3d
-!This file is part of Xcompact3d (xcompact3d.com)
-!SPDX-License-Identifier: BSD 3-Clause
+!################################################################################
+!This file is part of Xcompact3d.
+!
+!Xcompact3d
+!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
+!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
+!
+!    Xcompact3d is free software: you can redistribute it and/or modify
+!    it under the terms of the GNU General Public License as published by
+!    the Free Software Foundation.
+!
+!    Xcompact3d is distributed in the hope that it will be useful,
+!    but WITHOUT ANY WARRANTY; without even the implied warranty of
+!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!    GNU General Public License for more details.
+!
+!    You should have received a copy of the GNU General Public License
+!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
+!-------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
+!    We kindly request that you cite Xcompact3d/Incompact3d in your
+!    publications and presentations. The following citations are suggested:
+!
+!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
+!    incompressible flows: a simple and efficient method with the quasi-spectral
+!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
+!
+!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
+!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
+!    Methods in Fluids, vol 67 (11), pp 1735-1757
+!################################################################################
 
 module decomp_2d_poisson
 
@@ -10,7 +38,7 @@ module decomp_2d_poisson
                         decomp_info_finalize
   use decomp_2d_fft, only : decomp_2d_fft_init, &
                             decomp_2d_fft_3d,   &
-                            decomp_2d_fft_finalize
+                            decomp_2d_fft_finalize 
   use x3d_transpose
   use param
   use variables
@@ -45,8 +73,8 @@ module decomp_2d_poisson
   complex(mytype), save, allocatable, dimension(:,:,:) :: kxyz
   !wave numbers for stretching in a pentadiagonal matrice
   complex(mytype), save, allocatable, dimension(:,:,:,:) :: a,a2,a3
-  ! work arrays,
-  ! naming convention: cw (complex); rw (real);
+  ! work arrays, 
+  ! naming convention: cw (complex); rw (real); 
   !                    1 = X-pencil; 2 = Y-pencil; 3 = Z-pencil
   real(mytype), allocatable, dimension(:,:,:) :: rw1,rw1b,rw2,rw2b,rw3
   complex(mytype), allocatable, dimension(:,:,:) :: cw1,cw1b,cw2,cw22,cw2b,cw2c
@@ -77,7 +105,7 @@ contains
     implicit none
 
     integer :: nx, ny, nz, i
-
+    
     real(mytype) :: rl, iy
     external  rl, iy
 
@@ -117,7 +145,7 @@ contains
     if (bcy==1) ny=ny-1
     if (bcz==1) nz=nz-1
 
-#ifdef DEBUG
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init start'
 #endif
 
@@ -132,14 +160,14 @@ contains
     bz = zero
     call abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
-#ifdef DEBUG
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init'
 #endif
 
     call decomp_info_init(nx, ny, nz, ph)
     call decomp_info_init(nx, ny, nz/2+1, sp)
 
-#ifdef DEBUG
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init decomp_info_init ok'
 #endif
 
@@ -206,7 +234,7 @@ contains
             ph%yst(3):ph%yen(3)))
        rw2 = zero
        allocate(rw2b, source=rw2)
-       if (bcz==1) then
+       if (bcz==1) then  
           allocate(rw3(ph%zsz(1),ph%zsz(2),ph%zsz(3)))
           rw3 = zero
        end if
@@ -214,17 +242,17 @@ contains
        allocate(a(sp%yst(1):sp%yen(1),ny/2,sp%yst(3):sp%yen(3),5))
        a = zero
        allocate(a2, source=a)
-       allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))
+       allocate(a3(sp%yst(1):sp%yen(1),nym,sp%yst(3):sp%yen(3),5))      
        a3 = zero
     end if
 
-#ifdef DEBUG
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init before waves'
 #endif
 
     call waves()
 
-#ifdef DEBUG
+#ifdef DEBUG 
     if (nrank .eq. 0) write(*,*)'# decomp_2d_poisson_init end'
 #endif
 
@@ -281,6 +309,7 @@ contains
     use x3d_operator_z_data
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d_fft, only : PHYSICAL_IN_Z
+    use nvtx
 
     ! right-hand-side of Poisson as input
     ! solution of Poisson as output
@@ -300,6 +329,7 @@ contains
 
     complex(mytype) :: cw1_tmp
     real(mytype) :: ntot
+    integer, dimension(3) :: dim3d
 
     nx = nx_global
     ny = ny_global
@@ -313,8 +343,10 @@ contains
        fft_initialised = .true.
     end if
 
-    ! compute r2c transform
+    ! compute r2c transform 
+    call nvtxStartRange("call decomp_fft_r2c")
     call decomp_2d_fft_3d(rhs,cw1)
+    call nvtxEndRange
     !do k = sp%xst(3), sp%xen(3)
     !   do j = sp%xst(2), sp%xen(2)
     !      do i = sp%xst(1), sp%xen(1)
@@ -325,6 +357,7 @@ contains
     !   end do
     !end do
 
+    call nvtxStartRange("call normalisation")
     do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
       ! POST PROCESSING IN Z
       cw1_tmp = cw1(i,j,k)
@@ -386,11 +419,25 @@ contains
       if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
       ! post-processing in spectral space
       cw1(i,j,k) = cw1_tmp
+      
 
     end do
-
+    call nvtxEndRange
+#ifdef DEBUG
+    dim3d = shape(cw1)
+    do k = 1, dim3d(3),dim3d(3)/2+1
+      do j = 1, dim3d(2),dim3d(2)/2+1
+        do i = 1, dim3d(1),dim3d(1)/2+1
+          print "(i3,i3,i3,1x,e12.5,1x,e12.5)", i, j, k, real(cw1(i,j,k)),&
+                             aimag(cw1(i,j,k))
+        enddo
+      enddo
+    enddo
+#endif
     ! compute c2r transform
+    call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)
+    call nvtxEndRange
 
     !   call decomp_2d_fft_finalize
 
@@ -402,7 +449,7 @@ contains
 
     use decomp_2d, only : nx_global, ny_global, nz_global
     use decomp_2d_fft, only : PHYSICAL_IN_Z
-
+    
     implicit none
 
     real(mytype), dimension(:,:,:), intent(INOUT) :: rhs
@@ -445,7 +492,7 @@ contains
        fft_initialised = .true.
     end if
 
-    ! compute r2c transform
+    ! compute r2c transform 
     call decomp_2d_fft_3d(rhs,cw1)
 
     ! normalisation
@@ -539,13 +586,13 @@ contains
              tmp1 = rl(kxyz(i,j,k))
              tmp2 = iy(kxyz(i,j,k))
              ! CANNOT DO A DIVISION BY ZERO
-             if ((abs(tmp1) < epsilon).and.(abs(tmp2) < epsilon)) then
+             if ((abs(tmp1) < epsilon).and.(abs(tmp2) < epsilon)) then    
                 cw1b(i,j,k)=cx(zero, zero)
              end if
              if ((abs(tmp1) < epsilon).and.(abs(tmp2) >= epsilon)) then
                 cw1b(i,j,k)=cx(zero, iy(cw1b(i,j,k)) / (-tmp2))
              end if
-             if ((abs(tmp1) >= epsilon).and.(abs(tmp2) < epsilon)) then
+             if ((abs(tmp1) >= epsilon).and.(abs(tmp2) < epsilon)) then    
                 cw1b(i,j,k)=cx(rl(cw1b(i,j,k)) / (-tmp1), zero)
              end if
              if ((abs(tmp1) >= epsilon).and.(abs(tmp2) >= epsilon)) then
@@ -565,7 +612,7 @@ contains
     do k = sp%xst(3), sp%xen(3)
        do j = sp%xst(2), sp%xen(2)
           cw1(1,j,k) = cw1b(1,j,k)
-          do i = 2, nx
+          do i = 2, nx 
              tmp1 = rl(cw1b(i,j,k))
              tmp2 = iy(cw1b(i,j,k))
              tmp3 = rl(cw1b(nx-i+2,j,k))
@@ -655,7 +702,7 @@ contains
   subroutine abxyz(ax,ay,az,bx,by,bz,nx,ny,nz,bcx,bcy,bcz)
 
     use param
-    use x3d_precision, only : pi
+    use x3d_precision, only : pi 
 
     implicit none
 
@@ -718,7 +765,7 @@ contains
     !
     !***********************************************************
 
-    use x3d_operator_x_data
+    use x3d_operator_x_data 
     use x3d_operator_y_data
     use x3d_operator_z_data
     use param
@@ -729,7 +776,7 @@ contains
     implicit none
 
     integer :: i,j,k
-    real(mytype) :: w,wp,w1,w1p
+    real(mytype) :: w,wp,w1,w1p 
     complex(mytype) :: xyzk
     complex(mytype) :: ytt,xtt,ztt,yt1,xt1,yt2,xt2
     complex(mytype) :: xtt1,ytt1,ztt1,zt1,zt2,tmp1,tmp2,tmp3
@@ -742,29 +789,9 @@ contains
     real(mytype) :: ytt_rl,xtt_rl,ztt_rl,yt1_rl,xt1_rl,zt1_rl
     real(mytype) :: xtt1_rl,ytt1_rl,ztt1_rl
 
-    interface
-       pure function cx(realpart,imaginarypart)
-          use decomp_2d, only : mytype
-          implicit none
-          !$acc routine seq
-          complex(mytype) :: cx
-          real(mytype), intent(in) :: realpart, imaginarypart
-       end function cx
-       pure function rl(complexnumber)
-          use decomp_2d, only : mytype
-          implicit none
-          !$acc routine seq
-          complex(mytype), intent(in) :: complexnumber
-          real(mytype) :: rl
-       end function rl
-       pure function iy(complexnumber)
-          use decomp_2d, only : mytype
-          implicit none
-          !$acc routine seq
-          complex(mytype), intent(in) :: complexnumber
-          real(mytype) :: iy
-       end function iy
-    end interface
+    complex(mytype) :: cx
+    real(mytype) :: rl, iy
+    external cx, rl, iy
 
     xkx = zero
     xk2 = zero
@@ -799,7 +826,7 @@ contains
           xkx(i) = cx_one_one * nxm * wp / xlx
           exs(i) = cx_one_one * nxm * w / xlx
           xk2(i) = cx_one_one * (nxm * wp / xlx)**2
-!
+!      
        enddo
        xkx(1) = zero
        exs(1) = zero
@@ -817,7 +844,7 @@ contains
           if (istret /= 0) yky(j) = cx_one_one * (ny * wp)
           eys(j) = cx_one_one * (ny * w / yly)
           yk2(j) = cx_one_one * (ny * wp / yly)**2
-!
+!      
        enddo
        do j = ny/2 + 2, ny
           yky(j) = yky(ny-j+2)
@@ -834,7 +861,7 @@ contains
           if (istret /= 0) yky(j) = cx_one_one * (nym * wp)
           eys(j)=cx_one_one * (nym * w / yly)
           yk2(j)=cx_one_one * (nym * wp / yly)**2
-!
+!      
        enddo
        yky(1) = zero
        eys(1) = zero
@@ -870,123 +897,150 @@ contains
     endif
 
     if ((bcx == 0).and.(bcz == 0).and.(bcy /= 0)) then
-
-       do concurrent (k=sp%yst(3):sp%yen(3), j=sp%yst(2):sp%yen(2), i=sp%yst(1):sp%yen(1))
-          rlezs = rl(ezs(k)) * dz
-          rleys = rl(eys(j)) * dy
-          rlexs = rl(exs(i)) * dx
+       do k = sp%yst(3), sp%yen(3)
 !
-          xtt_rl = two * &
+          rlezs = rl(ezs(k)) * dz
+!
+          do j = sp%yst(2), sp%yen(2)
+!
+             rleys = rl(eys(j)) * dy
+!
+             do i = sp%yst(1), sp%yen(1)
+!
+                rlexs = rl(exs(i)) * dx
+!
+                xtt_rl = two * &
      (bicix6 * cos(rlexs * onepfive) + cicix6 * cos(rlexs * twopfive) + dicix6 * cos(rlexs * threepfive))
 !
-          ytt_rl = two * &
+                ytt_rl = two * &
      (biciy6 * cos(rleys * onepfive) + ciciy6 * cos(rleys * twopfive) + diciy6 * cos(rleys * threepfive))
 !
-          ztt_rl = two * &
+                ztt_rl = two * &
      (biciz6 * cos(rlezs * onepfive) + ciciz6 * cos(rlezs * twopfive) + diciz6 * cos(rlezs * threepfive))
 !
-          xtt1_rl = two * aicix6 * cos(rlexs * half)
-          ytt1_rl = two * aiciy6 * cos(rleys * half)
-          ztt1_rl = two * aiciz6 * cos(rlezs * half)
+                xtt1_rl = two * aicix6 * cos(rlexs * half)
+                ytt1_rl = two * aiciy6 * cos(rleys * half)
+                ztt1_rl = two * aiciz6 * cos(rlezs * half)
 !
-          xt1_rl = one + two * ailcaix6 * cos(rlexs)
-          yt1_rl = one + two * ailcaiy6 * cos(rleys)
-          zt1_rl = one + two * ailcaiz6 * cos(rlezs)
+                xt1_rl = one + two * ailcaix6 * cos(rlexs)
+                yt1_rl = one + two * ailcaiy6 * cos(rleys)
+                zt1_rl = one + two * ailcaiz6 * cos(rlezs)
 !
-          xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
-          yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
-          zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)
+                xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)
 !
-          xyzk = xt2 + yt2 + zt2
-          kxyz(i,j,k) = xyzk
+                xyzk = xt2 + yt2 + zt2
+                kxyz(i,j,k) = xyzk
+!
+             enddo
+          enddo
        enddo
 
     else
        if (bcz==0) then
-
-          do concurrent (k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2), i=sp%xst(1):sp%xen(1))
-             rlezs = rl(ezs(k)) * dz
-             rleys = rl(eys(j)) * dy
-             rlexs = rl(exs(i)) * dx
+          do k = sp%xst(3),sp%xen(3)
 !
-             xtt_rl = two * &
+             rlezs = rl(ezs(k)) * dz
+!
+             do j = sp%xst(2),sp%xen(2)
+!
+                rleys = rl(eys(j)) * dy
+!
+                do i = sp%xst(1),sp%xen(1)
+!
+                   rlexs = rl(exs(i)) * dx
+!
+                   xtt_rl = two * &  
   (bicix6 * cos(rlexs * onepfive) + cicix6 * cos(rlexs * twopfive) + dicix6 * cos(rlexs * threepfive))
 !
-             ytt_rl = two * &
+                   ytt_rl = two * &
   (biciy6 * cos(rleys * onepfive) + ciciy6 * cos(rleys * twopfive) + diciy6 * cos(rleys * threepfive))
 !
-             ztt_rl = two * &
+                   ztt_rl = two * &
   (biciz6 * cos(rlezs * onepfive) + ciciz6 * cos(rlezs * twopfive) + diciz6 * cos(rlezs * threepfive))
 !
-             xtt1_rl = two * aicix6 * cos(rlexs * half)
-             ytt1_rl = two * aiciy6 * cos(rleys * half)
-             ztt1_rl = two * aiciz6 * cos(rlezs * half)
+                   xtt1_rl = two * aicix6 * cos(rlexs * half)
+                   ytt1_rl = two * aiciy6 * cos(rleys * half)
+                   ztt1_rl = two * aiciz6 * cos(rlezs * half)
 !
-             xt1_rl = one + two * ailcaix6 * cos(rlexs)
-             yt1_rl = one + two * ailcaiy6 * cos(rleys)
-             zt1_rl = one + two * ailcaiz6 * cos(rlezs)
+                   xt1_rl = one + two * ailcaix6 * cos(rlexs)
+                   yt1_rl = one + two * ailcaiy6 * cos(rleys)
+                   zt1_rl = one + two * ailcaiz6 * cos(rlezs)
 !
-             xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
-             yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
-             zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)
+                   xt2 = xk2(i) * ((((ytt1_rl + ytt_rl) / yt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                   yt2 = yk2(j) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ztt1_rl + ztt_rl) / zt1_rl))**2)
+                   zt2 = zk2(k) * ((((xtt1_rl + xtt_rl) / xt1_rl) * ((ytt1_rl + ytt_rl) / yt1_rl))**2)
 !
-             xyzk = xt2 + yt2 + zt2
-             kxyz(i,j,k) = xyzk
+                   xyzk = xt2 + yt2 + zt2
+                   kxyz(i,j,k) = xyzk
+!
+                enddo
+             enddo
           enddo
 
        else
-
-          do concurrent (k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2), i=sp%xst(1):sp%xen(1))
+          do k = sp%xst(3), sp%xen(3)
+!
              rlezs = rl(ezs(k)) * dz
              iyezs = iy(ezs(k)) * dz
-             rleys = rl(eys(j)) * dy
-             rlexs = rl(exs(i)) * dx
 !
-             xtt_rl = two * &
+             do j = sp%xst(2), sp%xen(2)
+!
+                rleys = rl(eys(j)) * dy
+!
+                do i = sp%xst(1), sp%xen(1)  
+!
+                   rlexs = rl(exs(i)) * dx
+!
+                   xtt_rl = two * &
   (bicix6 * cos(rlexs * onepfive) + cicix6 * cos(rlexs * twopfive) + dicix6 * cos(rlexs * threepfive))
 !
-             ytt_rl = two * &
+                   ytt_rl = two * &
   (biciy6 * cos(rleys * onepfive) + ciciy6 * cos(rleys * twopfive) + diciy6 * cos(rleys * threepfive))
 !
-             ztt = two * cx( &
+                   ztt = two * cx( &
   biciz6 * cos(rlezs * onepfive) + ciciz6 * cos(rlezs * twopfive) + diciz6 * cos(rlezs * threepfive),&
   biciz6 * cos(iyezs * onepfive) + ciciz6 * cos(iyezs * twopfive) + diciz6 * cos(iyezs * threepfive))
 !
-             xtt1_rl = two * aicix6 * cos(rlexs * half)
-             ytt1_rl = two * aiciy6 * cos(rleys * half)
+                   xtt1_rl = two * aicix6 * cos(rlexs * half)
+                   ytt1_rl = two * aiciy6 * cos(rleys * half)
 !
-             ztt1 = two * cx(aiciz6 * cos(rlezs * half),&
-                             aiciz6 * cos(iyezs * half))
+                   ztt1 = two * cx(aiciz6 * cos(rlezs * half),&
+                                   aiciz6 * cos(iyezs * half))
 !
-             xt1_rl = one + two * ailcaix6 * cos(rlexs)
-             yt1_rl = one + two * ailcaiy6 * cos(rleys)
+                   xt1_rl = one + two * ailcaix6 * cos(rlexs)
+                   yt1_rl = one + two * ailcaiy6 * cos(rleys)
 !
-             zt1 = cx((one + two * ailcaiz6 * cos(rlezs)),&
-                      (one + two * ailcaiz6 * cos(iyezs)))
+                   zt1 = cx((one + two * ailcaiz6 * cos(rlezs)),&
+                            (one + two * ailcaiz6 * cos(iyezs)))
 !
-             tmp1 = cx(rl(ztt1 + ztt) / rl(zt1),&
-                       iy(ztt1 + ztt) / iy(zt1))
+                   tmp1 = cx(rl(ztt1 + ztt) / rl(zt1),&
+                             iy(ztt1 + ztt) / iy(zt1))
 !
-             tmp2 = cx_one_one * (ytt1_rl + ytt_rl) / yt1_rl
+                   tmp2 = cx_one_one * (ytt1_rl + ytt_rl) / yt1_rl
 !
-             tmp3 = cx_one_one * (xtt1_rl + xtt_rl) / xt1_rl
+                   tmp3 = cx_one_one * (xtt1_rl + xtt_rl) / xt1_rl
 !
-             tmp4 = rl(tmp2)**2 * cx(rl(tmp1)**2, iy(tmp1)**2)
+                   tmp4 = rl(tmp2)**2 * cx(rl(tmp1)**2, iy(tmp1)**2)
 !
-             tmp5 = rl(tmp3)**2 * cx(rl(tmp1)**2, iy(tmp1)**2)
+                   tmp5 = rl(tmp3)**2 * cx(rl(tmp1)**2, iy(tmp1)**2)
 !
-             tmp6 = (rl(tmp3) * rl(tmp2))**2 * cx_one_one
+                   tmp6 = (rl(tmp3) * rl(tmp2))**2 * cx_one_one
 !
-             tmp1 = cx(rl(tmp4) * rl(xk2(i)), iy(tmp4) * iy(xk2(i)))
+                   tmp1 = cx(rl(tmp4) * rl(xk2(i)), iy(tmp4) * iy(xk2(i)))
 !
-             tmp2 = cx(rl(tmp5) * rl(yk2(j)), iy(tmp5) * iy(yk2(j)))
+                   tmp2 = cx(rl(tmp5) * rl(yk2(j)), iy(tmp5) * iy(yk2(j)))
 !
-             tmp3 = rl(tmp6) * zk2(k)
+                   tmp3 = rl(tmp6) * zk2(k)
 !
-             xyzk = tmp1 + tmp2 + tmp3
-             kxyz(i,j,k) = xyzk
+                   xyzk = tmp1 + tmp2 + tmp3
+                   kxyz(i,j,k) = xyzk
+!
+                enddo
+             enddo
           enddo
-
+!
        endif
     endif
 

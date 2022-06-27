@@ -1,62 +1,36 @@
-#=======================================================================
-# Makefile for Xcompact3D
-#=======================================================================
-# Choose pre-processing options
-#   -DDOUBLE_PREC - use double-precision
-#   -DSAVE_SINGLE - Save 3D data in single-precision
-#   -DDEBG        - debuggin xcompact3d.f90
-# generate a Git version string
+#
 GIT_VERSION := $(shell git describe --tag --long --always)
 
 DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
 
-LCL = local# local,lad,sdu,archer
-CMP = nvhpc# intel,gcc,nagfor,cray,nvhpc
-FFT = generic# fftw3,fftw3_f03,generic,mkl
-
-BUILD ?= # debug can be used with gcc
-FCFLAGS ?= # user can set default compiler flags
-LDFLAGS ?= # user can set default linker flags
-FFLAGS = $(FCFLAGS)
-LFLAGS = $(LDFLAGS)
+IVER = 17# 15,16,17,18
+CMP = nvhpc# intel,gcc,nvhpc
+FFT = generic# generic,fftw3,mkl,cufft
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
-  FC = mpiifort
-  FFLAGS += -fpp -O3 # -mavx2 -march=core-avx2 -mtune=core-avx2
-  FFLAGS += -fopenmp
-  LFLAGS += -fopenmp
+FC = mpiifort
+FFLAGS = -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
+FFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
-  FC = mpif90
-  FFLAGS += -cpp
-  ifeq "$(shell expr `gfortran -dumpversion | cut -f1 -d.` \>= 10)" "1"
-    FFLAGS += -fallow-argument-mismatch
-  endif
-  ifeq ($(BUILD),debug)
-    DEFS += -DDEBUG
-    FFLAGS += -g3 -Og
-    FFLAGS += -ffpe-trap=invalid,zero -fcheck=all -fimplicit-none
-  else
-    FFLAGS += -O3 -march=native
-    FFLAGS += -fopenmp -ftree-parallelize-loops=12
-    LFLAGS += -fopenmp
-  endif
+FC = mpif90
+FFLAGS = -cpp -O3 -march=native
+FFLAGS += -fopenmp -ftree-parallelize-loops=12
 else ifeq ($(CMP),nagfor)
-  FC = mpinagfor
-  FFLAGS += -fpp
+FC = mpinagfor
+FFLAGS = -fpp
 else ifeq ($(CMP),cray)
-  FC = ftn
-  FFLAGS += -eF -g -O3 -N 1023
-  FFLAGS += -h omp -h thread_do_concurrent
-  LFLAGS += -h omp -h thread_do_concurrent
+FC = ftn
+FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
-  FC = mpif90
-  #FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-  FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
-  #FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda 
-  LFLAGS += -acc -lnvhpcwrapnvtx
+FC = mpif90
+#FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
+FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
+#FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft  
 endif
 
+
+MODDIR = ./mod
 DECOMPDIR = ./decomp2d
 SRCDIR = ./src
 
@@ -81,21 +55,22 @@ else ifeq ($(FFT),fftw3_f03)
   LIBFFT=-L$(FFTW3_PATH)/lib -lfftw3 -lfftw3f
 else ifeq ($(FFT),generic)
   INC=
-  LIBFFT=
+  LIBFFT=#-lnvhpcwrapnvtx
 else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-	INC=-I$(MKLROOT)/include
+  INC=-I$(MKLROOT)/include
 else ifeq ($(FFT),cufft)
   #CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
   INC=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/compilers/include
   #LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
 endif
 
-#######OPTIONS settings###########
-OPT = -I$(SRCDIR) -I$(DECOMPDIR)
-LINKOPT = $(LFLAGS)
+INC=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/
 
+#######OPTIONS settings###########
+OPT = -I$(SRCDIR) -I$(DECOMPDIR) 
+LINKOPT = $(FFLAGS) -lnvhpcwrapnvtx
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 
@@ -105,12 +80,19 @@ xcompact3d : $(OBJDECOMP) $(OBJ)
 	$(FC) -o $@ $(LINKOPT) $(OBJDECOMP) $(OBJ) $(LIBFFT)
 
 $(OBJDECOMP):$(DECOMPDIR)%.o : $(DECOMPDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(INC) -c $<
+	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
 	mv $(@F) ${DECOMPDIR}
+	#mv *.mod ${DECOMPDIR}
+
 
 $(OBJ):$(SRCDIR)%.o : $(SRCDIR)%.f90
-	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(INC) -c $<
+	$(FC) $(FFLAGS) $(OPT) $(DEFS) $(DEFS2) $(INC) -c $<
 	mv $(@F) ${SRCDIR}
+	#mv *.mod ${SRCDIR}
+
+## This %.o : %.f90 doesn't appear to be called...
+%.o : %.f90
+	$(FC) $(FFLAGS) $(DEFS) $(DEFS2) $(INC) -c $<
 
 .PHONY: post
 post:

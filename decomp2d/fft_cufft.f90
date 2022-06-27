@@ -236,31 +236,31 @@ module decomp_2d_fft
     else if (format == PHYSICAL_IN_Z) then
 
        ! For C2C transforms
-       call plan_1m_z(plan(-1,3), ph, CUFFT_Z2Z,ws)
+       call plan_1m_z(plan(-1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(-1,2), ph, CUFFT_Z2Z,ws) 
+       call plan_1m_y(plan(-1,2), ph, CUFFT_C2C,ws) 
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(-1,1), ph, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan(-1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan( 1,1), ph, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan( 1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan( 1,2), ph, CUFFT_Z2Z,ws)
+       call plan_1m_y(plan( 1,2), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan( 1,3), ph, CUFFT_Z2Z,ws)
+       call plan_1m_z(plan( 1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
 
        ! For R2C/C2R tranforms
-       call plan_1m_z(plan(0,3), ph, CUFFT_D2Z,ws)
+       call plan_1m_z(plan(0,3), ph, CUFFT_R2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(0,2), sp, CUFFT_Z2Z,ws)
+       call plan_1m_y(plan(0,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(0,1), sp, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan(0,1), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(2,1), sp, CUFFT_Z2Z,ws)
+       call plan_1m_x(plan(2,1), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(2,2), sp, CUFFT_Z2Z,ws)
+       call plan_1m_y(plan(2,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(2,3), sp, CUFFT_Z2R,ws)
+       call plan_1m_z(plan(2,3), sp, CUFFT_C2R,ws)
        cufft_ws = max (cufft_ws,ws)
     end if
 #endif

@@ -148,7 +148,6 @@ module param
   real(mytype),parameter :: eight=8._mytype
   real(mytype),parameter :: nine=9._mytype
   real(mytype),parameter :: ten=10._mytype
-
   complex(mytype),parameter :: cx_one_one=cmplx(one, one, kind=mytype)
 
 end module param

@@ -23,7 +23,7 @@ LFLAGS = $(LDFLAGS)
 #######CMP settings###########
 ifeq ($(CMP),intel)
   FC = mpiifort
-  FFLAGS += -fpp -O3 -mavx2 -march=core-avx2 -mtune=core-avx2
+  FFLAGS += -fpp -O3 # -mavx2 -march=core-avx2 -mtune=core-avx2
   FFLAGS += -fopenmp
   LFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
@@ -51,9 +51,9 @@ else ifeq ($(CMP),cray)
   LFLAGS += -h omp -h thread_do_concurrent
 else ifeq ($(CMP),nvhpc)
   FC = mpif90
-  FFLAGS += -cpp -O3 -march=native
-  FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-#  FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
+  #FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
+  FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
+  #FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda 
   LFLAGS += -acc -lnvhpcwrapnvtx
 endif
 
@@ -70,7 +70,7 @@ SRC = $(SRCDIR)/x3d_precision.f90 $(SRCDIR)/module_param.f90 $(SRCDIR)/time_inte
 ifeq ($(FFT),fftw3)
   #FFTW3_PATH=/usr
   #FFTW3_PATH=/usr/lib64
-  FFTW3_PATH=/usr/local/Cellar/fftw/3.3.7_1
+  FFTW3_PATH=/scratch21/eb/gpu/software/FFTW/3.3.10-gompi-2021b
   INC=-I$(FFTW3_PATH)/include
   LIBFFT=-L$(FFTW3_PATH) -lfftw3 -lfftw3f
 else ifeq ($(FFT),fftw3_f03)
@@ -85,12 +85,17 @@ else ifeq ($(FFT),generic)
 else ifeq ($(FFT),mkl)
   SRCDECOMP := $(DECOMPDIR)/mkl_dfti.f90 $(SRCDECOMP)
   LIBFFT=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread
-  INC=-I$(MKLROOT)/include
+	INC=-I$(MKLROOT)/include
+else ifeq ($(FFT),cufft)
+  #CUFFT_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/22.1/math_libs                                
+  INC=-I${NVHPC}/Linux_x86_64/${EBVERSIONNVHPC}/compilers/include
+  #LIBFFT=-L$(CUFFT_PATH)/lib64 -Mcudalib=cufft 
 endif
 
 #######OPTIONS settings###########
 OPT = -I$(SRCDIR) -I$(DECOMPDIR)
 LINKOPT = $(LFLAGS)
+
 #-----------------------------------------------------------------------
 # Normally no need to change anything below
 

@@ -163,6 +163,7 @@ subroutine init_xcompact3d(ndt_max)
   call listing()
   call case_listing()
 
+  write(*,*) 'Decomp2d_init'
   call decomp_2d_init(nx,ny,nz,p_row,p_col)
   call init_coarser_mesh_statS(nstat,nstat,nstat,.true.)    !start from 1 == true
   call init_coarser_mesh_statV(nvisu,nvisu,nvisu,.true.)    !start from 1 == true

@@ -16,7 +16,13 @@ module decomp_2d
 
   use MPI
   use, intrinsic :: iso_fortran_env, only : real32, real64
-  
+#if defined(_GPU)
+  use cudafor
+#if defined(_NCCL)
+  use nccl
+#endif
+#endif
+
   implicit none
 
   private        ! Make everything private unless declared public
@@ -64,6 +70,12 @@ module decomp_2d
 
   ! flags for periodic condition in three dimensions
   logical, save :: periodic_x, periodic_y, periodic_z
+
+#if defined(_GPU)
+#if defined(_NCCL)
+  integer, save :: row_rank, col_rank
+#endif
+#endif
 
 #ifdef SHM
   ! derived type to store shared-memory info
@@ -147,6 +159,20 @@ module decomp_2d
   real(mytype),    allocatable, dimension(:) :: work1_r, work2_r
   complex(mytype), allocatable, dimension(:) :: work1_c, work2_c
 
+#if defined(_GPU)
+  real(mytype), allocatable, dimension(:), device :: work1_r_d, work2_r_d
+  complex(mytype), allocatable, dimension(:), device :: work1_c_d, work2_c_d
+
+#if defined(_NCCL)
+  integer col_comm_size, row_comm_size
+  type(ncclResult) :: nccl_stat
+  integer, allocatable, dimension(:) :: local_to_global_col, local_to_global_row
+  type(ncclUniqueId) :: nccl_uid_2decomp
+  type(ncclComm) :: nccl_comm_2decomp
+  integer cuda_stat, ierr
+  integer(kind=cuda_stream_kind) :: cuda_stream_2decomp
+#endif
+#endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! To define smaller arrays using every several mesh points
   integer, save, dimension(3), public :: xszS,yszS,zszS,xstS,ystS,zstS,xenS,yenS,zenS
@@ -161,13 +187,6 @@ module decomp_2d
   public :: decomp_2d_init, decomp_2d_finalize, &
        transpose_x_to_y, transpose_y_to_z, &
        transpose_z_to_y, transpose_y_to_x, &
-#ifdef OCC
-       transpose_x_to_y_start, transpose_y_to_z_start, &
-       transpose_z_to_y_start, transpose_y_to_x_start, &
-       transpose_x_to_y_wait, transpose_y_to_z_wait, &
-       transpose_z_to_y_wait, transpose_y_to_x_wait, &
-       transpose_test, &
-#endif
        decomp_info_init, decomp_info_finalize, partition, &
        init_coarser_mesh_statS,fine_to_coarseS,&
        init_coarser_mesh_statV,fine_to_coarseV,&
@@ -213,48 +232,6 @@ module decomp_2d
      module procedure transpose_y_to_x_real
      module procedure transpose_y_to_x_complex
   end interface transpose_y_to_x
-
-#ifdef OCC
-  interface transpose_x_to_y_start
-     module procedure transpose_x_to_y_real_start
-     module procedure transpose_x_to_y_complex_start
-  end interface transpose_x_to_y_start
-
-  interface transpose_y_to_z_start
-     module procedure transpose_y_to_z_real_start
-     module procedure transpose_y_to_z_complex_start
-  end interface transpose_y_to_z_start
-
-  interface transpose_z_to_y_start
-     module procedure transpose_z_to_y_real_start
-     module procedure transpose_z_to_y_complex_start
-  end interface transpose_z_to_y_start
-
-  interface transpose_y_to_x_start
-     module procedure transpose_y_to_x_real_start
-     module procedure transpose_y_to_x_complex_start
-  end interface transpose_y_to_x_start
-
-  interface transpose_x_to_y_wait
-     module procedure transpose_x_to_y_real_wait
-     module procedure transpose_x_to_y_complex_wait
-  end interface transpose_x_to_y_wait
-
-  interface transpose_y_to_z_wait
-     module procedure transpose_y_to_z_real_wait
-     module procedure transpose_y_to_z_complex_wait
-  end interface transpose_y_to_z_wait
-
-  interface transpose_z_to_y_wait
-     module procedure transpose_z_to_y_real_wait
-     module procedure transpose_z_to_y_complex_wait
-  end interface transpose_z_to_y_wait
-
-  interface transpose_y_to_x_wait
-     module procedure transpose_y_to_x_real_wait
-     module procedure transpose_y_to_x_complex_wait
-  end interface transpose_y_to_x_wait
-#endif
 
   interface update_halo
      module procedure update_halo_real
@@ -478,6 +455,33 @@ contains
     if (nrank==0) write(*,*) 'Padded ALLTOALL optimisation on'
 #endif 
 
+#if defined(_GPU)
+#if defined(_NCCL)
+    call MPI_COMM_RANK(DECOMP_2D_COMM_COL,col_rank,ierror)
+    call MPI_COMM_RANK(DECOMP_2D_COMM_ROW,row_rank,ierror)
+    call MPI_COMM_SIZE(DECOMP_2D_COMM_COL,col_comm_size,ierror)
+    call MPI_COMM_SIZE(DECOMP_2D_COMM_ROW,row_comm_size,ierror)
+
+    allocate(local_to_global_col(col_comm_size), local_to_global_row(row_comm_size))
+    
+    local_to_global_col(:) = 0
+    local_to_global_row(:) = 0
+    local_to_global_col(col_rank+1) = nrank
+    local_to_global_row(row_rank+1) = nrank
+    
+    call mpi_allreduce(MPI_IN_PLACE,local_to_global_col,col_comm_size,MPI_INTEGER,MPI_SUM,DECOMP_2D_COMM_COL,ierr)
+    call mpi_allreduce(MPI_IN_PLACE,local_to_global_row,row_comm_size,MPI_INTEGER,MPI_SUM,DECOMP_2D_COMM_ROW,ierr)
+
+    if (nrank .eq. 0) then
+       nccl_stat = ncclGetUniqueId(nccl_uid_2decomp)
+    end if
+    call MPI_Bcast(nccl_uid_2decomp, int(sizeof(ncclUniqueId)), MPI_BYTE, 0, MPI_COMM_WORLD, ierr)
+
+    nccl_stat = ncclCommInitRank(nccl_comm_2decomp, nproc, nccl_uid_2decomp, nrank)
+    cuda_stat = cudaStreamCreate(cuda_stream_2decomp)
+#endif
+#endif
+
     return
   end subroutine decomp_2d_init
 
@@ -505,7 +509,14 @@ contains
 
     decomp_buf_size = 0
     deallocate(work1_r, work2_r, work1_c, work2_c)
-    
+#if defined(_GPU)
+    deallocate(work1_r_d, work2_r_d, work1_c_d, work2_c_d)
+
+#if defined(_NCCL)
+    nccl_stat = ncclCommDestroy(nccl_comm_2decomp)
+#endif
+#endif
+
     return
   end subroutine decomp_2d_finalize
 
@@ -600,6 +611,36 @@ contains
     ! *** TODO: consider how to share the real/complex buffers 
     if (buf_size > decomp_buf_size) then
        decomp_buf_size = buf_size
+#if defined(_GPU)
+       if (allocated(work1_r_d)) deallocate(work1_r_d)
+       if (allocated(work2_r_d)) deallocate(work2_r_d)
+       if (allocated(work1_c_d)) deallocate(work1_c_d)
+       if (allocated(work2_c_d)) deallocate(work2_c_d)
+       allocate(work1_r_d(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
+       allocate(work1_c_d(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
+       allocate(work2_r_d(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
+       allocate(work2_c_d(buf_size), STAT=status)
+       if (status /= 0) then
+          errorcode = 2
+          call decomp_2d_abort(__FILE__, __LINE__, errorcode, &
+               'Out of memory when allocating 2DECOMP workspace')
+       end if
+#endif
        if (allocated(work1_r)) deallocate(work1_r)
        if (allocated(work2_r)) deallocate(work2_r)
        if (allocated(work1_c)) deallocate(work1_c)

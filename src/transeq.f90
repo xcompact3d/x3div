@@ -64,6 +64,18 @@ contains
 
 
     integer :: i,j,k,is
+    integer :: xsz1, xsz2, xsz3
+    integer :: ysz1, ysz2, ysz3
+    integer :: zsz1, zsz2, zsz3
+    xsz1=xsize(1)
+    xsz2=xsize(2)
+    xsz3=xsize(3)
+    ysz1=ysize(1)
+    ysz2=ysize(2)
+    ysz3=ysize(3)
+    zsz1=zsize(1)
+    zsz2=zsize(2)
+    zsz3=zsize(3)
 
     !SKEW SYMMETRIC FORM
     !WORK X-PENCILS
@@ -128,7 +140,7 @@ contains
     call x3d_transpose_y_to_z(uz2,uz3)
 
     !WORK Z-PENCILS
-    do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
+    do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
       td3(i,j,k) = ux3(i,j,k) * uz3(i,j,k)
       te3(i,j,k) = uy3(i,j,k) * uz3(i,j,k)
       tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)

@@ -74,6 +74,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
     TYPE(DECOMP_INFO), intent(IN) :: decomp
@@ -105,12 +107,15 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
     TYPE(DECOMP_INFO), intent(IN) :: decomp
 
     integer :: i,j,k
 
+#if 1
     !$acc parallel loop gang vector collapse(2) private(buf, scratch)
     do k=1,decomp%ysz(3)
        do i=1,decomp%ysz(1)
@@ -124,6 +129,17 @@ module decomp_2d_fft
        end do
     end do
     !$acc end parallel loop
+#else
+    do concurrent (k=1:decomp%ysz(3), i=1:decomp%ysz(1))
+       do concurrent (j=1:decomp%ysz(2))
+          buf(j) = inout(i,j,k)
+       end do
+       call spcfft(buf,decomp%ysz(2),isign,scratch)
+       do concurrent (j=1:decomp%ysz(2))
+          inout(i,j,k) = buf(j)
+       end do
+    end do
+#endif
 
     return
 
@@ -135,6 +151,8 @@ module decomp_2d_fft
     !$acc routine(spcfft) seq
 
     implicit none
+
+    !$acc routine(spcfft) seq
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
     integer, intent(IN) :: isign
@@ -166,6 +184,8 @@ module decomp_2d_fft
     !$acc routine(spcfft) seq
 
     implicit none
+
+    !$acc routine(spcfft) seq
 
     real(mytype), dimension(:,:,:), intent(IN)  ::  input
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
@@ -207,6 +227,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     real(mytype), dimension(:,:,:), intent(IN)  ::  input
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
 
@@ -246,6 +268,8 @@ module decomp_2d_fft
     !$acc routine(spcfft) seq
 
     implicit none
+
+    !$acc routine(spcfft) seq
 
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
@@ -294,6 +318,8 @@ module decomp_2d_fft
 
     implicit none
 
+    !$acc routine(spcfft) seq
+
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
 
@@ -327,5 +353,5 @@ module decomp_2d_fft
 
 #include "fft_common_3d.f90"
 
-
+  
 end module decomp_2d_fft

@@ -86,7 +86,6 @@ contains
     tg1(:,:,:) = td1(:,:,:) + ux1(:,:,:) * ta1(:,:,:)
     th1(:,:,:) = te1(:,:,:) + ux1(:,:,:) * tb1(:,:,:)
     ti1(:,:,:) = tf1(:,:,:) + ux1(:,:,:) * tc1(:,:,:)
-    ! TODO: save the x-convective terms already in dux1, duy1, duz1
 
     call test_du(ta1)
     
@@ -137,19 +136,27 @@ contains
     call test_dw(tf3)
     
     !WORK Y-PENCILS
+    !z-terms back in Y
     call transpose_z_to_y(ta3,td2)
     call transpose_z_to_y(tb3,te2)
     call transpose_z_to_y(tc3,tf2)
 
     !WORK X-PENCILS
+    !y-terms back in X
+    call transpose_y_to_x(tg2,td1)
+    call transpose_y_to_x(th2,te1)
+    call transpose_y_to_x(ti2,tf1)
+    !z-terms back in X
     call transpose_y_to_x(td2,ta1)
     call transpose_y_to_x(te2,tb1)
-    call transpose_y_to_x(tf2,tc1) !diff+conv. terms
+    call transpose_y_to_x(tf2,tc1) !conv. terms
 
-    !FINAL SUM: DIFF TERMS + CONV TERMS
-    dux1(:,:,:,1) = ta1(:,:,:)
-    duy1(:,:,:,1) = tb1(:,:,:)
-    duz1(:,:,:,1) = tc1(:,:,:)
+    !FINAL SUM: CONV TERMS (x-terms+y-terms+z-terms)
+    dux1(:,:,:,1) = ta1(:,:,:)+td1(:,:,:)+tg1(:,:,:)
+    duy1(:,:,:,1) = tb1(:,:,:)+te1(:,:,:)+th1(:,:,:)
+    duz1(:,:,:,1) = tc1(:,:,:)+tf1(:,:,:)+ti1(:,:,:)
+
+    !we are missing the diffusive term for this version of x3div
 
   end subroutine momentum_rhs_eq
   !############################################################################

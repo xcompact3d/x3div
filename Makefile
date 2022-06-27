@@ -15,7 +15,8 @@ FFLAGS += -fopenmp
 else ifeq ($(CMP),gcc)
 FC = mpif90
 FFLAGS = -cpp -O3 -march=native
-FFLAGS += -fopenmp -ftree-parallelize-loops=12
+NTHREADS = 1 # Specify NTHREADS on commandline to override
+FFLAGS += -fopenmp -ftree-parallelize-loops=$(NTHREADS)
 else ifeq ($(CMP),nagfor)
 FC = mpinagfor
 FFLAGS = -fpp

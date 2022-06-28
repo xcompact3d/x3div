@@ -13,8 +13,7 @@ module test_deriv
    type, extends(ParameterizedTestCase) :: testDeriv
       type(pencilSize) :: pencil_size
       real, allocatable, dimension(:, :, :) :: func, dfunc, expected_dfunc
-      real, allocatable :: ff(:), fs(:), fw(:)
-      real, allocatable :: s(:, :), di1(:, :, :)
+      real, allocatable, dimension(:) :: ff, fs, fw
     contains
       procedure :: allocate_on_pencil
       procedure :: setup_coefficient_arrays
@@ -66,13 +65,20 @@ module test_deriv
           & )
    end subroutine allocate_on_pencil
 
-   subroutine setup_coefficient_arrays(this, ff, fs, fw, ncl1, ncln)
+   subroutine setup_coefficient_arrays(this, ff, fs, fw, ncl1, ncln, x3dop)
+     use x3d_operator_1d, only : x3doperator1d
+
+     implicit none
+
      class(testDeriv), intent(in) :: this
      integer, intent(in) :: ncl1, ncln
-     real, allocatable, intent(out) :: ff(:), fs(:), fw(:)
+     real, allocatable, target, intent(out) :: ff(:), fs(:), fw(:)
+     type(x3doperator1d), intent(out) :: x3dop
 
      real, allocatable :: fb(:)
      real, parameter :: alfai = 1. / 3.
+     logical :: is_periodic
+     integer, parameter :: npaire = 0
      integer :: i
 
      ff = [(alfai, i = 1,this % pencil_size % nx)]
@@ -112,7 +118,20 @@ module test_deriv
         fw(i) = 1. / fw(i)
      enddo
 
+     if (ncl1==0 .and. ncln==0) then
+        is_periodic = .true.
+     else
+        is_periodic = .false.
+     endif
+
+     call x3dop%init(ff, fs, fw, &
+                  &  this % pencil_size % nx, &
+                  &  is_periodic, &
+                  &  alfai, &
+                  &  npaire)
+
      deallocate(fb)
+
    end subroutine setup_coefficient_arrays
 
    function toString(this) result(string)
@@ -126,13 +145,19 @@ module test_deriv
   @test
   subroutine test_derx_odd_11(this)
     use x3d_precision, only: pi
-    use x3d_derive, only : derx_ij
+    use x3d_operator_1d, only : x3doperator1d
+    use x3d_derive, only : derx, derx_11
     use x3d_operator_x_data, only: afix, bfix
+
+    implicit none
+
     class (testDeriv), intent(inout) :: this
     integer :: i, j, k
     real :: x, dx
+    type(x3doperator1d) :: x3dop
 
-    call this % setup_coefficient_arrays(this% ff, this % fs, this % fw, ncl1 = 1, ncln = 1)
+    call this % setup_coefficient_arrays(this% ff, this % fs, this % fw, 1, 1, x3dop)
+    derx => derx_11
 
     dx = 1. / (this % pencil_size % nx - 1)
     do k=1,this % pencil_size % nz
@@ -147,13 +172,16 @@ module test_deriv
 
     afix = (7. / 9.) / dx
     bfix = (1. / 36.) / dx
-    call derx_ij(this % dfunc, this % func, &
-         & this % ff, this % fs, this % fw, &
+    call derx(this % dfunc, this % func, &
+         & x3dop, &
          & this % pencil_size % nx, &
          & this % pencil_size % ny, &
-         & this % pencil_size % nz, 0, 1, 1)
+         & this % pencil_size % nz)
 
     @assertEqual(this % dfunc, this % expected_dfunc, tolerance=1E-2)
+
+    call x3dop%finalize()
+    nullify(derx)
 
   end subroutine test_derx_odd_11
 

@@ -120,6 +120,7 @@ module test_deriv
     @assertEqual(dfunc, expected_dfunc, tolerance=1E-2)
 
     deallocate(func, dfunc, expected_dfunc)
+    deallocate(ff, fs, fw)
 
   end subroutine test_derx_odd_11
 

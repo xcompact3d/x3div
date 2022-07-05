@@ -1,0 +1,10 @@
+set(gfortran_flags
+  -cpp
+  -funroll-loops
+  -floop-optimize
+  -g
+  -Warray-bounds
+  -fcray-pointer
+  -fbacktrace
+  -ffree-line-length-none
+  )

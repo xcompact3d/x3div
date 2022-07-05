@@ -60,7 +60,7 @@ contains
 
       integer, intent(in) :: nz, nzm
 
-      if (nz==1) return
+      if (nz == 1) return
 
       allocate (ffz(nz))
       ffz = 0._mytype
@@ -137,7 +137,7 @@ contains
 
       implicit none
 
-      if (.not.allocated(ffz)) return
+      if (.not. allocated(ffz)) return
 
       deallocate (ffz)
       deallocate (sfz)

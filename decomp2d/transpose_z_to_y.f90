@@ -33,7 +33,7 @@
 #endif
     
     integer :: s1,s2,s3,d1,d2,d3
-    integer :: ierror
+    integer :: ierror, istat
 
     if (present(opt_decomp)) then
        decomp = opt_decomp
@@ -63,7 +63,7 @@
     ! note the src array is suitable to be a send buffer
     ! so no split operation needed
 
-#if defined(GPU)
+#if defined(_GPU)
     istat = cudaMemcpy( work1_r_d, src, s1*s2*s3 )
 #endif
 
@@ -159,7 +159,7 @@
 #endif
     
     integer :: s1,s2,s3,d1,d2,d3
-    integer :: ierror
+    integer :: ierror, istat
 
     if (present(opt_decomp)) then
        decomp = opt_decomp
@@ -189,7 +189,7 @@
     ! note the src array is suitable to be a send buffer
     ! so no split operation needed
 
-#if defined(GPU)
+#if defined(_GPU)
     istat = cudaMemcpy( work1_c_d, src, s1*s2*s3 )
 #endif
 

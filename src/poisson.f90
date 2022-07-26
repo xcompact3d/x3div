@@ -298,13 +298,18 @@ contains
 
     integer :: nx,ny,nz, i,j,k
 
-    complex(mytype) :: cx
-    real(mytype) :: rl, iy
-    external cx, rl, iy
+    complex(mytype) :: cw1_tmp
+    real(mytype) :: ntot
+#ifdef DEBUG
+    integer, dimension(3) :: dim3d
+#endif
 
     nx = nx_global
     ny = ny_global
     nz = nz_global
+    ntot = real(nx, kind=mytype) &
+         * real(ny, kind=mytype) &
+         * real(nz, kind=mytype)
 
     if (.not. fft_initialised) then
        call decomp_2d_fft_init(PHYSICAL_IN_Z)
@@ -312,75 +317,104 @@ contains
     end if
 
     ! compute r2c transform
+#ifdef DEBUG
+    dim3d = shape(rhs)
+    write(*,*) 'RHS before transform'
+    do k = 1, dim3d(3),dim3d(3)/2+1
+      do j = 1, dim3d(2),dim3d(2)/2+1
+        do i = 1, dim3d(1),dim3d(1)/2+1
+          print "(i3,i3,i3,1x,e12.5,1x,e12.5)", i, j, k, rhs(i,j,k)
+        enddo
+      enddo
+    enddo
+#endif
     call decomp_2d_fft_3d(rhs,cw1)
+#ifdef DEBUG
+    dim3d = shape(cw1)
+    write(*,*) 'CW1 after transform'
+    do k = 1, dim3d(3),dim3d(3)/2+1
+      do j = 1, dim3d(2),dim3d(2)/2+1
+        do i = 1, dim3d(1),dim3d(1)/2+1
+          print "(i3,i3,i3,1x,e12.5,1x,e12.5)", i, j, k, real(cw1(i,j,k)),&
+                             aimag(cw1(i,j,k))
+        enddo
+      enddo
+    enddo
+#endif
 
-    ! normalisation
-    cw1 = cw1 / real(nx, kind=mytype) /real(ny, kind=mytype) &
-         / real(nz, kind=mytype)
 
     do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
-             ! POST PROCESSING IN Z
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bz(k) + tmp2 * az(k), &
-                             tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
-
-             ! POST PROCESSING IN Y
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
-             if (j > (ny/2+1)) cw1(i,j,k) = -cw1(i,j,k)
-
-             ! POST PROCESSING IN X
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
-                             tmp2 * bx(i) - tmp1 * ax(i), kind=mytype)
-             if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
-
-             ! Solve Poisson
-             tmp1 = real(kxyz(i,j,k), kind=mytype)
-             tmp2 = aimag(kxyz(i,j,k))
-             ! CANNOT DO A DIVISION BY ZERO
-             if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
-                cw1(i,j,k) = zero
-             else
-                cw1(i,j,k) = cmplx(real(cw1(i,j,k),kind=mytype) / (-tmp1), &
-                                  aimag(cw1(i,j,k)) / (-tmp2), kind=mytype)
-             end if
-
-             !Print result in spectal space after Poisson
-             !     if (abs(out(i,j,k)) > 1.0e-4) then
-             !        write(*,*) 'AFTER',i,j,k,out(i,j,k),xyzk
-             !     end if
-
-             ! post-processing backward
-
-             ! POST PROCESSING IN Z
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bz(k) - tmp2 * az(k), &
-                            -tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
-
-             ! POST PROCESSING IN Y
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
-                             tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
-             if (j > (ny/2 + 1)) cw1(i,j,k) = -cw1(i,j,k)
-
-             ! POST PROCESSING IN X
-             tmp1 = real(cw1(i,j,k), kind=mytype)
-             tmp2 = aimag(cw1(i,j,k))
-             cw1(i,j,k) = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
-                            -tmp2 * bx(i) + tmp1 * ax(i), kind=mytype)
-             if (i > (nx/2+1)) cw1(i,j,k) = -cw1(i,j,k)
-       ! post-processing in spectral space
-
+      ! POST PROCESSING IN Z
+      cw1_tmp = cw1(i,j,k)
+      tmp1 = real(cw1_tmp, kind=mytype)/ntot
+      tmp2 = aimag(cw1_tmp)/ntot
+      cw1_tmp = cmplx(tmp1 * bz(k) + tmp2 * az(k), &
+                      tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
+      
+      ! POST PROCESSING IN Y
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                      tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
+      if (j > (ny/2+1)) cw1_tmp = -cw1_tmp
+      
+      ! POST PROCESSING IN X
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                      tmp2 * bx(i) - tmp1 * ax(i), kind=mytype)
+      if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
+      
+      ! Solve Poisson
+      tmp1 = real(kxyz(i,j,k), kind=mytype)
+      tmp2 = aimag(kxyz(i,j,k))
+      ! CANNOT DO A DIVISION BY ZERO
+      if ((tmp1 < epsilon).or.(tmp2 < epsilon)) then
+         cw1_tmp = zero
+      else
+         cw1_tmp = cmplx(real(cw1_tmp,kind=mytype) / (-tmp1), &
+                           aimag(cw1_tmp) / (-tmp2), kind=mytype)
+      end if
+      
+      ! post-processing backward
+      
+      ! POST PROCESSING IN Z
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * bz(k) - tmp2 * az(k), &
+                     -tmp2 * bz(k) - tmp1 * az(k), kind=mytype)
+      
+      ! POST PROCESSING IN Y
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * by(j) + tmp2 * ay(j), &
+                      tmp2 * by(j) - tmp1 * ay(j), kind=mytype)
+      if (j > (ny/2 + 1)) cw1_tmp = -cw1_tmp
+      
+      ! POST PROCESSING IN X
+      tmp1 = real(cw1_tmp, kind=mytype)
+      tmp2 = aimag(cw1_tmp)
+      cw1_tmp = cmplx(tmp1 * bx(i) + tmp2 * ax(i), &
+                     -tmp2 * bx(i) + tmp1 * ax(i), kind=mytype)
+      if (i > (nx/2+1)) cw1_tmp = -cw1_tmp
+      ! post-processing in spectral space
+      cw1(i,j,k) = cw1_tmp
+      
 
     end do
 
+#ifdef DEBUG
+    dim3d = shape(cw1)
+    write(*,*) 'CW1 after normalisation'
+    do k = 1, dim3d(3),dim3d(3)/2+1
+      do j = 1, dim3d(2),dim3d(2)/2+1
+        do i = 1, dim3d(1),dim3d(1)/2+1
+          print "(i3,i3,i3,1x,e12.5,1x,e12.5)", i, j, k, real(cw1(i,j,k)),&
+                             aimag(cw1(i,j,k))
+        enddo
+      enddo
+    enddo
+#endif
     ! compute c2r transform
     call decomp_2d_fft_3d(cw1,rhs)
 

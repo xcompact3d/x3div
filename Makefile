@@ -57,8 +57,8 @@ else ifeq ($(CMP),nvhpc)
      FFLAGS += -cpp -O3 -Minfo=accel -stdpar -acc -target=multicore
      LFLAGS += -acc -lnvhpcwrapnvtx
   else ifeq ($(PARAMOD),gpu)
-     #FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
-     FFLAGS += -cpp -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda
+     FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
+     #FFLAGS += -cpp -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda
      LFLAGS += -acc -lnvhpcwrapnvtx
   else
     FFLAGS += -cpp -O3 -march=native

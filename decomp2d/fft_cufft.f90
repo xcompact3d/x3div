@@ -370,8 +370,8 @@ module decomp_2d_fft
     end if
 #endif
     allocate(cufft_workspace(cufft_ws))
-    do i=-1,2
-      do j=1,3
+    do j=1,3
+       do i=-1,2
          istat = cufftSetWorkArea(plan(i,j),cufft_workspace)
       enddo
     enddo

@@ -25,6 +25,7 @@
 #if defined(_NCCL)
     integer :: row_rank_id
 #endif
+    integer :: istat
 #endif
 
 #ifdef SHM
@@ -33,7 +34,7 @@
 #endif
     
     integer :: s1,s2,s3,d1,d2,d3
-    integer :: ierror, istat
+    integer :: ierror
 
     if (present(opt_decomp)) then
        decomp = opt_decomp
@@ -151,6 +152,7 @@
 #if defined(_NCCL)
     integer :: row_rank_id
 #endif
+    integer :: istat
 #endif
 
 #ifdef SHM
@@ -159,7 +161,7 @@
 #endif
     
     integer :: s1,s2,s3,d1,d2,d3
-    integer :: ierror, istat
+    integer :: ierror
 
     if (present(opt_decomp)) then
        decomp = opt_decomp

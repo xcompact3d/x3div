@@ -5,20 +5,20 @@
 ! decomposition. It also implements a highly scalable distributed
 ! three-dimensional Fast Fourier Transform (FFT).
 !
-! Copyright (C) 2009-2021 Ning Li, the Numerical Algorithms Group (NAG)
+! Copyright (C) 2009-2011 Ning Li, the Numerical Algorithms Group (NAG)
 !
 !=======================================================================
 
 ! This is the FFTW (version 3.x) implementation of the FFT library
 
 module decomp_2d_fft
-  
+
   use decomp_2d  ! 2D decomposition module
-  
+
   implicit none
 
   include "fftw3.f"
-  
+
   private        ! Make everything private unless declared public
 
   ! engine-specific global variables
@@ -256,9 +256,9 @@ module decomp_2d_fft
   end subroutine c2r_1m_z_plan
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !  This routine performs one-time initialisations for the FFT engine
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine init_fft_engine
 
     implicit none
@@ -278,7 +278,7 @@ module decomp_2d_fft
        call c2c_1m_z_plan(plan( 1,3), ph, FFTW_BACKWARD)
        call c2c_1m_y_plan(plan( 1,2), ph, FFTW_BACKWARD)
        call c2c_1m_x_plan(plan( 1,1), ph, FFTW_BACKWARD)
-       
+
        ! For R2C/C2R tranforms
        call r2c_1m_x_plan(plan(0,1), ph, sp)
        call c2c_1m_y_plan(plan(0,2), sp, FFTW_FORWARD )
@@ -296,7 +296,7 @@ module decomp_2d_fft
        call c2c_1m_x_plan(plan( 1,1), ph, FFTW_BACKWARD)
        call c2c_1m_y_plan(plan( 1,2), ph, FFTW_BACKWARD)
        call c2c_1m_z_plan(plan( 1,3), ph, FFTW_BACKWARD)
-       
+
        ! For R2C/C2R tranforms
        call r2c_1m_z_plan(plan(0,3), ph, sp)
        call c2c_1m_y_plan(plan(0,2), sp, FFTW_FORWARD )
@@ -304,22 +304,22 @@ module decomp_2d_fft
        call c2c_1m_x_plan(plan(2,1), sp, FFTW_BACKWARD)
        call c2c_1m_y_plan(plan(2,2), sp, FFTW_BACKWARD)
        call c2r_1m_z_plan(plan(2,3), sp, ph)
-       
+
     end if
 
     return
   end subroutine init_fft_engine
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !  This routine performs one-time finalisations for the FFT engine
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine finalize_fft_engine
 
     implicit none
 
     integer :: i,j
-    
+
     do j=1,3
        do i=-1,2
 #ifdef DOUBLE_PREC
@@ -390,9 +390,9 @@ module decomp_2d_fft
     integer*8, intent(IN) :: plan1
 
 #ifdef DOUBLE_PREC
-       call dfftw_execute_dft(plan1, inout, inout)
+    call dfftw_execute_dft(plan1, inout, inout)
 #else
-       call sfftw_execute_dft(plan1, inout, inout)
+    call sfftw_execute_dft(plan1, inout, inout)
 #endif
 
     return
@@ -472,13 +472,13 @@ module decomp_2d_fft
 
 
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! 3D FFT - complex to complex
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine fft_3d_c2c(in, out, isign)
-    
+
     implicit none
-    
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: in
     complex(mytype), dimension(:,:,:), intent(OUT) :: out
     integer, intent(IN) :: isign
@@ -489,7 +489,7 @@ module decomp_2d_fft
 
     if (format==PHYSICAL_IN_X .AND. isign==DECOMP_2D_FFT_FORWARD .OR.  &
          format==PHYSICAL_IN_Z .AND. isign==DECOMP_2D_FFT_BACKWARD) then
-       
+
        ! ===== 1D FFTs in X =====
 #ifdef OVERWRITE
        call c2c_1m_x(in,isign,plan(isign,1))
@@ -563,7 +563,7 @@ module decomp_2d_fft
           call transpose_y_to_x(wk2_c2c,out,ph)
        end if
        call c2c_1m_x(out,isign,plan(isign,1))
-       
+
     end if
 
 #ifndef OVERWRITE
@@ -573,18 +573,16 @@ module decomp_2d_fft
     return
   end subroutine fft_3d_c2c
 
-  
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! 3D forward FFT - real to complex
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine fft_3d_r2c(in_r, out_c)
-    
+
     implicit none
-    
+
     real(mytype), dimension(:,:,:), intent(IN) :: in_r
     complex(mytype), dimension(:,:,:), intent(OUT) :: out_c
-    integer :: i, j ,k
-    integer, dimension(3) :: dim3d
 
     if (format==PHYSICAL_IN_X) then
 
@@ -606,71 +604,19 @@ module decomp_2d_fft
           call transpose_y_to_z(wk13,out_c,sp)
        end if
        call c2c_1m_z(out_c,-1,plan(0,3))
-                
+
     else if (format==PHYSICAL_IN_Z) then
 
        ! ===== 1D FFTs in Z =====
-#ifdef DEBUG
-       dim3d = shape(in_r)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_r(i,j,k))
-            end do
-         end do
-       end do
-#endif
        call r2c_1m_z(in_r,wk13)
-#ifdef DEBUG
-       write(*,*) 'r2c_1m_z'
-       dim3d = shape(wk13)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
-                             aimag(wk13(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
+
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
           call transpose_z_to_y(wk13,wk2_r2c,sp)
           call c2c_1m_y(wk2_r2c,-1,plan(0,2))
-#ifdef DEBUG
-          write(*,*) 'c2c_1m_y'
-          dim3d = shape(wk2_r2c)
-          do k = 1, dim3d(3),dim3d(3)/8
-            do j = 1, dim3d(2),dim3d(2)/8
-               do i = 1, dim3d(1),dim3d(1)/8
-                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
-                                aimag(wk2_r2c(i,j,k))
-               end do
-            end do
-          end do
-          write(*,*)
-          write(*,*)
-#endif
        else  ! out_c==wk2_r2c if 1D decomposition
           call transpose_z_to_y(wk13,out_c,sp)
           call c2c_1m_y(out_c,-1,plan(0,2))
-          call nvtxEndRange
-#ifdef DEBUG
-          write(*,*) 'c2c_1m_y2'
-          dim3d = shape(out_c)
-          do k = 1, dim3d(3),dim3d(3)/8
-            do j = 1, dim3d(2),dim3d(2)/8
-               do i = 1, dim3d(1),dim3d(1)/8
-                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
-                                aimag(out_c(i,j,k))
-               end do
-            end do
-          end do
-          write(*,*)
-          write(*,*)
-#endif
        end if
 
        ! ===== Swap Y --> X; 1D FFTs in X =====
@@ -678,37 +624,23 @@ module decomp_2d_fft
           call transpose_y_to_x(wk2_r2c,out_c,sp)
        end if
        call c2c_1m_x(out_c,-1,plan(0,1))
-#ifdef DEBUG
-       write(*,*) 'c2c_1m_x'
-       dim3d = shape(out_c)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_c(i,j,k)),&
-                             aimag(out_c(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
+
     end if
-    
+
     return
   end subroutine fft_3d_r2c
-  
-  
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! 3D inverse FFT - complex to real
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine fft_3d_c2r(in_c, out_r)
-    
+
     implicit none
-    
+
     complex(mytype), dimension(:,:,:), intent(INOUT) :: in_c
     real(mytype), dimension(:,:,:), intent(OUT) :: out_r
-    integer :: i,j,k
-    integer, dimension(3) :: dim3d
+
 #ifndef OVERWRITE
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
@@ -741,55 +673,14 @@ module decomp_2d_fft
        end if
 
     else if (format==PHYSICAL_IN_Z) then
-#ifdef DEBUG
-       write(*,*) 'Back Init c2c_1m_x line 788'
-       dim3d = shape(in_c)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
-                             aimag(in_c(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
+
        ! ===== 1D FFTs in X =====
 #ifdef OVERWRITE
        call c2c_1m_x(in_c,1,plan(2,1))
-#ifdef DEBUG
-       write(*,*) 'Back c2c_1m_x overwrite line 804'
-       dim3d = shape(in_c)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
-                             aimag(in_c(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
 #else
        allocate(wk1(sp%xsz(1),sp%xsz(2),sp%xsz(3)))
        wk1 = in_c
        call c2c_1m_x(wk1,1,plan(2,1))
-#ifdef DEBUG
-       write(*,*) 'Back2 c2c_1m_x line 821'
-       dim3d = shape(wk1)
-       do k = 1, dim3d(3),dim3d(1)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk1(i,j,k)),&
-                             aimag(wk1(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
 #endif
 
        ! ===== Swap X --> Y; 1D FFTs in Y =====
@@ -800,53 +691,11 @@ module decomp_2d_fft
           call transpose_x_to_y(wk1,wk2_r2c,sp)
 #endif
           call c2c_1m_y(wk2_r2c,1,plan(2,2))
-#ifdef DEBUG
-          write(*,*) 'Back c2c_1m_y line 844'
-          dim3d = shape(wk2_r2c)
-          do k = 1, dim3d(3),dim3d(3)/8
-            do j = 1, dim3d(2),dim3d(2)/8
-               do i = 1, dim3d(1),dim3d(1)/8
-                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk2_r2c(i,j,k)),&
-                                aimag(wk2_r2c(i,j,k))
-               end do
-            end do
-          end do
-          write(*,*)
-          write(*,*)
-#endif
        else  ! in_c==wk2_r2c if 1D decomposition
 #ifdef OVERWRITE
           call c2c_1m_y(in_c,1,plan(2,2))
-#ifdef DEBUG
-          write(*,*) 'Back2 c2c_1m_y line 860'
-          dim3d = shape(in_c)
-          do k = 1, dim3d(3),dim3d(3)/8
-            do j = 1, dim3d(2),dim3d(2)/8
-               do i = 1, dim3d(1),dim3d(1)/8
-                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(in_c(i,j,k)),&
-                                aimag(in_c(i,j,k))
-               end do
-            end do
-          end do
-          write(*,*)
-          write(*,*)
-#endif
 #else
           call c2c_1m_y(wk1,1,plan(2,2))
-#ifdef DEBUG
-          write(*,*) 'Back3 c2c_1m_y line 875'
-          dim3d = shape(wk1)
-          do k = 1, dim3d(3),dim3d(3)/8
-            do j = 1, dim3d(2),dim3d(2)/8
-               do i = 1, dim3d(1),dim3d(1)/8
-                     print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk1(i,j,k)),&
-                                aimag(wk1(i,j,k))
-               end do
-            end do
-          end do
-          write(*,*)
-          write(*,*)
-#endif
 #endif
        end if
 
@@ -861,19 +710,6 @@ module decomp_2d_fft
 #endif
        end if
        call c2r_1m_z(wk13,out_r)
-#ifdef DEBUG
-       write(*,*) 'Back2 c2c_1m_z out_r line 902'
-       dim3d = shape(out_r)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(out_r(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
 
     end if
 
@@ -884,5 +720,5 @@ module decomp_2d_fft
     return
   end subroutine fft_3d_c2r
 
-  
+
 end module decomp_2d_fft

@@ -1,7 +1,26 @@
-#
-IVER = 17# 15,16,17,18
-CMP = nvhpc# intel,gcc,nvhpc
-FFT = cufft# generic,fftw3,mkl,cufft
+#=======================================================================
+# Makefile for Xcompact3D
+#=======================================================================
+# Choose pre-processing options
+#   -DDOUBLE_PREC - use double-precision
+#   -DSAVE_SINGLE - Save 3D data in single-precision
+#   -DDEBG        - debuggin xcompact3d.f90
+# generate a Git version string
+GIT_VERSION := $(shell git describe --tag --long --always)
+
+DEFS = -DDOUBLE_PREC -DVERSION=\"$(GIT_VERSION)\"
+
+LCL = local# local,lad,sdu,archer
+CMP = nvhpc# intel,gcc,nagfor,cray,nvhpc
+FFT = generic# fftw3,fftw3_f03,generic,mkl
+PARAMOD = mpi # multicore,gpu
+
+
+BUILD ?= # debug can be used with gcc
+FCFLAGS ?= # user can set default compiler flags
+LDFLAGS ?= # user can set default linker flags
+FFLAGS = $(FCFLAGS)
+LFLAGS = $(LDFLAGS)
 
 #######CMP settings###########
 ifeq ($(CMP),intel)
@@ -19,10 +38,19 @@ else ifeq ($(CMP),cray)
 FC = ftn
 FFLAGS = -eF -g -O3 -N 1023
 else ifeq ($(CMP),nvhpc)
-FC = mpif90
-#FFLAGS += -Minfo=accel -stdpar -acc -target=multicore
-FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
-#FFLAGS = -cpp -D_GPU -Mfree -Kieee -Minfo=accel,ftn,inline,loop,vect,opt,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft
+  FC = mpif90
+  ifeq ($(PARAMOD),multicore)
+     FFLAGS += -cpp -O3 -Minfo=accel -stdpar -acc -target=multicore
+     LFLAGS += -acc -lnvhpcwrapnvtx
+  else ifeq ($(PARAMOD),gpu)
+     FFLAGS = -cpp -D_GPU -D_NCCL -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda -cudalib=cufft,nccl
+     #FFLAGS += -cpp -Mfree -Kieee -Minfo=accel,stdpar -stdpar=gpu -gpu=cc80,managed,lineinfo -acc -target=gpu -traceback -O3 -DUSE_CUDA -cuda
+     LFLAGS += -acc -lnvhpcwrapnvtx
+  else
+    FFLAGS += -cpp -O3 -march=native
+  endif
+  #FFLAGS += -cpp -O3 -Minfo=accel -stdpar -acc -target=multicore
+  #FFLAGS = -cpp -Mfree -Kieee -Minfo=accel -g -acc -target=gpu -fast -O3 -Minstrument
 endif
 
 

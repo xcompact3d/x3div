@@ -40,8 +40,8 @@ module decomp_2d_fft
   ! generic interface definitions and several subroutines
 #include "fft_common.f90"
 
-  ! Return a cuFFT plan for multiple 1D FFTs in X direction
-  subroutine plan_1m_x(plan1, decomp, cufft_type, worksize)
+  ! Return a cuFFT plan for multiple 1D FFTs in X direction: C2C case
+  subroutine c2c_1m_x_plan(plan1, decomp, cufft_type, worksize)
     
     implicit none
 
@@ -56,19 +56,18 @@ module decomp_2d_fft
    
     istat = cufftCreate(plan1)
     istat = istat + cufftSetAutoAllocation(plan1,0)
-    istat = istat + cufftMakePlanMany(plan1,1,                           &
-                              decomp%xsz(1),null_fptr,1,         &
-                              decomp%xsz(1),null_fptr,1,         &
-                              decomp%xsz(1),cufft_type,          &
-                              decomp%xsz(2)*decomp%xsz(3),worksize)
+    istat = istat + cufftMakePlanMany(plan1,1,decomp%xsz(1),     &
+                                      decomp%xsz(1),1,decomp%xsz(1),     &
+                                      decomp%xsz(1),1,decomp%xsz(1),     &
+                                      cufft_type,decomp%xsz(2)*decomp%xsz(3),worksize)
     if (istat /= 0) &
-       write (*,*) "Cannot create plan for plan_1m_x FFTs batch (cufftPlanMany)"
+       write (*,*) "Cannot create plan for c2c_1m_x_plan FFTs batch (cufftPlanMany)"
 
     return
-  end subroutine plan_1m_x
+  end subroutine c2c_1m_x_plan
 
-  ! Return a cuFFT plan for multiple 1D FFTs in Y direction
-  subroutine plan_1m_y(plan1, decomp, cufft_type,worksize)
+  ! Return a cuFFT plan for multiple 1D FFTs in Y direction: C2C case
+  subroutine c2c_1m_y_plan(plan1, decomp, cufft_type,worksize)
 
     implicit none
 
@@ -85,19 +84,18 @@ module decomp_2d_fft
    
     istat = cufftCreate(plan1)
     istat = istat + cufftSetAutoAllocation(plan1,0)
-    istat = istat + cufftMakePlanMany(plan1,1,                    &
-                              decomp%ysz(2),null_fptr,1,  &
-                              decomp%ysz(2),null_fptr,1,  &
-                              decomp%ysz(2),cufft_type,   &
-                              decomp%ysz(1),worksize)
+    istat = istat + cufftMakePlanMany(plan1,1,decomp%ysz(2),     &
+                                      decomp%ysz(2),decomp%ysz(1),1,     &
+                                      decomp%ysz(2),decomp%ysz(1),1,     &
+                                      cufft_type,decomp%ysz(1),worksize)
     if (istat /= 0) &
-       write (*,*) "Cannot create plan for plan_1m_y FFTs batch (cufftPlanMany)"
+       write (*,*) "Cannot create plan for c2c_1m_y_plan FFTs batch (cufftPlanMany)"
 
     return 
-  end subroutine plan_1m_y
+  end subroutine c2c_1m_y_plan
 
-  ! Return a cuFFT plan for multiple 1D FFTs in Z direction
-  subroutine plan_1m_z(plan1, decomp, cufft_type,worksize)
+  ! Return a cuFFT plan for multiple 1D FFTs in Z direction: C2C case
+  subroutine c2c_1m_z_plan(plan1, decomp, cufft_type,worksize)
 
     implicit none
 
@@ -112,18 +110,123 @@ module decomp_2d_fft
    
     istat = cufftCreate(plan1)
     istat = istat + cufftSetAutoAllocation(plan1,0)
-    istat = istat + cufftMakePlanMany(plan1,1,                      &
-                              decomp%zsz(3),null_fptr,1,    &
-                              decomp%zsz(3),null_fptr,1,    &
-                              decomp%zsz(3),cufft_type,     &
-                              decomp%zsz(1)*decomp%zsz(2),worksize)
-
+    istat = istat + cufftMakePlanMany(plan1,1,decomp%zsz(3),                           &
+                                      decomp%zsz(3),decomp%zsz(1)*decomp%zsz(2),1,     &
+                                      decomp%zsz(3),decomp%zsz(1)*decomp%zsz(2),1,     &
+                                      cufft_type,decomp%zsz(1)*decomp%zsz(2),worksize)
     if (istat /= 0) &
-       write (*,*) "Cannot create plan for plan_1m_z FFTs batch (cufftPlanMany)"
-
+       write (*,*) "Cannot create plan for c2c_1m_z_plan FFTs batch (cufftPlanMany)"
 
     return
-  end subroutine plan_1m_z
+  end subroutine c2c_1m_z_plan
+
+  ! Return a cuFFT plan for multiple 1D FFTs in X direction: R2C case
+  subroutine r2c_1m_x_plan(plan1, decomp_ph, decomp_sp, cufft_type, worksize)
+
+    implicit none
+
+    integer*4, intent(OUT) :: plan1
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_ph
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_sp
+    integer, intent(IN) :: cufft_type
+
+    integer :: istat
+    integer(int_ptr_kind()), intent(out) :: worksize
+    integer, pointer :: null_fptr
+    call c_f_pointer( c_null_ptr, null_fptr )
+
+    istat = cufftCreate(plan1)
+    istat = istat + cufftSetAutoAllocation(plan1,0)
+    istat = istat + cufftMakePlanMany(plan1,1,decomp_ph%xsz(1),     &
+                                      decomp_ph%xsz(1),1,decomp_ph%xsz(1),     &
+                                      decomp_sp%xsz(1),1,decomp_sp%xsz(1),     &
+                                      cufft_type,decomp_ph%xsz(2)*decomp_ph%xsz(3),worksize)
+    if (istat /= 0) &
+       write (*,*) "Cannot create plan for r2c_1m_x_plan FFTs batch (cufftPlanMany)"
+
+    return
+  end subroutine r2c_1m_x_plan
+
+  ! Return a cuFFT plan for multiple 1D FFTs in X direction: C2R case
+  subroutine c2r_1m_x_plan(plan1, decomp_sp, decomp_ph, cufft_type, worksize)
+
+    implicit none
+
+    integer*4, intent(OUT) :: plan1
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_ph
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_sp
+    integer, intent(IN) :: cufft_type
+
+    integer :: istat
+    integer(int_ptr_kind()), intent(out) :: worksize
+    integer, pointer :: null_fptr
+    call c_f_pointer( c_null_ptr, null_fptr )
+
+    istat = cufftCreate(plan1)
+    istat = istat + cufftSetAutoAllocation(plan1,0)
+    istat = istat + cufftMakePlanMany(plan1,1,decomp_ph%xsz(1),     &
+                                      decomp_sp%xsz(1),1,decomp_sp%xsz(1),     &
+                                      decomp_ph%xsz(1),1,decomp_ph%xsz(1),     &
+                                      cufft_type,decomp_ph%xsz(2)*decomp_ph%xsz(3),worksize)
+    if (istat /= 0) &
+       write (*,*) "Cannot create plan for c2r_1m_x_plan FFTs batch (cufftPlanMany)"
+
+    return
+  end subroutine c2r_1m_x_plan
+
+  ! Return a cuFFT plan for multiple 1D FFTs in X direction: R2C case
+  subroutine r2c_1m_z_plan(plan1, decomp_ph, decomp_sp, cufft_type, worksize)
+
+    implicit none
+
+    integer*4, intent(OUT) :: plan1
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_ph
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_sp
+    integer, intent(IN) :: cufft_type
+
+    integer :: istat
+    integer(int_ptr_kind()), intent(out) :: worksize
+    integer, pointer :: null_fptr
+    call c_f_pointer( c_null_ptr, null_fptr )
+
+    istat = cufftCreate(plan1)
+    istat = istat + cufftSetAutoAllocation(plan1,0)
+    istat = istat + cufftMakePlanMany(plan1,1,decomp_ph%zsz(3),                           &
+                                      decomp_ph%zsz(3),decomp_ph%zsz(1)*decomp_ph%zsz(2),1,     &
+                                      decomp_sp%zsz(3),decomp_sp%zsz(1)*decomp_sp%zsz(2),1,     &
+                                      cufft_type,decomp_ph%zsz(1)*decomp_ph%zsz(2),worksize)
+    if (istat /= 0) &
+       write (*,*) "Cannot create plan for r2c_1m_z_plan FFTs batch (cufftPlanMany)"
+
+    return
+  end subroutine r2c_1m_z_plan
+
+  ! Return a cuFFT plan for multiple 1D FFTs in X direction: C2R case
+  subroutine c2r_1m_z_plan(plan1, decomp_sp, decomp_ph, cufft_type, worksize)
+
+    implicit none
+
+    integer*4, intent(OUT) :: plan1
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_ph
+    TYPE(DECOMP_INFO), intent(IN) :: decomp_sp
+    integer, intent(IN) :: cufft_type
+
+    integer :: istat
+    integer(int_ptr_kind()), intent(out) :: worksize
+    integer, pointer :: null_fptr
+    call c_f_pointer( c_null_ptr, null_fptr )
+
+    istat = cufftCreate(plan1)
+    istat = istat + cufftSetAutoAllocation(plan1,0)
+    istat = istat + cufftMakePlanMany(plan1,1,decomp_ph%zsz(3),                           &
+                                      decomp_sp%zsz(3),decomp_sp%zsz(1)*decomp_sp%zsz(2),1,     &
+                                      decomp_ph%zsz(3),decomp_ph%zsz(1)*decomp_ph%zsz(2),1,     &
+                                      cufft_type,decomp_ph%zsz(1)*decomp_ph%zsz(2),worksize)
+    if (istat /= 0) &
+       write (*,*) "Cannot create plan for c2r_1m_z_plan FFTs batch (cufftPlanMany)"
+
+    return
+  end subroutine c2r_1m_z_plan
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !  This routine performs one-time initialisations for the FFT engine
@@ -138,7 +241,7 @@ module decomp_2d_fft
 
     if (nrank==0) then
        write(*,*) ' '
-       write(*,*) '***** Using the cuFFT engine *****'
+       write(*,*) '***** Using the New cuFFT engine *****'
        write(*,*) ' '
     end if
     
@@ -146,127 +249,129 @@ module decomp_2d_fft
 #ifdef DOUBLE_PREC
     if (format == PHYSICAL_IN_X) then
        ! For C2C transforms
-       call plan_1m_x(plan(-1,1), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_x_plan(plan(-1,1), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(-1,2), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan(-1,2), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(-1,3), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_z_plan(plan(-1,3), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan( 1,3), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_z_plan(plan( 1,3), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan( 1,2), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan( 1,2), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan( 1,1), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_x_plan(plan( 1,1), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
        ! For R2C/C2R tranforms
-       call plan_1m_x(plan(0,1), ph, CUFFT_D2Z,ws)
+       call r2c_1m_x_plan(plan(0,1), ph, sp, CUFFT_D2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(0,2), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan(0,2), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(0,3), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_z_plan(plan(0,3), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(2,3), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_z_plan(plan(2,3), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(2,2), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan(2,2), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(2,1), sp, CUFFT_Z2D,ws)
+       call c2r_1m_x_plan(plan(2,1), sp, ph, CUFFT_Z2D,ws)
        cufft_ws = max (cufft_ws,ws)
 
     else if (format == PHYSICAL_IN_Z) then
 
        ! For C2C transforms
        write(*,*) 'Create the plans'
-       call plan_1m_z(plan(-1,3), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_z_plan(plan(-1,3), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(-1,2), ph, CUFFT_Z2Z,ws) 
+       call c2c_1m_y_plan(plan(-1,2), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(-1,1), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_x_plan(plan(-1,1), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan( 1,1), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_x_plan(plan( 1,1), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan( 1,2), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan( 1,2), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan( 1,3), ph, CUFFT_Z2Z,ws)
+       call c2c_1m_z_plan(plan( 1,3), ph, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
 
        ! For R2C/C2R tranforms
-       call plan_1m_z(plan(0,3), ph, CUFFT_D2Z,ws)
+       call r2c_1m_z_plan(plan(0,3), ph, sp, CUFFT_D2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(0,2), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan(0,2), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(0,1), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_x_plan(plan(0,1), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(2,1), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_x_plan(plan(2,1), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(2,2), sp, CUFFT_Z2Z,ws)
+       call c2c_1m_y_plan(plan(2,2), sp, CUFFT_Z2Z,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(2,3), sp, CUFFT_Z2D,ws)
+       call c2r_1m_z_plan(plan(2,3), sp, ph, CUFFT_Z2D,ws)
        cufft_ws = max (cufft_ws,ws)
 
     end if
 #else
     if (format == PHYSICAL_IN_X) then
        ! For C2C transforms
-       call plan_1m_x(plan(-1,1), ph, CUFFT_C2C,ws)
+       call c2c_1m_x_plan(plan(-1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(-1,2), ph, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan(-1,2), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(-1,3), ph, CUFFT_C2C,ws)
+       call c2c_1m_z_plan(plan(-1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan( 1,3), ph, CUFFT_C2C,ws)
+       call c2c_1m_z_plan(plan( 1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan( 1,2), ph, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan( 1,2), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan( 1,1), ph, CUFFT_C2C,ws)
+       call c2c_1m_x_plan(plan( 1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
        ! For R2C/C2R tranforms
-       call plan_1m_x(plan(0,1), ph, CUFFT_R2C,ws)
+       call r2c_1m_x_plan(plan(0,1), ph, sp, CUFFT_R2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(0,2), sp, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan(0,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(0,3), sp, CUFFT_C2C,ws)
+       call c2c_1m_z_plan(plan(0,3), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(2,3), sp, CUFFT_C2C,ws)
+       call c2c_1m_z_plan(plan(2,3), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(2,2), sp, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan(2,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(2,1), sp, CUFFT_C2R,ws)
+       call c2r_1m_x_plan(plan(2,1), sp, ph, CUFFT_C2R,ws)
        cufft_ws = max (cufft_ws,ws)
 
     else if (format == PHYSICAL_IN_Z) then
 
        ! For C2C transforms
-       call plan_1m_z(plan(-1,3), ph, CUFFT_C2C,ws)
+       write(*,*) 'Create the plans'
+       call c2c_1m_z_plan(plan(-1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(-1,2), ph, CUFFT_C2C,ws) 
+       call c2c_1m_y_plan(plan(-1,2), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(-1,1), ph, CUFFT_C2C,ws)
+       call c2c_1m_x_plan(plan(-1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan( 1,1), ph, CUFFT_C2C,ws)
+       call c2c_1m_x_plan(plan( 1,1), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan( 1,2), ph, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan( 1,2), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan( 1,3), ph, CUFFT_C2C,ws)
+       call c2c_1m_z_plan(plan( 1,3), ph, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
 
        ! For R2C/C2R tranforms
-       call plan_1m_z(plan(0,3), ph, CUFFT_R2C,ws)
+       call r2c_1m_z_plan(plan(0,3), ph, sp, CUFFT_R2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(0,2), sp, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan(0,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(0,1), sp, CUFFT_C2C,ws)
+       call c2c_1m_x_plan(plan(0,1), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_x(plan(2,1), sp, CUFFT_C2C,ws)
+       call c2c_1m_x_plan(plan(2,1), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_y(plan(2,2), sp, CUFFT_C2C,ws)
+       call c2c_1m_y_plan(plan(2,2), sp, CUFFT_C2C,ws)
        cufft_ws = max (cufft_ws,ws)
-       call plan_1m_z(plan(2,3), sp, CUFFT_C2R,ws)
+       call c2r_1m_z_plan(plan(2,3), sp, ph, CUFFT_C2R,ws)
        cufft_ws = max (cufft_ws,ws)
+
     end if
 #endif
     allocate(cufft_workspace(cufft_ws))
-    do i=-1,2
-      do j=1,3
+    do j=1,3
+       do i=-1,2
          istat = cufftSetWorkArea(plan(i,j),cufft_workspace)
       enddo
     enddo
@@ -303,9 +408,10 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
-    complex(mytype), dimension(:,:,:), allocatable :: output
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
+
+    complex(mytype), dimension(:,:,:), allocatable :: output
     integer :: istat
 
     allocate(output,mold=inout)
@@ -316,7 +422,6 @@ module decomp_2d_fft
 #else
     !$acc host_data use_device(inout,output)
     istat = cufftExecC2C(plan1, inout, output,isign)
-
     !$acc end host_data
 #endif
     if (istat /= 0) &
@@ -324,8 +429,7 @@ module decomp_2d_fft
     !$acc kernels
     inout = output
     !$acc end kernels 
-
-
+    deallocate(output)
     return
   end subroutine c2c_1m_x
 
@@ -336,56 +440,32 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
-    complex(mytype), dimension(:,:,:), allocatable :: input
-    complex(mytype), dimension(:,:,:), allocatable :: output
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
-    integer :: istat, i,j,k
-    integer, dimension(3) :: dim3d
 
-    integer :: s3
+    complex(mytype), dimension(:,:,:), allocatable :: output
+    integer :: s3, k, istat
     
-    dim3d = shape(inout)
-    allocate(input(dim3d(2),dim3d(1),dim3d(3)))
-    allocate(output(dim3d(2),dim3d(1),dim3d(3)))
-    ! Move y to leading direction
-    !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           input(j,i,k) = inout(i,j,k)
-        enddo
-      enddo
-    enddo
-    !$acc end kernels
-
+    allocate(output,mold=inout)
     ! transform on one Z-plane at a time
     s3 = size(inout,3)
     do k=1,s3
 #ifdef DOUBLE_PREC
-       !$acc host_data use_device(input,output)
-       istat = cufftExecZ2Z(plan1, input(:,:,k), output(:,:,k),isign)
+       !$acc host_data use_device(inout,output)
+       istat = cufftExecZ2Z(plan1, inout(:,:,k), output(:,:,k),isign)
        !$acc end host_data
 #else
-       !$acc host_data use_device(input,output)
-       istat = cufftExecC2C(plan1, input(:,:,k), output(:,:,k),isign)
-
+       !$acc host_data use_device(inout,output)
+       istat = cufftExecC2C(plan1, inout(:,:,k), output(:,:,k),isign)
        !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_y istat ", istat, isign
     end do
-    ! Move y back
     !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           inout(i,j,k) = output(j,i,k)
-        enddo
-      enddo
-    enddo
+    inout = output
     !$acc end kernels 
-    deallocate(input,output)
+    deallocate(output)
     return
   end subroutine c2c_1m_y
 
@@ -395,49 +475,30 @@ module decomp_2d_fft
     implicit none
 
     complex(mytype), dimension(:,:,:), intent(INOUT) :: inout
-    complex(mytype), dimension(:,:,:), allocatable :: input
-    complex(mytype), dimension(:,:,:), allocatable :: output
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
-    integer :: istat, i, j, k
-    integer, dimension(3) :: dim3d
     
-    dim3d = shape(inout)
-    allocate(input(dim3d(3),dim3d(2),dim3d(1)))
-    allocate(output(dim3d(3),dim3d(2),dim3d(1)))
-    ! Move z to leadind direction
-    !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           input(k,j,i) = inout(i,j,k)
-        enddo
-      enddo
-    enddo
-    !$acc end kernels 
+    complex(mytype), dimension(:,:,:), allocatable :: output
+    integer :: istat
+
+    allocate(output,mold=inout)
+
 
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(input,output)
-    istat = cufftExecZ2Z(plan1, input, output,isign)
+    !$acc host_data use_device(inout,output)
+    istat = cufftExecZ2Z(plan1, inout, output,isign)
     !$acc end host_data
 #else
-    !$acc host_data use_device(input,output)
-    istat = cufftExecC2C(plan1, input, output,isign)
+    !$acc host_data use_device(inout,output)
+    istat = cufftExecC2C(plan1, inout, output,isign)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_z", istat, isign
-    ! Move z back
     !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           inout(i,j,k) = output(k,j,i)
-        enddo
-      enddo
-    enddo
+    inout = output
     !$acc end kernels
-    deallocate(input,output)
+    deallocate(output)
 
     return
   end subroutine c2c_1m_z
@@ -475,49 +536,21 @@ module decomp_2d_fft
 
     real(mytype), dimension(:,:,:), intent(IN)     ::  input
     complex(mytype), dimension(:,:,:), intent(OUT) :: output
-    real(mytype), dimension(:,:,:), allocatable    ::  input2
-    complex(mytype), dimension(:,:,:), allocatable :: output2
-    integer :: istat, i , j, k
-    integer,dimension(3) :: dim3d
-    
-    dim3d=shape(input)
-    allocate(input2(dim3d(3),dim3d(2),dim3d(1)))
-    ! Move z to leading direction
-    !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           input2(k,j,i) = input(i,j,k)
-        enddo
-      enddo
-    enddo
-    !$acc end kernels
-    ! Shape the output
-    dim3d=shape(output)
-    allocate(output2(dim3d(3),dim3d(2),dim3d(1)))
-    
+
+    integer :: istat
+
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(input2,output2)
-    istat = cufftExecD2Z(plan(0,3), input2, output2)
+    !$acc host_data use_device(input,output)
+    istat = cufftExecD2Z(plan(0,3), input, output)
     !$acc end host_data
 #else
-    !$acc host_data use_device(input2,output2)
-    istat = cufftExecR2C(plan(0,3), input2, output2)
+    !$acc host_data use_device(input,output)
+    istat = cufftExecR2C(plan(0,3), input, output)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing r2c_1m_z istat ", istat
-    ! Move z back
-    !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           output(i,j,k) = output2(k,j,i)
-        enddo
-      enddo
-    enddo
-    !$acc end kernels
-    deallocate(input2,output2)
+
     return
 
   end subroutine r2c_1m_z
@@ -529,6 +562,7 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN)  ::  input
     real(mytype), dimension(:,:,:), intent(OUT)    :: output
+
     integer :: istat
 
 #ifdef DOUBLE_PREC
@@ -554,49 +588,20 @@ module decomp_2d_fft
 
     complex(mytype), dimension(:,:,:), intent(IN) :: input
     real(mytype), dimension(:,:,:), intent(OUT) :: output
-    complex(mytype), dimension(:,:,:), allocatable :: input2
-    real(mytype), dimension(:,:,:), allocatable :: output2
-    integer :: istat, i, j, k
-    integer, dimension(3) :: dim3d
 
-    dim3d=shape(input)
-    allocate(input2(dim3d(3),dim3d(2),dim3d(1)))
-    ! Move z to leading direction
-    !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           input2(k,j,i) = input(i,j,k)
-        enddo
-      enddo
-    enddo
-    !$acc end kernels
-    ! Shape the output
-    dim3d=shape(output)
-    allocate(output2(dim3d(3),dim3d(2),dim3d(1)))
+    integer :: istat
 
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(input2,output2)
-    istat = cufftExecZ2D(plan(2,3), input2, output2)
+    !$acc host_data use_device(input,output)
+    istat = cufftExecZ2D(plan(2,3), input, output)
     !$acc end host_data
 #else
     !$acc host_data use_device(input,output)
-    istat = cufftExecC2R(plan(2,3), input2, output2)
+    istat = cufftExecC2R(plan(2,3), input, output)
     !$acc end host_data
 #endif
     if (istat /= 0) &
-       write (*,*) "Error in executing c2r_1m_z"    
-    ! Move z back
-    !$acc kernels
-    do k=1,dim3d(3)
-      do j=1,dim3d(2)
-        do i=1,dim3d(1)
-           output(i,j,k) = output2(k,j,i)
-        enddo
-      enddo
-    enddo
-    !$acc end kernels
-    deallocate(input2,output2)
+       write (*,*) "Error in executing c2r_1m_z"
 
     return
 
@@ -710,7 +715,7 @@ module decomp_2d_fft
   ! 3D forward FFT - real to complex
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine fft_3d_r2c(in_r, out_c)
-    use nvtx
+    !use nvtx
     implicit none
 
     real(mytype), dimension(:,:,:), intent(IN) :: in_r
@@ -742,7 +747,7 @@ module decomp_2d_fft
     else if (format==PHYSICAL_IN_Z) then
 
        ! ===== 1D FFTs in Z =====
-       call nvtxStartRange("Z r2c_1m_z")
+       !call nvtxStartRange("Z r2c_1m_z")
 #ifdef DEBUG
        dim3d = shape(in_r)
        do k = 1, dim3d(3),dim3d(3)/8
@@ -754,29 +759,15 @@ module decomp_2d_fft
        end do
 #endif
        call r2c_1m_z(in_r,wk13)
-       call nvtxEndRange
-#ifdef DEBUG
-       write(*,*) 'r2c_1m_z'
-       dim3d = shape(wk13)
-       do k = 1, dim3d(3),dim3d(3)/8
-         do j = 1, dim3d(2),dim3d(2)/8
-            do i = 1, dim3d(1),dim3d(1)/8
-                  print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
-                             aimag(wk13(i,j,k))
-            end do
-         end do
-       end do
-       write(*,*)
-       write(*,*)
-#endif
+
        ! ===== Swap Z --> Y; 1D FFTs in Y =====
        if (dims(1)>1) then
-          call nvtxStartRange("Z1 transpose_z_to_y")
+          !call nvtxStartRange("Z1 transpose_z_to_y")
           call transpose_z_to_y(wk13,wk2_r2c,sp)
-          call nvtxEndRange
-          call nvtxStartRange("Z1 c2c_1m_y")
+          !call nvtxEndRange
+          !call nvtxStartRange("Z1 c2c_1m_y")
           call c2c_1m_y(wk2_r2c,-1,plan(0,2))
-          call nvtxEndRange
+          !call nvtxEndRange
 #ifdef DEBUG
           write(*,*) 'c2c_1m_y'
           dim3d = shape(wk2_r2c)
@@ -792,12 +783,12 @@ module decomp_2d_fft
           write(*,*)
 #endif
        else  ! out_c==wk2_r2c if 1D decomposition
-          call nvtxStartRange("Z transpose_z_to_y")
+          !call nvtxStartRange("Z transpose_z_to_y")
           call transpose_z_to_y(wk13,out_c,sp)
-          call nvtxEndRange
-          call nvtxStartRange("Z c2c_1m_y")
+          !call nvtxEndRange
+          !call nvtxStartRange("Z c2c_1m_y")
           call c2c_1m_y(out_c,-1,plan(0,2))
-          call nvtxEndRange
+          !call nvtxEndRange
 #ifdef DEBUG
           write(*,*) 'c2c_1m_y2'
           dim3d = shape(out_c)
@@ -816,13 +807,13 @@ module decomp_2d_fft
 
        ! ===== Swap Y --> X; 1D FFTs in X =====
        if (dims(1)>1) then
-          call nvtxStartRange("Z1 transpose_y_to_x")
+          !call nvtxStartRange("Z1 transpose_y_to_x")
           call transpose_y_to_x(wk2_r2c,out_c,sp)
-          call nvtxEndRange
+          !call nvtxEndRange
        end if
-       call nvtxStartRange("c2c_1m_x")
+       !call nvtxStartRange("c2c_1m_x")
        call c2c_1m_x(out_c,-1,plan(0,1))
-       call nvtxEndRange
+       !call nvtxEndRange
 #ifdef DEBUG
        write(*,*) 'c2c_1m_x'
        dim3d = shape(out_c)
@@ -1005,9 +996,23 @@ module decomp_2d_fft
           call transpose_y_to_z(wk1,wk13,sp)
 #endif
        end if
+#ifdef DEBUG
+       write(*,*) 'Back2 after tr_y2z'
+       dim3d = shape(wk13)
+       do k = 1, dim3d(3),dim3d(3)/8
+         do j = 1, dim3d(2),dim3d(2)/8
+            do i = 1, dim3d(1),dim3d(1)/8
+              print "(i3,1x,i3,1x,i3,1x,e12.5,1x,e12.5)", i, j, k, real(wk13(i,j,k)),&
+                               aimag(wk13(i,j,k))
+            end do
+         end do
+       end do
+       write(*,*)
+       write(*,*)
+#endif
        call c2r_1m_z(wk13,out_r)
 #ifdef DEBUG
-       write(*,*) 'Back2 c2c_1m_z out_r line 902'
+       write(*,*) 'Back2 c2r_1m_z out_r line 902'
        dim3d = shape(out_r)
        do k = 1, dim3d(3),dim3d(3)/8
          do j = 1, dim3d(2),dim3d(2)/8
@@ -1031,3 +1036,4 @@ module decomp_2d_fft
 
 
 end module decomp_2d_fft
+

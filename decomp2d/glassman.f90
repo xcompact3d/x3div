@@ -42,9 +42,9 @@ contains
     IMPLICIT NONE
 
     LOGICAL :: INU
+    integer, intent(in) :: N, ISIGN
     INTEGER :: A,B,C,I
-    INTEGER, INTENT(IN) :: N, ISIGN
-    COMPLEX(mytype), INTENT(INOUT) :: U(*),WORK(*)
+    COMPLEX(mytype), intent(inout) :: U(*),WORK(*)
 
     A = 1
     B = N
@@ -76,20 +76,20 @@ contains
   END SUBROUTINE SPCFFT
 
 
-  PURE SUBROUTINE SPCPFT( A, B, C, UIN, UOUT, ISIGN )
+  pure SUBROUTINE SPCPFT( A, B, C, UIN, UOUT, ISIGN )
 
     !$acc routine seq
 
     IMPLICIT NONE
 
-    INTEGER, INTENT(IN), VALUE :: A, B, C, ISIGN
+    INTEGER, value, intent(in) :: ISIGN,A,B,C
     INTEGER :: IA,IB,IC,JCR,JC
 
     DOUBLE PRECISION :: ANGLE
 
-    COMPLEX(mytype), INTENT(IN) :: UIN(B,C,A)
-    COMPLEX(mytype), INTENT(OUT) :: UOUT(B,A,C)
-    COMPLEX(mytype) :: DELTA,OMEGA,SUM
+    COMPLEX(mytype), intent(in) :: UIN(B,C,A)
+    complex(mytype), intent(out) :: UOUT(B,A,C)
+    complex(mytype) :: DELTA,OMEGA,SUM
 
     ANGLE = 6.28318530717958_mytype / REAL( A * C, kind=mytype )
     OMEGA = CMPLX( 1.0, 0.0, kind=mytype )

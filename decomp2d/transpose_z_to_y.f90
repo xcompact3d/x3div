@@ -65,7 +65,9 @@
     ! so no split operation needed
 
 #if defined(_GPU)
-    istat = cudaMemcpy( work1_r_d, src, s1*s2*s3 )
+    !$acc host_data use_device(src)
+    istat = cudaMemcpy( work1_r_d, src, s1*s2*s3, cudaMemcpyDeviceToDevice )
+    !$acc end host_data
 #endif
 
 #endif
@@ -192,7 +194,9 @@
     ! so no split operation needed
 
 #if defined(_GPU)
-    istat = cudaMemcpy( work1_c_d, src, s1*s2*s3 )
+    !$acc host_data use_device(src)
+    istat = cudaMemcpy( work1_c_d, src, s1*s2*s3, cudaMemcpyDeviceToDevice )
+    !$acc end host_data
 #endif
 
 #endif

@@ -34,7 +34,7 @@ module decomp_2d_fft
   !     use plan(0,j) for r2c transforms;
   !     use plan(2,j) for c2r transforms;
   integer*4, save :: plan(-1:2,3)
-  complex*8, device, allocatable, dimension(:) :: cufft_workspace
+  complex(mytype), device, allocatable, dimension(:) :: cufft_workspace
 
   ! common code used for all engines, including global variables, 
   ! generic interface definitions and several subroutines
@@ -369,6 +369,7 @@ module decomp_2d_fft
 
     end if
 #endif
+    cufft_ws = cufft_ws / sizeof(1._mytype)
     allocate(cufft_workspace(cufft_ws))
     do j=1,3
        do i=-1,2
@@ -395,6 +396,8 @@ module decomp_2d_fft
        end do
     end do
 
+    deallocate(cufft_workspace)
+
     return
   end subroutine finalize_fft_engine
 
@@ -411,25 +414,19 @@ module decomp_2d_fft
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
 
-    complex(mytype), dimension(:,:,:), allocatable :: output
     integer :: istat
 
-    allocate(output,mold=inout)
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(inout,output)
-    istat = cufftExecZ2Z(plan1, inout, output,isign)
+    !$acc host_data use_device(inout)
+    istat = cufftExecZ2Z(plan1, inout, inout,isign)
     !$acc end host_data
 #else
-    !$acc host_data use_device(inout,output)
-    istat = cufftExecC2C(plan1, inout, output,isign)
+    !$acc host_data use_device(inout)
+    istat = cufftExecC2C(plan1, inout, inout,isign)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_x"
-    !$acc kernels
-    inout = output
-    !$acc end kernels 
-    deallocate(output)
     return
   end subroutine c2c_1m_x
 
@@ -443,29 +440,23 @@ module decomp_2d_fft
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
 
-    complex(mytype), dimension(:,:,:), allocatable :: output
     integer :: s3, k, istat
     
-    allocate(output,mold=inout)
     ! transform on one Z-plane at a time
     s3 = size(inout,3)
     do k=1,s3
 #ifdef DOUBLE_PREC
-       !$acc host_data use_device(inout,output)
-       istat = cufftExecZ2Z(plan1, inout(:,:,k), output(:,:,k),isign)
+       !$acc host_data use_device(inout)
+       istat = cufftExecZ2Z(plan1, inout(:,:,k), inout(:,:,k),isign)
        !$acc end host_data
 #else
-       !$acc host_data use_device(inout,output)
-       istat = cufftExecC2C(plan1, inout(:,:,k), output(:,:,k),isign)
+       !$acc host_data use_device(inout)
+       istat = cufftExecC2C(plan1, inout(:,:,k), inout(:,:,k),isign)
        !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_y istat ", istat, isign
     end do
-    !$acc kernels
-    inout = output
-    !$acc end kernels 
-    deallocate(output)
     return
   end subroutine c2c_1m_y
 
@@ -478,27 +469,21 @@ module decomp_2d_fft
     integer, intent(IN) :: isign
     integer*4, intent(IN) :: plan1
     
-    complex(mytype), dimension(:,:,:), allocatable :: output
     integer :: istat
 
-    allocate(output,mold=inout)
 
 
 #ifdef DOUBLE_PREC
-    !$acc host_data use_device(inout,output)
-    istat = cufftExecZ2Z(plan1, inout, output,isign)
+    !$acc host_data use_device(inout)
+    istat = cufftExecZ2Z(plan1, inout, inout,isign)
     !$acc end host_data
 #else
-    !$acc host_data use_device(inout,output)
-    istat = cufftExecC2C(plan1, inout, output,isign)
+    !$acc host_data use_device(inout)
+    istat = cufftExecC2C(plan1, inout, inout,isign)
     !$acc end host_data
 #endif
     if (istat /= 0) &
        write (*,*) "Error in executing c2c_1m_z", istat, isign
-    !$acc kernels
-    inout = output
-    !$acc end kernels
-    deallocate(output)
 
     return
   end subroutine c2c_1m_z

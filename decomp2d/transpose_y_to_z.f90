@@ -130,7 +130,10 @@
     ! so no merge operation needed
 
 #if defined(_GPU)
+    !If one of the array in cuda call is not device we need to add acc host_data
+    !$acc host_data use_device(dst)
     istat = cudaMemcpy( dst, work2_r_d, d1*d2*d3, cudaMemcpyDeviceToDevice )
+    !$acc end host_data
 #endif
 
 #endif
@@ -248,7 +251,9 @@
     ! so no merge operation needed
 
 #if defined(_GPU)
+    !$acc host_data use_device(dst)
     istat = cudaMemcpy( dst, work2_c_d, d1*d2*d3, cudaMemcpyDeviceToDevice )
+    !$acc end host_data
 #endif
 
 #endif

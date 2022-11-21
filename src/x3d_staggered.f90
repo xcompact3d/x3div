@@ -66,6 +66,7 @@ subroutine derxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
 
   if (nclx) then
      ! nxm = nx
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny)
 
         ! Compute r.h.s.
@@ -82,42 +83,49 @@ subroutine derxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
         tx(nx  ,j,k) = acix6*(ux(1,j,k)-ux(nx  ,j,k)) &
                      + bcix6*(ux(2,j,k)-ux(nx-1,j,k))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
 
   else
      ! nxm = nx-1
-     do concurrent (k=1:nz, j=1:ny)
-
-        ! Compute r.h.s.
-        if (x3dop%npaire==1) then
+     if (x3dop%npaire==1) then
+        !$acc kernels default(present)
+        do concurrent (k=1:nz, j=1:ny)
+           ! Compute r.h.s.
            tx(1,j,k) = acix6*(ux(2,j,k)-ux(1,j,k)) &
                      + bcix6*(ux(3,j,k)-ux(2,j,k))
            tx(2,j,k) = acix6*(ux(3,j,k)-ux(2,j,k)) &
                      + bcix6*(ux(4,j,k)-ux(1,j,k))
-        else
-           tx(1,j,k) = acix6*(ux(2,j,k)-ux(1,j,k)) &
-                     + bcix6*(ux(3,j,k)-two*ux(1,j,k)+ux(2,j,k))
-           tx(2,j,k) = acix6*(ux(3,j,k)-ux(2,j,k)) &
-                     + bcix6*(ux(4,j,k)-ux(1,j,k))
-        endif
-        do concurrent (i=3:nxm-2)
-           tx(i,j,k) = acix6*(ux(i+1,j,k)-ux(i  ,j,k)) &
-                     + bcix6*(ux(i+2,j,k)-ux(i-1,j,k))
-        enddo
-        if (x3dop%npaire==1) then
+           do concurrent (i=3:nxm-2)
+              tx(i,j,k) = acix6*(ux(i+1,j,k)-ux(i  ,j,k)) &
+                        + bcix6*(ux(i+2,j,k)-ux(i-1,j,k))
+           enddo
            tx(nxm-1,j,k) = acix6*(ux(nxm,j,k)-ux(nxm-1,j,k)) &
                          + bcix6*(ux(nx ,j,k)-ux(nxm-2,j,k))
            tx(nxm,j,k) = acix6*(ux(nx ,j,k)-ux(nxm  ,j,k)) &
                        + bcix6*(ux(nxm,j,k)-ux(nxm-1,j,k))
-        else
+        enddo
+        !$acc end kernels
+     else
+        !$acc kernels default(present)
+        do concurrent (k=1:nz, j=1:ny)
+           tx(1,j,k) = acix6*(ux(2,j,k)-ux(1,j,k)) &
+                     + bcix6*(ux(3,j,k)-two*ux(1,j,k)+ux(2,j,k))
+           tx(2,j,k) = acix6*(ux(3,j,k)-ux(2,j,k)) &
+                     + bcix6*(ux(4,j,k)-ux(1,j,k))
+           do concurrent (i=3:nxm-2)
+              tx(i,j,k) = acix6*(ux(i+1,j,k)-ux(i  ,j,k)) &
+                        + bcix6*(ux(i+2,j,k)-ux(i-1,j,k))
+           enddo
            tx(nxm-1,j,k) = acix6*(ux(nxm,j,k)-ux(nxm-1,j,k)) &
                          + bcix6*(ux(nx ,j,k)-ux(nxm-2,j,k))
            tx(nxm,j,k) = acix6*(ux(nx,j,k)-ux(nxm,j,k)) &
                        + bcix6*(two*ux(nx,j,k)-ux(nxm,j,k)-ux(nxm-1,j,k))
-        endif
-     enddo
+        enddo
+        !$acc end kernels
+     endif
 
      ! Solve tri-diagonal system
      call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nxm, ny, nz)
@@ -143,9 +151,13 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
+
+  npaire = x3dop%npaire
 
   if (nclx) then
      ! nxm = nx
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny)
 
         ! Compute r.h.s.
@@ -184,6 +196,7 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
                      + cicix6*(ux(3,j,k)+ux(nx-2,j,k)) &
                      + dicix6*(ux(4,j,k)+ux(nx-3,j,k))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -191,6 +204,7 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
   else
      ! nxm = nx-1
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz, j=1:ny)
 
            ! Compute r.h.s.
@@ -225,6 +239,7 @@ subroutine interxvp(tx,ux,sx,x3dop,nx,nxm,ny,nz)
                          + cicix6*(ux(nxm-1,j,k)+ux(nxm-2,j,k)) &
                          + dicix6*(ux(nxm-2,j,k)+ux(nxm-3,j,k))
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nxm, ny, nz)
@@ -251,9 +266,13 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
+
+  npaire = x3dop%npaire
 
   if (nclx) then
      ! nxm = nx
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny)
 
         ! Compute r.h.s.
@@ -270,6 +289,7 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
         tx(nx  ,j,k) = acix6*(ux(nx,j,k)-ux(nx-1,j,k)) &
                      + bcix6*(ux(1,j,k)-ux(nx-2,j,k))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -277,8 +297,8 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
   else
      ! nxm = nx-1
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz, j=1:ny)
-
            ! Compute r.h.s.
            tx(1,j,k) = zero
            tx(2,j,k) = acix6*(ux(2,j,k)-ux(1,j,k)) &
@@ -291,6 +311,7 @@ subroutine derxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
                         + bcix6*(ux(nx-1,j,k)-ux(nx-3,j,k))
            tx(nx,j,k) = zero
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
@@ -317,9 +338,13 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
+
+  npaire = x3dop%npaire
 
   if (nclx) then
      ! nxm = nx
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny)
 
         ! Compute r.h.s.
@@ -358,6 +383,7 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
                      + cicix6*(ux(2,j,k)+ux(nx-3,j,k)) &
                      + dicix6*(ux(3,j,k)+ux(nx-4,j,k))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -365,6 +391,7 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
   else
      ! nxm = nx-1
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz, j=1:ny)
 
            ! Compute r.h.s.
@@ -407,6 +434,7 @@ subroutine interxpv(tx,ux,sx,x3dop,nxm,nx,ny,nz)
                         + cicix6*(ux(nx-3,j,k)+ux(nx-3,j,k)) &
                         + dicix6*(ux(nx-4,j,k)+ux(nx-4,j,k))
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call xthomas(tx, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
@@ -433,9 +461,13 @@ subroutine interyvp(ty,uy,sy,x3dop,nx,ny,nym,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire 
+
+  npaire = x3dop%npaire
 
   if (ncly) then
      ! nym = ny
+     !$acc kernels default(present)
      do concurrent (k=1:nz)
 
         ! Compute r.h.s.
@@ -488,6 +520,7 @@ subroutine interyvp(ty,uy,sy,x3dop,nx,ny,nym,nz)
                         + diciy6*(uy(i,4,k)+uy(i,ny-3,k))
         enddo
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -495,6 +528,7 @@ subroutine interyvp(ty,uy,sy,x3dop,nx,ny,nym,nz)
   else
      ! nym = ny-1
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz)
 
            ! Compute r.h.s.
@@ -541,6 +575,7 @@ subroutine interyvp(ty,uy,sy,x3dop,nx,ny,nym,nz)
                             + diciy6*(uy(i,nym-2,k)+uy(i,nym-3,k))
            enddo
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, nx, nym, nz)
@@ -568,9 +603,13 @@ subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire 
+
+  npaire = x3dop%npaire
 
   if (ncly) then
      ! nym = ny
+     !$acc kernels default(present)
      do concurrent (k=1:nz)
 
         ! Compute r.h.s.
@@ -595,6 +634,7 @@ subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
                         + bciy6*(uy(i,2,k)-uy(i,ny-1,k))
         enddo
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -602,6 +642,7 @@ subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
   else
      ! nym = ny-1
      if (x3dop%npaire==0) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz)
 
            ! Compute r.h.s.
@@ -626,6 +667,7 @@ subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
                             + bciy6*(two*uy(i,ny,k)-uy(i,nym,k)-uy(i,nym-1,k))
            enddo
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, nx, nym, nz)
@@ -634,9 +676,11 @@ subroutine deryvp(ty,uy,sy,x3dop,ppyi,nx,ny,nym,nz)
   endif
 
   if (istret /= 0) then
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:nym, i=1:nx)
         ty(i,j,k) = ty(i,j,k) * ppyi(j)
      enddo
+     !$acc end kernels
   endif
 
 end subroutine deryvp
@@ -658,9 +702,13 @@ subroutine interypv(ty,uy,sy,x3dop,nx,nym,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer npaire
+
+  npaire = x3dop%npaire
 
   if (ncly) then
      ! nym = ny
+     !$acc kernels default(present)
      do concurrent (k=1:nz)
 
         ! Compute r.h.s.
@@ -713,6 +761,7 @@ subroutine interypv(ty,uy,sy,x3dop,nx,nym,ny,nz)
                         + diciy6*(uy(i,3,k)+uy(i,ny-4,k))
         enddo
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -720,6 +769,7 @@ subroutine interypv(ty,uy,sy,x3dop,nx,nym,ny,nz)
   else
      ! nym = ny-1
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz)
 
            ! Compute r.h.s.
@@ -778,6 +828,7 @@ subroutine interypv(ty,uy,sy,x3dop,nx,nym,ny,nz)
                            + diciy6*(uy(i,ny-4,k)+uy(i,ny-4,k))
            enddo
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
@@ -805,9 +856,13 @@ subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
+
+  npaire = x3dop%npaire
 
   if (ncly) then
      ! nym = ny
+     !$acc kernels default(present)
      do concurrent (k=1:nz)
 
         ! Compute r.h.s.
@@ -832,6 +887,7 @@ subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
                       + bciy6*(uy(i,1,k)-uy(i,ny-2,k))
         enddo
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -839,6 +895,7 @@ subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
   else
      ! nym = ny-1
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (k=1:nz)
 
            ! Compute r.h.s.
@@ -861,6 +918,7 @@ subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
               ty(i,ny,k) = zero
            enddo
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call ythomas(ty, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
@@ -869,9 +927,11 @@ subroutine derypv(ty,uy,sy,x3dop,ppy,nx,nym,ny,nz)
   endif
 
   if (istret /= 0) then
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny, i=1:nx)
         ty(i,j,k) = ty(i,j,k) * ppy(j)
      enddo
+     !$acc end kernels
   endif
 
 end subroutine derypv
@@ -893,17 +953,22 @@ subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
+
+  npaire = x3dop%npaire
 
   if (nz==1) then
+     !$acc kernels default(present)
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
         tz(i,j,k) = zero
      enddo
+     !$acc end kernels
      return
   endif
 
   if (nclz) then
      ! nzm = nz
-
+     !$acc kernels default(present)
      ! Compute r.h.s.
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,1) = aciz6*(uz(i,j,2)-uz(i,j,1)) &
@@ -925,6 +990,7 @@ subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
         tz(i,j,nz  ) = aciz6*(uz(i,j,1)-uz(i,j,nz)) &
                      + bciz6*(uz(i,j,2)-uz(i,j,nz-1))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -934,6 +1000,7 @@ subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
 
      ! Compute r.h.s.
      if (x3dop%npaire==1) then
+        !$acc kernels default(present)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,1) = aciz6*(uz(i,j,2)-uz(i,j,1)) &
                      + bciz6*(uz(i,j,3)-uz(i,j,2))
@@ -942,21 +1009,10 @@ subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
            tz(i,j,2) = aciz6*(uz(i,j,3)-uz(i,j,2))&
                      + bciz6*(uz(i,j,4)-uz(i,j,1))
         enddo
-     else
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,1) = aciz6*(uz(i,j,2)-uz(i,j,1)) &
-                     + bciz6*(uz(i,j,3)-two*uz(i,j,1)+uz(i,j,2))
+        do concurrent (k=3:nzm-2, j=1:ny, i=1:nx)
+           tz(i,j,k) = aciz6*(uz(i,j,k+1)-uz(i,j,k)) &
+                     + bciz6*(uz(i,j,k+2)-uz(i,j,k-1))
         enddo
-        do concurrent (j=1:ny, i=1:nx)
-           tz(i,j,2) = aciz6*(uz(i,j,3)-uz(i,j,2)) &
-                     + bciz6*(uz(i,j,4)-uz(i,j,1))
-        enddo
-     endif
-     do concurrent (k=3:nzm-2, j=1:ny, i=1:nx)
-        tz(i,j,k) = aciz6*(uz(i,j,k+1)-uz(i,j,k)) &
-                  + bciz6*(uz(i,j,k+2)-uz(i,j,k-1))
-     enddo
-     if (x3dop%npaire==1) then
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,nzm-1) = aciz6*(uz(i,j,nzm)-uz(i,j,nzm-1)) &
                          + bciz6*(uz(i,j,nz)-uz(i,j,nzm-2))
@@ -965,7 +1021,21 @@ subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
            tz(i,j,nzm  ) = aciz6*(uz(i,j,nz)-uz(i,j,nzm)) &
                          + bciz6*(uz(i,j,nzm)-uz(i,j,nzm-1))
         enddo
+        !$acc end kernels
      else
+        !$acc kernels default(present)
+        do concurrent (j=1:ny, i=1:nx)
+           tz(i,j,1) = aciz6*(uz(i,j,2)-uz(i,j,1)) &
+                     + bciz6*(uz(i,j,3)-two*uz(i,j,1)+uz(i,j,2))
+        enddo
+        do concurrent (j=1:ny, i=1:nx)
+           tz(i,j,2) = aciz6*(uz(i,j,3)-uz(i,j,2)) &
+                     + bciz6*(uz(i,j,4)-uz(i,j,1))
+        enddo
+        do concurrent (k=3:nzm-2, j=1:ny, i=1:nx)
+           tz(i,j,k) = aciz6*(uz(i,j,k+1)-uz(i,j,k)) &
+                     + bciz6*(uz(i,j,k+2)-uz(i,j,k-1))
+        enddo
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,nzm-1) = aciz6*(uz(i,j,nz-1)-uz(i,j,nz-2)) &
                          + bciz6*(uz(i,j,nz)-uz(i,j,nz-3))
@@ -974,6 +1044,7 @@ subroutine derzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
            tz(i,j,nzm  ) = aciz6*(uz(i,j,nz)-uz(i,j,nz-1)) &
                          + bciz6*(two*uz(i,j,nz)-uz(i,j,nz-1)-uz(i,j,nz-2))
         enddo
+        !$acc end kernels
      endif
 
      ! Solve tri-diagonal system
@@ -1000,17 +1071,22 @@ subroutine interzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
 
+  npaire = x3dop%npaire
   if (nz==1) then
+     !$acc kernels default(present)
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
         tz(i,j,k) = uz(i,j,k)
      enddo
+     !$acc end kernels
      return
   endif
 
   if (nclz) then
      ! nzm = nz
 
+     !$acc kernels default(present)
      ! Compute r.h.s.
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,1) = aiciz6*(uz(i,j,2)+uz(i,j,1)) &
@@ -1060,6 +1136,7 @@ subroutine interzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
                      + ciciz6*(uz(i,j,3)+uz(i,j,nz-2)) &
                      + diciz6*(uz(i,j,4)+uz(i,j,nz-3))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -1068,6 +1145,7 @@ subroutine interzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
      ! nzm = nz-1
      if (x3dop%npaire==1) then
 
+        !$acc kernels default(present)
         ! Compute r.h.s.
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,1) = aiciz6*(uz(i,j,2)+uz(i,j,1)) &
@@ -1111,6 +1189,7 @@ subroutine interzvp(tz,uz,sz,x3dop,nx,ny,nz,nzm)
                        + ciciz6*(uz(i,j,nzm-1)+uz(i,j,nzm-2)) &
                        + diciz6*(uz(i,j,nzm-2)+uz(i,j,nzm-3))
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, nx, ny, nzm)
@@ -1137,17 +1216,23 @@ subroutine derzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer npaire 
+
+  npaire = x3dop%npaire
 
   if (nz==1) then
+     !$acc kernels default(present)
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
         tz(i,j,k) = zero
      enddo
+     !$acc end kernels
      return
   endif
 
   if (nclz) then
      ! nzm = nz
 
+     !$acc kernels default(present)
      ! Compute r.h.s.
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,1) = aciz6*(uz(i,j,1)-uz(i,j,nz)) &
@@ -1169,6 +1254,7 @@ subroutine derzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
         tz(i,j,nz) = aciz6*(uz(i,j,nz)-uz(i,j,nz-1)) &
                    + bciz6*(uz(i,j,1)-uz(i,j,nz-2))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -1177,6 +1263,7 @@ subroutine derzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
      ! nzm = nz-1
      if (x3dop%npaire==1) then
 
+        !$acc kernels default(present)
         ! Compute r.h.s.
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,1) = zero
@@ -1196,6 +1283,7 @@ subroutine derzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,nz) = zero
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)
@@ -1222,17 +1310,23 @@ subroutine interzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
 
   ! Local variables
   integer :: i, j, k
+  integer :: npaire
+
+  npaire = x3dop%npaire
 
   if (nz==1) then
+     !$acc kernels default(present)
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
         tz(i,j,k) = uz(i,j,k)
      enddo
+     !$acc end kernels
      return
   endif
 
   if (nclz) then
      ! nzm = nz
 
+     !$acc kernels default(present)
      ! Compute r.h.s.
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,1) = aiciz6*(uz(i,j,1)+uz(i,j,nz)) &
@@ -1282,6 +1376,7 @@ subroutine interzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
                      + ciciz6*(uz(i,j,2)+uz(i,j,nz-3)) &
                      + diciz6*(uz(i,j,3)+uz(i,j,nz-4))
      enddo
+     !$acc end kernels
 
      ! Solve tri-diagonal system
      call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
@@ -1290,6 +1385,7 @@ subroutine interzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
      ! nzm = nz-1
      if (x3dop%npaire==1) then
 
+        !$acc kernels default(present)
         ! Compute r.h.s.
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,1) = aiciz6*(uz(i,j,1)+uz(i,j,1)) &
@@ -1345,6 +1441,7 @@ subroutine interzpv(tz,uz,sz,x3dop,nx,ny,nzm,nz)
                         + ciciz6*(uz(i,j,nz-3)+uz(i,j,nz-3)) &
                         + diciz6*(uz(i,j,nz-4)+uz(i,j,nz-4))
         enddo
+        !$acc end kernels
 
         ! Solve tri-diagonal system
         call zthomas(tz, x3dop%f, x3dop%s, x3dop%w, nx, ny, nz)

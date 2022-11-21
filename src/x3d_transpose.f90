@@ -98,14 +98,21 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+     
+    n1 = decomp%xsz(1)
+    n2 = decomp%xsz(2)
+    n3 = decomp%xsz(3)
 
-    if (p_row == 1) then
-      do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2), i=1:decomp%xsz(1))
-        data_out(i,j,k) = data_in(i,j,k)
-      enddo
-    else 
+    !if (p_row == 1) then
+    !  !$acc kernels default(present)
+    !  do concurrent (k=1:n3, j=1:n2, i=1:n1)
+    !    data_out(i,j,k) = data_in(i,j,k)
+    !  enddo
+    !  !$acc end kernels
+    !else 
       call transpose_x_to_y(data_in,data_out,decomp)
-    endif
+    !endif
 
   end subroutine x3d_transpose_x_to_y_real
   !############################################################################
@@ -122,11 +129,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%xsz(1)
+    n2 = decomp%xsz(2)
+    n3 = decomp%xsz(3)
 
     if (p_row == 1) then
-      do concurrent (k=1:decomp%xsz(3), j=1:decomp%xsz(2), i=1:decomp%xsz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_x_to_y(data_in,data_out,decomp)
     endif
@@ -153,11 +167,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%ysz(1)
+    n2 = decomp%ysz(2)
+    n3 = decomp%ysz(3)
 
     if (p_col == 1) then
-      do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_y_to_z(data_in,data_out,decomp)
     endif
@@ -177,11 +198,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%ysz(1)
+    n2 = decomp%ysz(2)
+    n3 = decomp%ysz(3)
 
     if (p_col == 1) then
-      do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_y_to_z(data_in,data_out,decomp)
     endif
@@ -208,11 +236,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%zsz(1)
+    n2 = decomp%zsz(2)
+    n3 = decomp%zsz(3)
 
     if (p_col == 1) then
-      do concurrent (k=1:decomp%zsz(3), j=1:decomp%zsz(2), i=1:decomp%zsz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_z_to_y(data_in,data_out,decomp)
     endif
@@ -232,11 +267,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%zsz(1)
+    n2 = decomp%zsz(2)
+    n3 = decomp%zsz(3)
 
     if (p_col == 1) then
-      do concurrent (k=1:decomp%zsz(3), j=1:decomp%zsz(2), i=1:decomp%zsz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_z_to_y(data_in,data_out,decomp)
     endif
@@ -263,11 +305,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%zsz(1)
+    n2 = decomp%zsz(2)
+    n3 = decomp%zsz(3)
 
     if (p_row == 1) then
-      do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_y_to_x(data_in,data_out,decomp)
     endif
@@ -287,11 +336,18 @@ contains
 
     !! Local
     integer :: i, j, k
+    integer :: n1, n2, n3
+
+    n1 = decomp%ysz(1)
+    n2 = decomp%ysz(2)
+    n3 = decomp%ysz(3)
 
     if (p_row == 1) then
-      do concurrent (k=1:decomp%ysz(3), j=1:decomp%ysz(2), i=1:decomp%ysz(1))
+      !$acc kernels default(present)
+      do concurrent (k=1:n3, j=1:n2, i=1:n1)
         data_out(i,j,k) = data_in(i,j,k)
       enddo
+      !$acc end kernels
     else 
       call transpose_y_to_x(data_in,data_out,decomp)
     endif

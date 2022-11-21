@@ -37,6 +37,7 @@ module x3d_derive
   use x3d_operator_1d, only : x3doperator1d
   use param
   use thomas
+  use nvtx
   
   implicit none
 
@@ -156,6 +157,8 @@ subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
   ! Local variables
   integer :: i, j, k
 
+  call nvtxStartRange("RHS X der")
+  !$acc kernels default(present)
   do concurrent (k=1:nz, j=1:ny)
      ! Compute r.h.s.
      tx(1,j,k) = afix*(ux(2,j,k)-ux(nx,j,k)) &
@@ -172,9 +175,12 @@ subroutine derx_00(tx,ux,sx,x3dop,nx,ny,nz)
                 + bfix*(ux(2,j,k)-ux(nx-2,j,k))
 
   enddo
+  !$acc end kernels
 
   ! Solve tri-diagonal system
+  call nvtxStartRange("Thomas X der")
   call xthomas(tx, sx, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call nvtxEndRange
 
 end subroutine derx_00
 
@@ -196,6 +202,7 @@ subroutine derx_ij(tx,ux,sx,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
   ! Local variables
   integer :: i, j, k
 
+  !$acc kernels default(present)
   do concurrent (k=1:nz, j=1:ny)
      ! Compute r.h.s.
      if (ncl1==1) then
@@ -234,6 +241,7 @@ subroutine derx_ij(tx,ux,sx,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
         tx(nx,j,k) = - afnx*ux(nx,j,k) - bfnx*ux(nx-1,j,k) - cfnx*ux(nx-2,j,k)
      endif
   enddo
+  !$acc end kernels
 
   ! Solve tri-diagonal system
   call xthomas(tx, ff, fs, fw, nx, ny, nz)
@@ -326,6 +334,8 @@ subroutine dery_00(ty,uy,sy,x3dop,ppy,nx,ny,nz)
   integer :: i, j, k
 
   ! Compute r.h.s.
+  call nvtxStartRange("RHS Y der")
+  !$acc kernels default(present)
   do concurrent (k=1:nz)
      do concurrent (i=1:nx)
         ty(i,1,k) = afjy*(uy(i,2,k)-uy(i,ny,k)) &
@@ -348,15 +358,21 @@ subroutine dery_00(ty,uy,sy,x3dop,ppy,nx,ny,nz)
                    + bfjy*(uy(i,2,k)-uy(i,ny-2,k))
      enddo
   enddo
+  !$acc end kernels
+  call nvtxEndRange
 
   ! Solve tri-diagonal system
+  call nvtxStartRange("Thomas Y der")
   call ythomas(ty, sy, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
-
+  call nvtxEndRange
+  
   ! Apply stretching if needed
   if (istret /= 0) then
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny, i=1:nx)
         ty(i,j,k) = ty(i,j,k) * ppy(j)
      enddo
+    !$acc end kernels
   endif
 
 end subroutine dery_00
@@ -379,6 +395,7 @@ subroutine dery_ij(ty,uy,sy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
   ! Local variables
   integer :: i, j, k
 
+  !$acc kernels default(present)
   do concurrent (k=1:nz)
 
      ! Compute r.h.s.
@@ -441,15 +458,18 @@ subroutine dery_ij(ty,uy,sy,ff,fs,fw,ppy,nx,ny,nz,npaire,ncl1,ncln)
         enddo
      endif
   enddo
+  !$acc end kernels
 
   ! Solve tri-diagonal system
   call ythomas(ty, ff, fs, fw, nx, ny, nz)
 
   ! Apply stretching if needed
   if (istret /= 0) then
+     !$acc kernels default(present)
      do concurrent (k=1:nz, j=1:ny, i=1:nx)
         ty(i,j,k) = ty(i,j,k) * ppy(j)
      enddo
+     !$acc end kernels
   endif
 
 end subroutine dery_ij
@@ -541,13 +561,17 @@ subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
   integer :: i, j, k
 
   if (nz==1) then
+     !$acc kernels default(present)
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
         tz(i,j,k) = zero
      enddo
+     !$acc end kernels
      return
   endif
 
   ! Compute r.h.s.
+  call nvtxStartRange("RHS Z der")
+  !$acc kernels default(present)
   do concurrent (j=1:ny, i=1:nx)
      tz(i,j,1) = afkz*(uz(i,j,2)-uz(i,j,nz  )) &
                + bfkz*(uz(i,j,3)-uz(i,j,nz-1))
@@ -568,9 +592,13 @@ subroutine derz_00(tz,uz,sz,x3dop,nx,ny,nz)
      tz(i,j,nz) = afkz*(uz(i,j,1)-uz(i,j,nz-1)) &
                 + bfkz*(uz(i,j,2)-uz(i,j,nz-2))
   enddo
+  !$acc end kernels
+  call nvtxEndRange
 
   ! Solve tri-diagonal system
+  call nvtxStartRange("Thomas Z der")
   call zthomas(tz, sz, x3dop%f, x3dop%s, x3dop%w, x3dop%periodic, x3dop%alfa, nx, ny, nz)
+  call nvtxEndRange
 
 end subroutine derz_00
 
@@ -593,15 +621,18 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
   integer :: i, j, k
 
   if (nz==1) then
+     !$acc kernels default(present)
      do concurrent(k=1:nz, j=1:ny, i=1:nx)
         tz(i,j,k) = zero
      enddo
+     !$acc end kernels
      return
   endif
 
   ! Compute r.h.s.
   if (ncl1==1) then
      if (npaire==1) then
+        !$acc kernels default(present)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,1) = zero
         enddo
@@ -609,7 +640,9 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
            tz(i,j,2) = afkz*(uz(i,j,3)-uz(i,j,1)) &
                      + bfkz*(uz(i,j,4)-uz(i,j,2))
         enddo
+        !$acc end kernels
      else
+        !$acc kernels default(present)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,1) = afkz*(uz(i,j,2)+uz(i,j,2)) &
                      + bfkz*(uz(i,j,3)+uz(i,j,3))
@@ -618,8 +651,10 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
            tz(i,j,2) = afkz*(uz(i,j,3)-uz(i,j,1)) &
                      + bfkz*(uz(i,j,4)+uz(i,j,2))
         enddo
+        !$acc end kernels
      endif
   else
+     !$acc kernels default(present)
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,1) = af1z*uz(i,j,1) + bf1z*uz(i,j,2) &
                   + cf1z*uz(i,j,3)
@@ -627,13 +662,17 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,2) = af2z*(uz(i,j,3)-uz(i,j,1))
      enddo
+     !$acc end kernels
   endif
+  !$acc kernels default(present)
   do concurrent (k=3:nz-2, j=1:ny, i=1:nx)
      tz(i,j,k) = afkz*(uz(i,j,k+1)-uz(i,j,k-1)) &
                + bfkz*(uz(i,j,k+2)-uz(i,j,k-2))
   enddo
+  !$acc end kernels
   if (ncln==1) then
      if (npaire==1) then
+        !$acc kernels default(present)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,nz-1) = afkz*(uz(i,j,nz  )-uz(i,j,nz-2)) &
                         + bfkz*(uz(i,j,nz-1)-uz(i,j,nz-3))
@@ -641,7 +680,9 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,nz) = zero
         enddo
+        !$acc end kernels
      else
+        !$acc kernels default(present)
         do concurrent (j=1:ny, i=1:nx)
            tz(i,j,nz-1) = afkz*( uz(i,j,nz  )-uz(i,j,nz-2)) &
                         + bfkz*(-uz(i,j,nz-1)-uz(i,j,nz-3))
@@ -650,8 +691,10 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
            tz(i,j,nz) = afkz*(-uz(i,j,nz-1)-uz(i,j,nz-1)) &
                       + bfkz*(-uz(i,j,nz-2)-uz(i,j,nz-2))
         enddo
+        !$acc end kernels
      endif
   else
+     !$acc kernels default(present)
      do concurrent (j=1:ny, i=1:nx)
         tz(i,j,nz-1) = afmz*(uz(i,j,nz)-uz(i,j,nz-2))
      enddo
@@ -659,6 +702,7 @@ subroutine derz_ij(tz,uz,sz,ff,fs,fw,nx,ny,nz,npaire,ncl1,ncln)
         tz(i,j,nz) = - afnz*uz(i,j,nz) - bfnz*uz(i,j,nz-1) &
                      - cfnz*uz(i,j,nz-2)
      enddo
+     !$acc end kernels
   endif
 
   ! Solve tri-diagonal system

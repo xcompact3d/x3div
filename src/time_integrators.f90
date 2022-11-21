@@ -33,11 +33,13 @@ contains
     kmax = xsize(3)
 
 
-    call nvtxStartRange("time loop orig")
+    call nvtxStartRange("time loop")
     ! We have only Euler
-    do concurrent (k=1:xsize(3), j=1:xsize(2), i=1:xsize(1))
+    !$acc kernels default(present)
+    do concurrent (k=1:kmax, j=1:jmax, i=1:imax)
       var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
     enddo
+    !$acc end kernels
     call nvtxEndRange
     
     return

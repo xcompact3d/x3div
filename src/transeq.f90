@@ -79,7 +79,7 @@ contains
     use x3d_transpose
     use x3d_derive
     use decomp_2d , only : xsize, ysize, zsize
-    use var, only : ta1,tb1,tc1,td1,te1,tf1,tg1,th1,ti1
+    use var, only : ta1,tb1,tc1,td1,te1,tf1
     use var, only : ux2,uy2,uz2,ta2,tb2,tc2,td2,te2,tf2,tg2,th2,ti2,tj2
     use var, only : ux3,uy3,uz3,ta3,tb3,tc3,td3,te3,tf3,tg3,th3,ti3
     use nvtx
@@ -108,104 +108,150 @@ contains
     zsz2=zsize(2)
     zsz3=zsize(3)
 
+    !$acc enter data create(sx,sy,sz) async 
+    !$acc enter data create(ta1,tb1,tc1) async 
+    !$acc enter data create(td1,te1,tf1) async
+    !$acc wait
     !SKEW SYMMETRIC FORM
     !WORK X-PENCIL
-    call nvtxStartRange("Trans Do concurr standard")
+    !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
       ta1(i,j,k) = ux1(i,j,k) * ux1(i,j,k)
       tb1(i,j,k) = ux1(i,j,k) * uy1(i,j,k)
       tc1(i,j,k) = ux1(i,j,k) * uz1(i,j,k)
     enddo
-    call nvtxEndRange
+    !$acc end kernels
 
+    call nvtxStartRange("Group Der X")
     call derx (td1,ta1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
     call derx (te1,tb1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
     call derx (tf1,tc1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
     call derx (ta1,ux1,sx,x3d_op_derx, xsize(1),xsize(2),xsize(3))
     call derx (tb1,uy1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
     call derx (tc1,uz1,sx,x3d_op_derxp,xsize(1),xsize(2),xsize(3))
+    call nvtxEndRange
 
-    ! Convective terms of x-pencil are stored in tg1,th1,ti1
+    ! Convective terms of x-pencil are stored directly in dux-y-z1
+    !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
-      tg1(i,j,k) = td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k)
-      th1(i,j,k) = te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k)
-      ti1(i,j,k) = tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k)
+      dux1(i,j,k,1) = td1(i,j,k) + ux1(i,j,k) * ta1(i,j,k) !duudx+u*dudx
+      duy1(i,j,k,1) = te1(i,j,k) + ux1(i,j,k) * tb1(i,j,k)
+      duz1(i,j,k,1) = tf1(i,j,k) + ux1(i,j,k) * tc1(i,j,k)
     enddo
-    ! TODO: save the x-convective terms already in dux1, duy1, duz1
-
+    !$acc end kernels
     call test_du(ta1)
     
+    !$acc exit data delete(td1,te1,tf1) async
+    !$acc enter data create(ux3,uy3,uz3) async
+    !$acc enter data create(td2,te2,tf2) async
+    !$acc enter data create(ux2,uy2,uz2) async
+    !$acc enter data create(tg2,th2,ti2) async
+    !$acc wait
+    call nvtxStartRange("Tran XY")
     call x3d_transpose_x_to_y(ux1,ux2)
     call x3d_transpose_x_to_y(uy1,uy2)
     call x3d_transpose_x_to_y(uz1,uz2)
+    call nvtxEndRange
 
     !WORK Y-PENCILS
-    
+    !$acc kernels default(present)
     do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       td2(i,j,k) = ux2(i,j,k) * uy2(i,j,k)
       te2(i,j,k) = uy2(i,j,k) * uy2(i,j,k)
       tf2(i,j,k) = uz2(i,j,k) * uy2(i,j,k)
     enddo
+    !$acc end kernels
 
+    call nvtxStartRange("Group Der Y")
     call dery (tg2,td2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
     call dery (th2,te2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
     call dery (ti2,tf2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
     call dery (td2,ux2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
     call dery (te2,uy2,sy,x3d_op_dery ,ppy,ysize(1),ysize(2),ysize(3))
     call dery (tf2,uz2,sy,x3d_op_deryp,ppy,ysize(1),ysize(2),ysize(3))
+    call nvtxEndRange
 
     ! Convective terms of y-pencil in tg2,th2,ti2
+    !$acc kernels default(present)
     do concurrent (k=1:ysz3, j=1:ysz2, i=1:ysz1)
       tg2(i,j,k) = tg2(i,j,k) + uy2(i,j,k) * td2(i,j,k)
       th2(i,j,k) = th2(i,j,k) + uy2(i,j,k) * te2(i,j,k)
       ti2(i,j,k) = ti2(i,j,k) + uy2(i,j,k) * tf2(i,j,k)
     enddo
-    
+    !$acc end kernels
     call test_dv(te2)
     
+    call nvtxStartRange("Tran YZ")
     call x3d_transpose_y_to_z(ux2,ux3)
     call x3d_transpose_y_to_z(uy2,uy3)
     call x3d_transpose_y_to_z(uz2,uz3)
+    call nvtxEndRange
+    !$acc exit data delete(tg2,th2,ti2) async
+    !$acc exit data delete(ux2,uy2,uz2) async
 
     !WORK Z-PENCILS
+    !$acc enter data create(ta3,tb3,tc3) async
+    !$acc enter data create(td3,te3,tf3) async
+    !$acc enter data create(tg3,th3,ti3) async
+    !$acc wait
+    !$acc kernels default(present)
     do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
       td3(i,j,k) = ux3(i,j,k) * uz3(i,j,k)
       te3(i,j,k) = uy3(i,j,k) * uz3(i,j,k)
       tf3(i,j,k) = uz3(i,j,k) * uz3(i,j,k)
     enddo
+    !$acc end kernels
 
+    call nvtxStartRange("Group Der Z")
     call derz (tg3,td3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
     call derz (th3,te3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
     call derz (ti3,tf3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
     call derz (td3,ux3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
     call derz (te3,uy3,sz,x3d_op_derzp,zsize(1),zsize(2),zsize(3))
     call derz (tf3,uz3,sz,x3d_op_derz ,zsize(1),zsize(2),zsize(3))
+    call nvtxEndRange
 
     ! Convective terms of z-pencil in ta3,tb3,tc3
+    !$acc kernels default(present)
     do concurrent (k=1:zsz3, j=1:zsz2, i=1:zsz1)
       ta3(i,j,k) = tg3(i,j,k) + uz3(i,j,k) * td3(i,j,k)
       tb3(i,j,k) = th3(i,j,k) + uz3(i,j,k) * te3(i,j,k)
       tc3(i,j,k) = ti3(i,j,k) + uz3(i,j,k) * tf3(i,j,k)
     enddo 
+    !$acc end kernels
 
     call test_dw(tf3)
     
     !WORK Y-PENCILS
+    call nvtxStartRange("Tran ZY")
     call x3d_transpose_z_to_y(ta3,td2)
     call x3d_transpose_z_to_y(tb3,te2)
     call x3d_transpose_z_to_y(tc3,tf2)
+    call nvtxEndRange
 
     !WORK X-PENCILS
+    call nvtxStartRange("Tran YX")
     call x3d_transpose_y_to_x(td2,ta1)
     call x3d_transpose_y_to_x(te2,tb1)
     call x3d_transpose_y_to_x(tf2,tc1) !diff+conv. terms
+    call nvtxEndRange
 
     !FINAL SUM: DIFF TERMS + CONV TERMS
+    !$acc kernels default(present)
     do concurrent (k=1:xsz3, j=1:xsz2, i=1:xsz1)
-      dux1(i,j,k,1) = ta1(i,j,k)
-      duy1(i,j,k,1) = tb1(i,j,k)
-      duz1(i,j,k,1) = tc1(i,j,k)
+      dux1(i,j,k,1) = dux1(i,j,k,1)+ta1(i,j,k)
+      duy1(i,j,k,1) = duy1(i,j,k,1)+tb1(i,j,k)
+      duz1(i,j,k,1) = duz1(i,j,k,1)+tc1(i,j,k)
     enddo
+    !$acc end kernels
+    !$acc exit data delete(tg3,th3,ti3) async
+    !$acc exit data delete(td3,te3,tf3) async
+    !$acc exit data delete(ta3,tb3,tc3) async
+    !$acc exit data delete(ux3,uy3,uz3) async
+    !$acc exit data delete(td2,tb2,tc2) async
+    !$acc exit data delete(ta1,tb1,tc1) async
+    !$acc exit data delete(sx,sy,sz) async
+    !$acc wait
 
   end subroutine momentum_rhs_eq
   !############################################################################

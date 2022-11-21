@@ -275,7 +275,9 @@
 #endif
 
 #if defined(_GPU)
+       !$acc host_data use_device(in)
        istat = cudaMemcpy2D( out(pos), i2-i1+1, in(i1,1,1), n1, i2-i1+1, n2*n3, cudaMemcpyDeviceToDevice )
+       !$acc end host_data
 #else
        do k=1,n3
           do j=1,n2
@@ -329,7 +331,9 @@
 #endif
 
 #if defined(_GPU)
+       !$acc host_data use_device(in)
        istat = cudaMemcpy2D( out(pos), i2-i1+1, in(i1,1,1), n1, i2-i1+1, n2*n3, cudaMemcpyDeviceToDevice )
+       !$acc end host_data
 #else
        do k=1,n3
           do j=1,n2
@@ -383,7 +387,9 @@
 #endif
 
 #if defined(_GPU)
+       !$acc host_data use_device(out)
        istat = cudaMemcpy2D( out(1,i1,1), n1*n2, in(pos), n1*(i2-i1+1), n1*(i2-i1+1), n3, cudaMemcpyDeviceToDevice )
+       !$acc end host_data
 #else
        do k=1,n3
           do j=i1,i2
@@ -437,7 +443,9 @@
 #endif
 
 #if defined(_GPU)
+       !$acc host_data use_device(out)
        istat = cudaMemcpy2D( out(1,i1,1), n1*n2, in(pos), n1*(i2-i1+1), n1*(i2-i1+1), n3, cudaMemcpyDeviceToDevice )
+       !$acc end host_data 
 #else
        do k=1,n3
           do j=i1,i2

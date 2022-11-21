@@ -326,6 +326,8 @@ contains
     real(mytype) :: tmp1, tmp2,x ,y, z
 
     integer :: nx,ny,nz, i,j,k
+    integer :: sp_xst3, sp_xst2, sp_xst1
+    integer :: sp_xen3, sp_xen2, sp_xen1
 
     complex(mytype) :: cw1_tmp
     real(mytype) :: ntot
@@ -338,11 +340,18 @@ contains
          * real(ny, kind=mytype) &
          * real(nz, kind=mytype)
 
+    sp_xst1=sp%xst(1);sp_xst2=sp%xst(2);sp_xst3=sp%xst(3);
+    sp_xen1=sp%xen(1);sp_xen2=sp%xen(2);sp_xen3=sp%xen(3);
+
     if (.not. fft_initialised) then
        call decomp_2d_fft_init(PHYSICAL_IN_Z)
        fft_initialised = .true.
     end if
-
+    
+    !$acc enter data create(cw1) async
+    !$acc enter data create(kxyz) async
+    !$acc enter data create(az, bz, ay, by, ax, bx) async
+    !$acc wait
     ! compute r2c transform 
     call nvtxStartRange("call decomp_fft_r2c")
     call decomp_2d_fft_3d(rhs,cw1)
@@ -358,7 +367,8 @@ contains
     !end do
 
     call nvtxStartRange("call normalisation")
-    do concurrent(k=sp%xst(3):sp%xen(3), j=sp%xst(2):sp%xen(2),i=sp%xst(1):sp%xen(1))
+    !$acc kernels default(present)
+    do concurrent(k=sp_xst3:sp_xen3, j=sp_xst2:sp_xen2,i=sp_xst1:sp_xen1)
       ! POST PROCESSING IN Z
       cw1_tmp = cw1(i,j,k)
       tmp1 = real(cw1_tmp, kind=mytype)/ntot
@@ -421,6 +431,7 @@ contains
       cw1(i,j,k) = cw1_tmp
 
     end do
+    !$acc end kernels
     call nvtxEndRange
 #ifdef DEBUG
     dim3d = shape(cw1)
@@ -437,6 +448,9 @@ contains
     call nvtxStartRange("call decomp_c2r")
     call decomp_2d_fft_3d(cw1,rhs)
     call nvtxEndRange
+    !$acc exit data delete(kxyz) async
+    !$acc exit data delete(az,bz,ay,by,ax,bx) async
+    !$acc exit data delete(cw1) async 
 
     !   call decomp_2d_fft_finalize
 

@@ -73,6 +73,7 @@ contains
 
     call xthomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is pre-determined
+    !$acc kernels default(present) 
     do concurrent (k=1:nz, j=1:ny)
        ss(j,k) = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
                / (one+perio(1)-alfa*perio(nx))
@@ -80,6 +81,7 @@ contains
           tt(i,j,k) = tt(i,j,k) - ss(j,k)*perio(i)
        enddo
     enddo
+    !$acc end kernels
 
   end subroutine xthomas_0
 
@@ -94,6 +96,7 @@ contains
 
     integer :: i, j, k
 
+    !$acc kernels default(present) 
     do concurrent (k=1:nz, j=1:ny)
        do i = 2, nx
           tt(i,j,k) = tt(i,j,k) - tt(i-1,j,k)*fs(i)
@@ -103,6 +106,8 @@ contains
           tt(i,j,k) = (tt(i,j,k)-ff(i)*tt(i+1,j,k)) * fw(i)
        enddo
     enddo
+    !$acc end kernels
+    
 
   end subroutine xthomas_12
 
@@ -121,6 +126,7 @@ contains
 
     call ythomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is pre-determined
+    !$acc kernels default(present) 
     do concurrent (k=1:nz, i=1:nx)
        ss(i,k) = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
                / (one+perio(1)-alfa*perio(ny))
@@ -128,6 +134,7 @@ contains
           tt(i,j,k) = tt(i,j,k) - ss(i,k)*perio(j)
        enddo
     enddo
+    !$acc end kernels
 
   end subroutine ythomas_0
 
@@ -142,6 +149,7 @@ contains
 
     integer :: i, j, k
 
+    !$acc kernels default(present) 
     do concurrent (k=1:nz, i=1:nx)
        do j=2,ny
           tt(i,j,k) = tt(i,j,k) - tt(i,j-1,k)*fs(j)
@@ -151,6 +159,7 @@ contains
           tt(i,j,k) = (tt(i,j,k)-ff(j)*tt(i,j+1,k)) * fw(j)
        enddo
     enddo
+    !$acc end kernels
 
   end subroutine ythomas_12
 
@@ -169,6 +178,7 @@ contains
 
     call zthomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is constant
+    !$acc kernels default(present)
     do concurrent (j=1:ny, i=1:nx)
        ss(i,j) = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
                / (one+perio(1)-alfa*perio(nz))
@@ -176,6 +186,7 @@ contains
           tt(i,j,k) = tt(i,j,k) - ss(i,j)*perio(k)
        enddo
     enddo
+    !$acc end kernels
 
   end subroutine zthomas_0
 
@@ -190,6 +201,7 @@ contains
 
     integer :: i, j, k
 
+    !$acc kernels default(present)
     do concurrent (j=1:ny, i=1:nx)
        do k=2,nz
           tt(i,j,k) = tt(i,j,k) - tt(i,j,k-1)*fs(k)
@@ -199,6 +211,7 @@ contains
           tt(i,j,k) = (tt(i,j,k)-ff(k)*tt(i,j,k+1)) * fw(k)
        enddo
     enddo 
+    !$acc end kernels
        
   end subroutine zthomas_12
 

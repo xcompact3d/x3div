@@ -608,7 +608,9 @@ module decomp_2d_fft
 #ifndef OVERWRITE
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
-
+    
+    !$acc enter data create(wk2_c2c) async
+    !$acc wait
     if (format==PHYSICAL_IN_X .AND. isign==DECOMP_2D_FFT_FORWARD .OR.  &
          format==PHYSICAL_IN_Z .AND. isign==DECOMP_2D_FFT_BACKWARD) then
 
@@ -617,7 +619,11 @@ module decomp_2d_fft
        call c2c_1m_x(in,isign,plan(isign,1))
 #else
        allocate (wk1(ph%xsz(1),ph%xsz(2),ph%xsz(3)))
+       !$acc enter data create(wk1) async
+       !$acc wait
+       !$acc kernels default(present)
        wk1 = in
+       !$acc end kernels
        call c2c_1m_x(wk1,isign,plan(isign,1))
 #endif
 
@@ -659,7 +665,11 @@ module decomp_2d_fft
        call c2c_1m_z(in,isign,plan(isign,3))
 #else
        allocate (wk1(ph%zsz(1),ph%zsz(2),ph%zsz(3)))
+       !$acc enter data create(wk1) async
+       !$acc wait
+       !$acc kernels default(present)
        wk1 = in
+       !$acc end kernels
        call c2c_1m_z(wk1,isign,plan(isign,3))
 #endif
 
@@ -689,8 +699,11 @@ module decomp_2d_fft
     end if
 
 #ifndef OVERWRITE
+    !acc exit data delete(wk1) async
     deallocate (wk1)
 #endif
+    !acc exit data delete(wk2_c2c) async
+    !acc wait
 
     return
   end subroutine fft_3d_c2c
@@ -708,6 +721,8 @@ module decomp_2d_fft
     integer :: i, j ,k
     integer, dimension(3) :: dim3d
 
+    !$acc enter data create(wk13,wk2_r2c)
+    !$acc wait
     if (format==PHYSICAL_IN_X) then
 
        ! ===== 1D FFTs in X =====
@@ -814,7 +829,8 @@ module decomp_2d_fft
        write(*,*)
 #endif
     end if
-
+    !$acc exit data delete(wk13,wk2_r2c) async
+    !$acc wait
     return
   end subroutine fft_3d_r2c
 
@@ -834,6 +850,8 @@ module decomp_2d_fft
     complex(mytype), allocatable, dimension(:,:,:) :: wk1
 #endif
 
+    !$acc enter data create(wk2_r2c,wk13)
+    !$acc wait
     if (format==PHYSICAL_IN_X) then
 
        ! ===== 1D FFTs in Z =====
@@ -841,7 +859,11 @@ module decomp_2d_fft
        call c2c_1m_z(in_c,1,plan(2,3))       
 #else
        allocate (wk1(sp%zsz(1),sp%zsz(2),sp%zsz(3)))
+       !$acc enter data create(wk1) async
+       !$acc wait
+       !$acc kernels default(present)
        wk1 = in_c
+       !$acc end kernels
        call c2c_1m_z(wk1,1,plan(2,3))
 #endif
 
@@ -895,7 +917,11 @@ module decomp_2d_fft
 #endif
 #else
        allocate(wk1(sp%xsz(1),sp%xsz(2),sp%xsz(3)))
+       !$acc enter data create(wk1) async
+       !$acc wait
+       !$acc kernels default(present)
        wk1 = in_c
+       !$acc end kernels
        call c2c_1m_x(wk1,1,plan(2,1))
 #ifdef DEBUG
        write(*,*) 'Back2 c2c_1m_x line 821'
@@ -1013,8 +1039,11 @@ module decomp_2d_fft
     end if
 
 #ifndef OVERWRITE
+    !$acc exit data delete(wk1) async
     deallocate (wk1)
 #endif
+    !$acc exit data delete(wk2_r2c,wk13) async
+    !$acc wait
 
     return
   end subroutine fft_3d_c2r

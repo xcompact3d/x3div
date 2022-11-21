@@ -83,36 +83,47 @@ contains
 
     real(mytype) :: x, y, z
     integer :: i, j, k
+    integer :: ne1, ne2, ne3
+    integer :: ns1, ns2, ns3
     integer :: code
 
     real(mytype) :: err, errloc
     real(mytype) :: du_ana
 
     if (test_mode) then
-       if (nrank .eq. 0 ) then
-          open(101, file="du.dat", action="write", status="unknown")
-       endif
+       !if (nrank .eq. 0 ) then
+       !   open(101, file="du.dat", action="write", status="unknown")
+       !endif
+      
+       ne1 = xsize(1)
+       ne2 = xsize(2)
+       ne3 = xsize(3)
+       ns1 = xstart(1)
+       ns2 = xstart(2)
+       ns3 = xstart(3)
     
        errloc = zero
-       do k = 1, xsize(3)
-          z = (k + xstart(3) - 2) * dz
-          do j = 1, xsize(2)
-             y = (j + xstart(2) - 2) * dy
-             do i = 1, xsize(1)
-                x = (i + xstart(1) - 2) * dx
+       !$acc parallel loop default(present) reduction(+:errloc)
+       do k = 1, ne3
+          z = (k + ns3 - 2) * dz
+          do j = 1, ne2
+             y = (j + ns2 - 2) * dy
+             do i = 1, ne1
+                x = (i + ns1 - 2) * dx
                 
                 du_ana = cos(twopi * (x / xlx)) * cos(twopi * (y / yly)) * cos(twopi * (z / zlz))
                 du_ana = twopi * du_ana / xlx
                 errloc = errloc + (du(i, j, k) - du_ana)**2
                 
-                if (nrank .eq. 0) then
-                   if ((j.eq.1) .and. (k.eq.1)) then
-                      write(101, *) x, du(i, j, k), du_ana, errloc
-                   endif
-                endif
+                !if (nrank .eq. 0) then
+                !   if ((j.eq.1) .and. (k.eq.1)) then
+                !      write(101, *) x, du(i, j, k), du_ana, errloc
+                !   endif
+                !endif
              enddo
           enddo
        enddo
+       !$acc end loop
        call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, code)
        if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
        err = sqrt(err / nx / ny / nz)
@@ -121,9 +132,9 @@ contains
           print *, "RMS error in dudx: ", err
        end if
 
-       if (nrank .eq. 0) then
-          close(101)
-       endif
+       !if (nrank .eq. 0) then
+       !   close(101)
+       !endif
     end if
     
   endsubroutine test_du
@@ -136,35 +147,45 @@ contains
 
     real(mytype) :: x, y, z
     integer :: i, j, k
+    integer :: ne1, ne2, ne3
+    integer :: ns1, ns2, ns3
     integer :: code
 
     real(mytype) :: err, errloc
     real(mytype) :: dv_ana
 
     if (test_mode) then
-       if (nrank .eq. 0) then
-          open(102, file="dv.dat", action="write", status="unknown")
-       endif
+       !if (nrank .eq. 0) then
+       !   open(102, file="dv.dat", action="write", status="unknown")
+       !endif
+       ne1 = ysize(1)
+       ne2 = ysize(2)
+       ne3 = ysize(3)
+       ns1 = ystart(1)
+       ns2 = ystart(2)
+       ns3 = ystart(3)
 
        errloc = zero
-       do k = 1, ysize(3)
-          z = (k + ystart(3) - 2) * dz
-          do j = 1, ysize(2)
-             y = (j + ystart(2) - 2) * dy
-             do i = 1, ysize(1)
-                x = (i + ystart(1) - 2) * dx
+       !$acc parallel loop default(present) reduction(+:errloc)
+       do k = 1, ne3
+          z = (k + ns3 - 2) * dz
+          do j = 1, ne2
+             y = (j + ns2 - 2) * dy
+             do i = 1, ne1
+                x = (i + ns1 - 2) * dx
                 
                 dv_ana = cos(twopi * (x / xlx)) * cos(twopi * (y / yly)) * cos(twopi * (z / zlz))
                 dv_ana = twopi * dv_ana / yly
                 errloc = errloc + (dv(i, j, k) - dv_ana)**2
-                if (nrank .eq. 0) then
-                   if ((i.eq.1) .and. (k.eq.1)) then
-                      write(102, *) y, dv(i, j, k), dv_ana, errloc
-                   endif
-                endif
+                !if (nrank .eq. 0) then
+                !   if ((i.eq.1) .and. (k.eq.1)) then
+                !      write(102, *) y, dv(i, j, k), dv_ana, errloc
+                !   endif
+                !endif
              enddo
           enddo
        enddo
+       !$acc end loop
        call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, code)
        if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
        err = sqrt(err / nx / ny / nz)
@@ -173,9 +194,9 @@ contains
           print *, "RMS error in dvdy: ", err
        end if
        
-       if (nrank .eq. 0) then
-          close(102)
-       endif
+       !if (nrank .eq. 0) then
+       !   close(102)
+       !endif
     end if
     
   endsubroutine test_dv
@@ -186,35 +207,45 @@ contains
 
     real(mytype) :: x, y, z
     integer :: i, j, k
+    integer :: ne1, ne2, ne3
+    integer :: ns1, ns2, ns3
     integer :: code
 
     real(mytype) :: err, errloc
     real(mytype) :: dw_ana
 
     if (test_mode) then
-       if (nrank .eq. 0) then
-          open(103, file="dw.dat", action="write", status="unknown")
-       endif
+       !if (nrank .eq. 0) then
+       !   open(103, file="dw.dat", action="write", status="unknown")
+       !endif
+       ne1 = zsize(1)
+       ne2 = zsize(2)
+       ne3 = zsize(3)
+       ns1 = zstart(1)
+       ns2 = zstart(2)
+       ns3 = zstart(3)
        errloc = zero
-       do k = 1, zsize(3)
-          z = (k + zstart(3) - 2) * dz
-          do j = 1, zsize(2)
-             y = (j + zstart(2) - 2) * dy
-             do i = 1, zsize(1)
-                x = (i + zstart(1) - 2) * dx
+       !$acc parallel loop default(present) reduction(+:errloc)
+       do k = 1, ne3
+          z = (k + ns3 - 2) * dz
+          do j = 1, ne2
+             y = (j + ns2 - 2) * dy
+             do i = 1, ne1
+                x = (i + ns1 - 2) * dx
 
                 dw_ana = -two * cos(twopi * (x / xlx)) * cos(twopi * (y / yly)) * cos(twopi * (z / zlz))
                 dw_ana = twopi * dw_ana / zlz
                 errloc = errloc + (dw(i, j, k) - dw_ana)**2
 
-                if (nrank .eq. 0) then
-                   if ((i.eq.1) .and. (j.eq.1)) then
-                      write(103, *) z, dw(i, j, k), dw_ana, errloc
-                   endif
-                endif
+                !if (nrank .eq. 0) then
+                !   if ((i.eq.1) .and. (j.eq.1)) then
+                !      write(103, *) z, dw(i, j, k), dw_ana, errloc
+                !   endif
+                !endif
              enddo
           enddo
        enddo
+       !$acc end loop
        call MPI_ALLREDUCE(errloc, err, 1, real_type, MPI_SUM, MPI_COMM_WORLD, code)
        if (code /= 0) call decomp_2d_warning(__FILE__, __LINE__, code, "MPI_ALLREDUCE")
        err = sqrt(err / nx / ny / nz)
@@ -223,9 +254,9 @@ contains
           print *, "RMS error in dwdz: ", err
        end if
 
-       if (nrank .eq. 0) then
-          close(103)
-       endif
+       !if (nrank .eq. 0) then
+       !   close(103)
+       !endif
     end if
 
   endsubroutine test_dw

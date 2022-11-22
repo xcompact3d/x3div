@@ -114,9 +114,9 @@ program xcompact3d
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
      call nvtxEndRange
      !
-     !call nvtxStartRange("cor_vel")
-     !call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
-     !call nvtxEndRange
+     call nvtxStartRange("cor_vel")
+     call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
+     call nvtxEndRange
 
      tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)

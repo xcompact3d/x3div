@@ -4,6 +4,12 @@
 
 module time_integrators
 
+  use param, only : itr, ntime, gdt
+  use variables
+  use decomp_2d_constants, only : mytype
+  use decomp_2d, only: xsize
+  !use nvtx
+
   implicit none
 
   private
@@ -14,10 +20,6 @@ contains
   subroutine intt(var1,dvar1)
 
     use MPI
-    use param    , only : itr, ntime, gdt
-    use variables
-    use decomp_2d, only : mytype, xsize
-    use nvtx
 
     implicit none
 
@@ -33,14 +35,14 @@ contains
     kmax = xsize(3)
 
 
-    call nvtxStartRange("time loop")
+    !call nvtxStartRange("time loop")
     ! We have only Euler
     !$acc kernels default(present)
     do concurrent (k=1:kmax, j=1:jmax, i=1:imax)
       var1(i,j,k)=gdt(itr)*dvar1(i,j,k,1)+var1(i,j,k)
     enddo
     !$acc end kernels
-    call nvtxEndRange
+    !call nvtxEndRange
     
     return
 
@@ -57,9 +59,6 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   subroutine int_time(ux1, uy1, uz1, dux1, duy1, duz1)
-
-    use decomp_2d, only : mytype, xsize, nrank
-    use param, only : ntime
 
     implicit none
 
@@ -88,14 +87,9 @@ contains
   !!      INPUTS: dux1, duy1, duz1 - the RHS(s) of the momentum equations
   !!     OUTPUTS: ux1,   uy1,  uz1 - the intermediate momentum state.
   !!       NOTES: This is integrating the MOMENTUM in time (!= velocity)
-  !!      AUTHOR: Paul Bartholomew
   !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine int_time_momentum(ux1, uy1, uz1, dux1, duy1, duz1)
-
-    use param
-    use variables
-    use decomp_2d
 
     implicit none
 

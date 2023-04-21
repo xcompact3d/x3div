@@ -1,38 +1,10 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
 
 module thomas
 
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
   use param, only : zero, one
 
   implicit none
@@ -59,26 +31,26 @@ module thomas
 contains
 
   ! Thomas algorithm in X direction (periodicity)
-  pure subroutine xthomas_0(tt, ss, ff, fs, fw, perio, alfa, nx, ny, nz)
+  pure subroutine xthomas_0(tt, ff, fs, fw, perio, alfa, nx, ny, nz)
 
     implicit none
 
     integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
-    real(mytype), intent(out), dimension(ny,nz) :: ss
     real(mytype), intent(in), dimension(nx):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
 
     integer :: i, j, k
+    real(mytype) :: ss
 
     call xthomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is pre-determined
     !$acc kernels default(present) 
     do concurrent (k=1:nz, j=1:ny)
-       ss(j,k) = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
-               / (one+perio(1)-alfa*perio(nx))
+       ss = (   tt(1,j,k)-alfa*tt(nx,j,k)) &
+          / (one+perio(1)-alfa*perio(nx))
        do i = 1, nx
-          tt(i,j,k) = tt(i,j,k) - ss(j,k)*perio(i)
+          tt(i,j,k) = tt(i,j,k) - ss*perio(i)
        enddo
     enddo
     !$acc end kernels
@@ -112,26 +84,26 @@ contains
   end subroutine xthomas_12
 
   ! Thomas algorithm in Y direction (periodicity)
-  subroutine ythomas_0(tt, ss, ff, fs, fw, perio, alfa, nx, ny, nz)
+  subroutine ythomas_0(tt, ff, fs, fw, perio, alfa, nx, ny, nz)
 
     implicit none
 
     integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
-    real(mytype), intent(out), dimension(nx,nz) :: ss
     real(mytype), intent(in), dimension(ny):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
 
     integer :: i, j, k
+    real(mytype) :: ss
 
     call ythomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is pre-determined
     !$acc kernels default(present) 
     do concurrent (k=1:nz, i=1:nx)
-       ss(i,k) = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
-               / (one+perio(1)-alfa*perio(ny))
+       ss = (   tt(i,1,k)-alfa*tt(i,ny,k)) &
+          / (one+perio(1)-alfa*perio(ny))
        do j = 1, ny
-          tt(i,j,k) = tt(i,j,k) - ss(i,k)*perio(j)
+          tt(i,j,k) = tt(i,j,k) - ss*perio(j)
        enddo
     enddo
     !$acc end kernels
@@ -164,26 +136,26 @@ contains
   end subroutine ythomas_12
 
   ! Thomas algorithm in Z direction (periodicity)
-  subroutine zthomas_0(tt, ss, ff, fs, fw, perio, alfa, nx, ny, nz)
+  subroutine zthomas_0(tt, ff, fs, fw, perio, alfa, nx, ny, nz)
 
     implicit none
 
     integer, intent(in) :: nx, ny, nz
     real(mytype), intent(inout), dimension(nx,ny,nz) :: tt
-    real(mytype), intent(out), dimension(nx,ny) :: ss
     real(mytype), intent(in), dimension(nz):: ff, fs, fw, perio
     real(mytype), intent(in) :: alfa
 
     integer :: i, j, k
+    real(mytype) :: ss
 
     call zthomas_12(tt, ff, fs, fw, nx, ny, nz)
     ! Optimized solver, rr is constant
     !$acc kernels default(present)
     do concurrent (j=1:ny, i=1:nx)
-       ss(i,j) = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
-               / (one+perio(1)-alfa*perio(nz))
+       ss = (   tt(i,j,1)-alfa*tt(i,j,nz)) &
+          / (one+perio(1)-alfa*perio(nz))
        do k=1,nz
-          tt(i,j,k) = tt(i,j,k) - ss(i,j)*perio(k)
+          tt(i,j,k) = tt(i,j,k) - ss*perio(k)
        enddo
     enddo
     !$acc end kernels

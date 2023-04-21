@@ -1,48 +1,22 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
 
 program xcompact3d
 
   use MPI
 
   use var
-  use decomp_2d, only : nrank, xsize, real_type, decomp_2d_warning 
+  use decomp_2d_constants, only : real_type 
+  use decomp_2d_mpi, only : nrank, decomp_2d_warning 
+  use decomp_2d, only : xsize 
   use param,   only : dt, zero, itr
   use param,   only : gdt
   use transeq, only : calculate_transeq_rhs
   use navier,  only : solve_poisson, cor_vel
   use mom,     only : test_du, test_dv, test_dw
   use time_integrators, only : int_time
-  use nvtx
+  !use nvtx
   use x3d_operator_1d
   use variables
 
@@ -56,9 +30,9 @@ program xcompact3d
 
   call boot_xcompact3d()
 
-  call nvtxStartRange("init_xcompact3d")
+  !call nvtxStartRange("init_xcompact3d")
   call init_xcompact3d(ndt_max)
-  call nvtxEndRange
+  !call nvtxEndRange
 
   telapsed = 0
   tmin = telapsed
@@ -94,29 +68,30 @@ program xcompact3d
   !$acc data copy(dux1,duy1,duz1) async
   !$acc data copy(pp3,px1,py1,pz1) async
   !$acc wait
+  call init_flowfield()
   do while(ndt <= ndt_max)
      itr = 1 ! no inner iterations
      !call init_flowfield()
 
      tstart = MPI_Wtime()
-     call nvtxStartRange("calculate_transeq_rhs")
+     !call nvtxStartRange("calculate_transeq_rhs")
      call calculate_transeq_rhs(dux1,duy1,duz1,ux1,uy1,uz1)
-     call nvtxEndRange
+     !call nvtxEndRange
 
-     call nvtxStartRange("int_time")
+     !call nvtxStartRange("int_time")
      call int_time(ux1,uy1,uz1,dux1,duy1,duz1)
-     call nvtxEndRange
+     !call nvtxEndRange
      !
      !!do concurrent (k=1:zsize(3), j=1:zsize(2), i=1:zsize(1))
      !!  divu3(:,:,:) = zero
      !!enddo
-     call nvtxStartRange("solve_poisson")
+     !call nvtxStartRange("solve_poisson")
      call solve_poisson(pp3,px1,py1,pz1,ux1,uy1,uz1)
-     call nvtxEndRange
+     !call nvtxEndRange
      !
-     call nvtxStartRange("cor_vel")
+     !call nvtxStartRange("cor_vel")
      call cor_vel(ux1,uy1,uz1,px1,py1,pz1)
-     call nvtxEndRange
+     !call nvtxEndRange
 
      tend = MPI_Wtime()
      telapsed = telapsed + (tend - tstart)

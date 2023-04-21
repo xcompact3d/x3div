@@ -1,45 +1,19 @@
-!################################################################################
-!This file is part of Xcompact3d.
-!
-!Xcompact3d
-!Copyright (c) 2012 Eric Lamballais and Sylvain Laizet
-!eric.lamballais@univ-poitiers.fr / sylvain.laizet@gmail.com
-!
-!    Xcompact3d is free software: you can redistribute it and/or modify
-!    it under the terms of the GNU General Public License as published by
-!    the Free Software Foundation.
-!
-!    Xcompact3d is distributed in the hope that it will be useful,
-!    but WITHOUT ANY WARRANTY; without even the implied warranty of
-!    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!    GNU General Public License for more details.
-!
-!    You should have received a copy of the GNU General Public License
-!    along with the code.  If not, see <http://www.gnu.org/licenses/>.
-!-------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------
-!    We kindly request that you cite Xcompact3d/Incompact3d in your
-!    publications and presentations. The following citations are suggested:
-!
-!    1-Laizet S. & Lamballais E., 2009, High-order compact schemes for
-!    incompressible flows: a simple and efficient method with the quasi-spectral
-!    accuracy, J. Comp. Phys.,  vol 228 (15), pp 5989-6015
-!
-!    2-Laizet S. & Li N., 2011, Incompact3d: a powerful tool to tackle turbulence
-!    problems with up to 0(10^5) computational cores, Int. J. of Numerical
-!    Methods in Fluids, vol 67 (11), pp 1735-1757
-!################################################################################
-! FUNCTION DEFINITION
+!Copyright (c) 2012-2022, Xcompact3d
+!This file is part of Xcompact3d (xcompact3d.com)
+!SPDX-License-Identifier: BSD 3-Clause
+
 !##################################################################
-function rl(complexnumber)
+pure function rl(complexnumber)
 
   !use param
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
+  !$acc routine seq
+
   real(mytype) :: rl
-  complex(mytype) :: complexnumber
+  complex(mytype), intent(in) :: complexnumber
 
   rl = real(complexnumber, kind=mytype)
 
@@ -47,15 +21,17 @@ end function rl
 !##################################################################
 
 !##################################################################
-function iy(complexnumber)
+pure function iy(complexnumber)
 
   !use param
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
+  !$acc routine seq
+
   real(mytype) :: iy
-  complex(mytype) :: complexnumber
+  complex(mytype), intent(in) :: complexnumber
 
   iy = aimag(complexnumber)
 
@@ -63,15 +39,16 @@ end function iy
 !##################################################################
 
 !##################################################################
-function cx(realpart,imaginarypart)
+pure function cx(realpart,imaginarypart)
 
-  !use param
-  use decomp_2d, only : mytype
+  use decomp_2d_constants, only : mytype
 
   implicit none
 
+  !$acc routine seq
+
   complex(mytype) :: cx
-  real(mytype) :: realpart, imaginarypart
+  real(mytype), intent(in) :: realpart, imaginarypart
 
   cx = cmplx(realpart, imaginarypart, kind=mytype)
 
@@ -80,10 +57,10 @@ end function cx
 ! SUBROUTINE DEFINITION
 !##################################################################
 subroutine boot_xcompact3d()
-  
+
   use MPI
-  use decomp_2d, only : nrank, nproc, decomp_2d_abort
-  
+  use decomp_2d_mpi, only : nrank, nproc, decomp_2d_abort
+
   implicit none
 
   integer :: code
@@ -114,6 +91,7 @@ subroutine init_xcompact3d(ndt_max)
   use x3d_operator_z_data, only : x3d_operator_z_data_init
   use x3d_operator_1d, only : x3d_operator_1d_init
   use x3d_derive, only : x3d_derive_init
+  use parameters
   use case
 
   use var
@@ -177,12 +155,13 @@ subroutine init_xcompact3d(ndt_max)
         print *, "  3) nz (default=16)"
         print *, "  4) p_row (default=0)"
         print *, "  5) p_col (default=0)"
-        print *, "  6) ndt_max (default=10)"
+        print *, "  6) ndt_max (default=5)"
         print *, "  7) test_mode logical 0/1 (default=0)"
      endif
   enddo
 
   call parameter()
+  call listing()
 
 
   !write(*,*) 'Decomp2d_init'
@@ -197,16 +176,16 @@ subroutine init_xcompact3d(ndt_max)
   call decomp_info_init(nxm, nym, nz, ph3)
 
   call var_init()
-  call x3d_operator_x_data_init()
-  call x3d_operator_y_data_init()
-  call x3d_operator_z_data_init()
+  call x3d_operator_x_data_init(nx, nxm)
+  call x3d_operator_y_data_init(ny, nym)
+  call x3d_operator_z_data_init(nz, nzm)
   call x3d_operator_1d_init()
   call x3d_derive_init()
 
   call decomp_2d_poisson_init()
   call decomp_info_init(nxm,nym,nzm,phG)
 
-  call init_flowfield()
+  !call init_flowfield()
   !write(*,*) 'End init_xcompact3d'
  
 

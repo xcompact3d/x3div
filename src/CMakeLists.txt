@@ -27,14 +27,11 @@ set(X3DFILES
             x3d_precision.f90)
 
 add_library(x3d STATIC ${X3DFILES})
-#target_include_directories(x3d PRIVATE ${2decomp_INCLUDE_DIR})
-#target_link_libraries(x3d PRIVATE decomp2d)
-
 add_executable(xcompact3d xcompact3d.f90)
-target_include_directories(xcompact3d PRIVATE ${2decomp_INCLUDE_DIR})
-target_link_libraries(x3d PRIVATE ${DECOMP2D_FFT_LIB})
-target_link_libraries(xcompact3d PRIVATE x3d)
-target_link_libraries(xcompact3d PRIVATE ${DECOMP2D_FFT_LIB})
+
+#target_include_directories(xcompact3d PRIVATE ${2decomp_INCLUDE_DIR})
+target_link_libraries(x3d PRIVATE decomp2d)
+target_link_libraries(xcompact3d PRIVATE decomp2d x3d)
 
 if (MPI_FOUND)
   target_link_libraries(x3d PRIVATE MPI::MPI_Fortran)

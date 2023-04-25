@@ -1,4 +1,5 @@
 *.o
 *.mod
 xcompact3d
+build*
 *.dat

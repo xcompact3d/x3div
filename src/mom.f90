@@ -72,9 +72,9 @@ contains
     real(mytype) :: du_ana
 
     if (test_mode) then
-       if (nrank .eq. 0 ) then
-          open(101, file="du.dat", action="write", status="unknown")
-       endif
+       !if (nrank .eq. 0 ) then
+       !   open(101, file="du.dat", action="write", status="unknown")
+       !endif
       
        ne1 = xsize(1)
        ne2 = xsize(2)
@@ -96,11 +96,11 @@ contains
                 du_ana = twopi * du_ana / xlx
                 errloc = errloc + (du(i, j, k) - du_ana)**2
                 
-                if (nrank .eq. 0) then
-                   if ((j.eq.1) .and. (k.eq.1)) then
-                      write(101, *) x, du(i, j, k), du_ana, errloc
-                   endif
-                endif
+                !if (nrank .eq. 0) then
+                !   if ((j.eq.1) .and. (k.eq.1)) then
+                !      write(101, *) x, du(i, j, k), du_ana, errloc
+                !   endif
+                !endif
              enddo
           enddo
        enddo
@@ -113,9 +113,9 @@ contains
           print *, "RMS error in dudx: ", err
        end if
 
-       if (nrank .eq. 0) then
-          close(101)
-       endif
+       !if (nrank .eq. 0) then
+       !   close(101)
+       !endif
     end if
     
   endsubroutine test_du
@@ -136,9 +136,9 @@ contains
     real(mytype) :: dv_ana
 
     if (test_mode) then
-       if (nrank .eq. 0) then
-          open(102, file="dv.dat", action="write", status="unknown")
-       endif
+       !if (nrank .eq. 0) then
+       !   open(102, file="dv.dat", action="write", status="unknown")
+       !endif
        ne1 = ysize(1)
        ne2 = ysize(2)
        ne3 = ysize(3)
@@ -158,11 +158,11 @@ contains
                 dv_ana = cos(twopi * (x / xlx)) * cos(twopi * (y / yly)) * cos(twopi * (z / zlz))
                 dv_ana = twopi * dv_ana / yly
                 errloc = errloc + (dv(i, j, k) - dv_ana)**2
-                if (nrank .eq. 0) then
-                   if ((i.eq.1) .and. (k.eq.1)) then
-                      write(102, *) y, dv(i, j, k), dv_ana, errloc
-                   endif
-                endif
+                !if (nrank .eq. 0) then
+                !   if ((i.eq.1) .and. (k.eq.1)) then
+                !      write(102, *) y, dv(i, j, k), dv_ana, errloc
+                !   endif
+                !endif
              enddo
           enddo
        enddo
@@ -175,9 +175,9 @@ contains
           print *, "RMS error in dvdy: ", err
        end if
        
-       if (nrank .eq. 0) then
-          close(102)
-       endif
+       !if (nrank .eq. 0) then
+       !   close(102)
+       !endif
     end if
     
   endsubroutine test_dv
@@ -196,9 +196,9 @@ contains
     real(mytype) :: dw_ana
 
     if (test_mode) then
-       if (nrank .eq. 0) then
-          open(103, file="dw.dat", action="write", status="unknown")
-       endif
+       !if (nrank .eq. 0) then
+       !   open(103, file="dw.dat", action="write", status="unknown")
+       !endif
        ne1 = zsize(1)
        ne2 = zsize(2)
        ne3 = zsize(3)
@@ -218,11 +218,11 @@ contains
                 dw_ana = twopi * dw_ana / zlz
                 errloc = errloc + (dw(i, j, k) - dw_ana)**2
 
-                if (nrank .eq. 0) then
-                   if ((i.eq.1) .and. (j.eq.1)) then
-                      write(103, *) z, dw(i, j, k), dw_ana, errloc
-                   endif
-                endif
+                !if (nrank .eq. 0) then
+                !   if ((i.eq.1) .and. (j.eq.1)) then
+                !      write(103, *) z, dw(i, j, k), dw_ana, errloc
+                !   endif
+                !endif
              enddo
           enddo
        enddo
@@ -235,9 +235,9 @@ contains
           print *, "RMS error in dwdz: ", err
        end if
 
-       if (nrank .eq. 0) then
-          close(103)
-       endif
+       !if (nrank .eq. 0) then
+       !   close(103)
+       !endif
     end if
 
   endsubroutine test_dw
